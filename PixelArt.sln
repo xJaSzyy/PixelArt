@@ -1,0 +1,16 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PixelArt", "PixelArt.csproj", "{7F36BD44-8918-48B2-8A64-EF5009ED7E66}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7F36BD44-8918-48B2-8A64-EF5009ED7E66}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7F36BD44-8918-48B2-8A64-EF5009ED7E66}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7F36BD44-8918-48B2-8A64-EF5009ED7E66}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7F36BD44-8918-48B2-8A64-EF5009ED7E66}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
