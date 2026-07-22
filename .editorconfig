@@ -1,0 +1,13 @@
+root = true
+
+[*.cs]
+
+dotnet_naming_rule.private_fields_should_have_underscore.severity = suggestion
+dotnet_naming_rule.private_fields_should_have_underscore.symbols = private_fields
+dotnet_naming_rule.private_fields_should_have_underscore.style = underscore_style
+
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+
+dotnet_naming_style.underscore_style.required_prefix = _
+dotnet_naming_style.underscore_style.capitalization = camel_case
