@@ -9,7 +9,7 @@ public class ColorButton(Color color, int number, Rectangle bounds)
     private Color Color { get; } = color;
     public int Number { get; } = number;
     private Rectangle Bounds { get; set; } = bounds;
-    private bool IsHovered { get; set; }
+    public bool IsHovered { get; set; }
     private bool IsSelected { get; set; }
     
     public void Update(MouseState mouse)
@@ -20,6 +20,18 @@ public class ColorButton(Color color, int number, Rectangle bounds)
     public void Draw(SpriteBatch spriteBatch, Texture2D pixelTexture)
     {
         var rect = GetDrawBounds();
+
+        if (IsSelected)
+        {
+            var border = new Rectangle(
+                rect.X - 2,
+                rect.Y - 2,
+                rect.Width + 4,
+                rect.Height + 4
+            );
+
+            spriteBatch.Draw(pixelTexture, border, Color.Yellow);
+        }
 
         var color = Color;
 
@@ -51,5 +63,10 @@ public class ColorButton(Color color, int number, Rectangle bounds)
             0.114f * Color.B;
 
         return brightness < 128;
+    }
+
+    public void SetSelected(bool isSelected)
+    {
+        IsSelected = isSelected;
     }
 }

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -60,6 +61,21 @@ public class GameScene : IScene
     {
         var mouse = Mouse.GetState();
 
+        if (_mouseService.IsLeftMouseButtonClicked(mouse))
+        {
+            var clickedButton = _buttons.FirstOrDefault(x => x.IsHovered);
+
+            if (clickedButton != null)
+            {
+                foreach (var button in _buttons)
+                {
+                    button.SetSelected(false);
+                }
+
+                clickedButton.SetSelected(true);
+            }
+        }
+        
         if (_mouseService.IsRightMouseButtonClicked(mouse))
         {
             _sceneService.SetScene(new MenuScene());
@@ -126,8 +142,8 @@ public class GameScene : IScene
     
     private void CreateColorButtons()
     {
-        var x = 0;
-        var y = _graphicsDevice.Viewport.Height - _buttonSize;
+        var x = _buttonSpacing;
+        var y = _graphicsDevice.Viewport.Height - _buttonSize - _buttonSpacing;
 
         foreach (var group in _processorService.GetColorMap().Values)
         {
