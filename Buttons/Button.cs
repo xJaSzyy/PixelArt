@@ -2,7 +2,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
-namespace PixelArt;
+namespace PixelArt.Buttons;
 
 public class Button(Texture2D texture, Rectangle bounds)
 {

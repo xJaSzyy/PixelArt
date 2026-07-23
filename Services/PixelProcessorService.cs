@@ -78,3 +78,16 @@ public class PixelProcessorService
         return _colorMap;
     }
 }
+
+/*Point mouse = Mouse.GetState().Position;
+
+if (_imageBounds.Contains(mouse))
+{
+    float pixelWidth = (float)_imageBounds.Width / _imageTexture.Width;
+    float pixelHeight = (float)_imageBounds.Height / _imageTexture.Height;
+
+    int x = (int)((mouse.X - _imageBounds.X) / pixelWidth);
+    int y = (int)((mouse.Y - _imageBounds.Y) / pixelHeight);
+}
+
+int index = y * _imageTexture.Width + x;*/

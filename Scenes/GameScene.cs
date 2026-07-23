@@ -1,7 +1,9 @@
+using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using PixelArt.Buttons;
 using PixelArt.Interfaces;
 using PixelArt.Services;
 
@@ -15,10 +17,15 @@ public class GameScene : IScene
     private SceneService _sceneService;
     private MouseService _mouseService;
     private DrawService _drawService;
-    private PixelProcessorService _processorService;
+    private readonly PixelProcessorService _processorService;
 
     private readonly Texture2D _imageTexture;
     private Rectangle _imageBounds;
+    
+    private Texture2D _pixelTexture;
+    private readonly List<ColorButton> _buttons = [];
+    private const int _buttonSize = 56;
+    private const int _buttonSpacing = 12;
 
     public GameScene(Texture2D imageTexture, Rectangle imageBounds)
     {
@@ -42,7 +49,11 @@ public class GameScene : IScene
         _graphicsDevice = graphicsDevice;
         _spriteBatch = new SpriteBatch(graphicsDevice);
         
+        _pixelTexture = new Texture2D(_graphicsDevice, 1, 1);
+        _pixelTexture.SetData([Color.White]);
+        
         PlaceImageCenter();
+        CreateColorButtons();
     }
 
     public void Update(GameTime gameTime)
@@ -53,6 +64,8 @@ public class GameScene : IScene
         {
             _sceneService.SetScene(new MenuScene());
         }
+        
+        _buttons.ForEach(x => x.Update(mouse));
         
         _mouseService.SetMouse(mouse);
     }
@@ -86,6 +99,17 @@ public class GameScene : IScene
                     numberColor);
             }
         }
+        
+        foreach (var colorButton in _buttons)
+        {
+            colorButton.Draw(_spriteBatch, _pixelTexture);
+            
+            _drawService.DrawString(
+                _spriteBatch, 
+                colorButton.Number.ToString(), 
+                colorButton.GetDrawBounds().Center.ToVector2(), 
+                colorButton.ColorIsDark() ? Color.White : Color.Black);
+        }
 
         _spriteBatch.End();
     }
@@ -98,5 +122,17 @@ public class GameScene : IScene
         var y = _graphicsDevice.Viewport.Height / 2 - _imageBounds.Height / 2;
         
         _imageBounds.Location = new Point(x, y);
+    }
+    
+    private void CreateColorButtons()
+    {
+        var x = 0;
+        var y = _graphicsDevice.Viewport.Height - _buttonSize;
+
+        foreach (var group in _processorService.GetColorMap().Values)
+        {
+            _buttons.Add(new ColorButton(group.OriginalColor, group.Number, new Rectangle(x, y, _buttonSize, _buttonSize)));
+            x += _buttonSize + _buttonSpacing;
+        }
     }
 }

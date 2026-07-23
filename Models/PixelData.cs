@@ -12,8 +12,8 @@ public class PixelData
         int textureWidth,
         int textureHeight)
     {
-        float pixelWidth = (float)bounds.Width / textureWidth;
-        float pixelHeight = (float)bounds.Height / textureHeight;
+        var pixelWidth = (float)bounds.Width / textureWidth;
+        var pixelHeight = (float)bounds.Height / textureHeight;
 
         return new Vector2(
             bounds.X + TexturePosition.X * pixelWidth + pixelWidth / 2f,
