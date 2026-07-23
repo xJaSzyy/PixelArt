@@ -1,28 +1,28 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using PixelArt.Interfaces;
+using PixelArt.Services;
 
 namespace PixelArt.Scenes;
 
 public class MenuScene : IScene
 {
     private GraphicsDevice _graphicsDevice;
-    private SceneManager _sceneManager;
+    private SceneService _sceneService;
+    private MouseService _mouseService;
     private SpriteBatch _spriteBatch;
     
     private List<Button> _buttons = [];
-    private int _buttonSize = 128;
+    private const int _buttonSize = 128;
+
     
-    private MouseState _prevMouse;
-    
-    public void Initialize(SceneManager sceneManager)
+    public void Initialize(SceneService sceneService, MouseService mouseService)
     {
-        _sceneManager = sceneManager;
+        _sceneService = sceneService;
+        _mouseService = mouseService;
     }
 
     public void LoadContent(GraphicsDevice graphicsDevice, ContentManager content)
@@ -48,21 +48,19 @@ public class MenuScene : IScene
 
         _buttons.ForEach(x => x.Update(mouse));
 
-        var clicked = mouse.LeftButton == ButtonState.Pressed && _prevMouse.LeftButton == ButtonState.Released;
-
-        if (clicked)
+        if (_mouseService.IsLeftMouseButtonClicked(mouse))
         {
             foreach (var button in _buttons)
             {
                 if (button.IsHovered)
                 {
-                    _sceneManager.SetScene(new GameScene(button.Texture, button.Bounds));
+                    _sceneService.SetScene(new GameScene(button.Texture, button.Bounds));
                     break;
                 }
             }
         }
 
-        _prevMouse = mouse;
+        _mouseService.SetMouse(mouse);
     }
 
     public void Draw(GameTime gameTime)

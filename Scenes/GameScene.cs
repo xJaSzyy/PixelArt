@@ -1,20 +1,21 @@
-using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using PixelArt.Interfaces;
+using PixelArt.Services;
 
 namespace PixelArt.Scenes;
 
 public class GameScene : IScene
 {
     private GraphicsDevice _graphicsDevice;
-    private SceneManager _sceneManager;
+    private SceneService _sceneService;
+    private MouseService _mouseService;
     private SpriteBatch _spriteBatch;
 
-    private Texture2D _imageTexture;
-    private Rectangle _imageBounds;
+    private readonly Texture2D _imageTexture;
+    private readonly Rectangle _imageBounds;
 
     public GameScene(Texture2D imageTexture, Rectangle imageBounds)
     {
@@ -22,9 +23,10 @@ public class GameScene : IScene
         _imageBounds = imageBounds;
     }
 
-    public void Initialize(SceneManager sceneManager)
+    public void Initialize(SceneService sceneService, MouseService mouseService)
     {
-        _sceneManager = sceneManager;
+        _sceneService = sceneService;
+        _mouseService = mouseService;
     }
 
     public void LoadContent(GraphicsDevice graphicsDevice, ContentManager content)
@@ -38,10 +40,12 @@ public class GameScene : IScene
     {
         var mouse = Mouse.GetState();
 
-        if (mouse.RightButton == ButtonState.Pressed)
+        if (_mouseService.IsRightMouseButtonClicked(mouse))
         {
-            _sceneManager.SetScene(new MenuScene());
+            _sceneService.SetScene(new MenuScene());
         }
+        
+        _mouseService.SetMouse(mouse);
     }
 
     public void Draw(GameTime gameTime)
