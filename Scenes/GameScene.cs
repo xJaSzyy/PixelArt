@@ -15,6 +15,7 @@ public class GameScene : IScene
     private SceneService _sceneService;
     private MouseService _mouseService;
     private DrawService _drawService;
+    private PixelProcessorService _processorService;
 
     private readonly Texture2D _imageTexture;
     private Rectangle _imageBounds;
@@ -23,6 +24,10 @@ public class GameScene : IScene
     {
         _imageTexture = imageTexture;
         _imageBounds = imageBounds;
+        
+        _processorService = new PixelProcessorService();
+        _processorService.SetTexture(_imageTexture);
+        _processorService.Generate();
     }
 
     public void Initialize(SceneService sceneService, MouseService mouseService, DrawService drawService)
@@ -66,16 +71,28 @@ public class GameScene : IScene
             Color.White
         );
 
-        _drawService.DrawString(_spriteBatch, "test");
+        var colorMap = _processorService.GetColorMap();
+        
+        foreach (var color in colorMap.Values)
+        {
+            var numberColor = color.GrayColorIsDark() ? Color.White : Color.Black;
+            
+            foreach (var pixel in color.Pixels)
+            {
+                _drawService.DrawString(
+                    _spriteBatch, 
+                    color.Number.ToString(), 
+                    pixel.GetScreenPosition(_imageBounds, _imageTexture.Width, _imageTexture.Height), 
+                    numberColor);
+            }
+        }
 
         _spriteBatch.End();
     }
     
-    
-    
     private void PlaceImageCenter()
     {
-        _imageBounds.Size *= 3;
+        _imageBounds.Size *= 4;
         
         var x = _graphicsDevice.Viewport.Width / 2 -  _imageBounds.Width / 2;
         var y = _graphicsDevice.Viewport.Height / 2 - _imageBounds.Height / 2;

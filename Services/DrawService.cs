@@ -12,13 +12,24 @@ public class DrawService
         _font = font;
     }
 
-    public void DrawString(SpriteBatch spriteBatch, string test)
+    public void DrawString(
+        SpriteBatch spriteBatch,
+        string text,
+        Vector2 position,
+        Color color)
     {
+        var size = _font.MeasureString(text);
+
         spriteBatch.DrawString(
             _font,
-            "12345",
-            new Vector2(100, 100),
-            Color.White
+            text,
+            position,
+            color,
+            0f,
+            size / 2f,
+            1f,
+            SpriteEffects.None,
+            0f
         );
     }
 }

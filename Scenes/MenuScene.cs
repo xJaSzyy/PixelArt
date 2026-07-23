@@ -16,7 +16,6 @@ public class MenuScene : IScene
     
     private SceneService _sceneService;
     private MouseService _mouseService;
-    private PixelProcessorService _processorService;
     
     private readonly List<Button> _buttons = [];
     private const int _buttonSize = 128;
@@ -43,10 +42,6 @@ public class MenuScene : IScene
             
             _buttons.Add(new Button(texture, rectangle));
         }
-        
-        _processorService = new PixelProcessorService(_buttons[0].Texture);
-        _processorService.GenerateColorMap();
-        _processorService.GenerateGrayImage();
     }
 
     public void Update(GameTime gameTime)
@@ -59,7 +54,7 @@ public class MenuScene : IScene
         {
             foreach (var button in _buttons.Where(button => button.IsHovered))
             {
-                _sceneService.SetScene(new GameScene(button.Texture, button.Bounds));
+                _sceneService.SetScene(new GameScene(CloneTexture(button.Texture), button.Bounds));
                 break;
             }
         }
@@ -78,5 +73,21 @@ public class MenuScene : IScene
         _buttons.ForEach(x => x.Draw(_spriteBatch));
 
         _spriteBatch.End();
+    }
+    
+    private Texture2D CloneTexture(Texture2D source)
+    {
+        var clone = new Texture2D(
+            _graphicsDevice,
+            source.Width,
+            source.Height
+        );
+
+        var pixels = new Color[source.Width * source.Height];
+
+        source.GetData(pixels);
+        clone.SetData(pixels);
+
+        return clone;
     }
 }

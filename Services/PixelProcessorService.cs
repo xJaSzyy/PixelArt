@@ -8,64 +8,73 @@ namespace PixelArt.Services;
 
 public class PixelProcessorService
 {
-    private readonly Texture2D _imageTexture;
-    private readonly Dictionary<Color, List<int>> _colorMap = new();
+    private Texture2D _imageTexture;
+    private readonly Dictionary<Color, PixelColorGroup> _colorMap = new();
 
-    public PixelProcessorService(Texture2D imageTexture)
+    public void SetTexture(Texture2D texture)
     {
-        _imageTexture =  imageTexture;
+        _imageTexture = texture;
     }
     
-    public void GenerateColorMap()
+    public void Generate()
     {
         var pixels = new Color[_imageTexture.Width * _imageTexture.Height];
+        var width = _imageTexture.Width;
         _imageTexture.GetData(pixels);
-
+        
         _colorMap.Clear();
-
+        
         for (var i = 0; i < pixels.Length; i++)
         {
-            var color = pixels[i];
+            Color original = pixels[i];
 
-            if (color.A == 0)
+            if (original.A == 0)
             {
                 continue;
             }
             
-            if (!_colorMap.ContainsKey(color))
-            {
-                _colorMap[color] = [];
-            }
-
-            _colorMap[color].Add(i);
-        }
-    }
-    
-    public void GenerateGrayImage()
-    {
-        var pixels = new Color[_imageTexture.Width * _imageTexture.Height];
-        _imageTexture.GetData(pixels);
-
-        for (int i = 0; i < pixels.Length; i++)
-        {
-            Color original = pixels[i];
-
             byte grayValue = (byte)(
                 original.R * 0.299f +
                 original.G * 0.587f +
                 original.B * 0.114f
             );
 
-            Color gray = new Color(
+            grayValue = (byte)(50 + grayValue * 0.8f);
+
+            var gray = new Color(
                 grayValue,
                 grayValue,
                 grayValue,
                 original.A
             );
-
+            
             pixels[i] = gray;
-        }
+            
+            if (!_colorMap.ContainsKey(original))
+            {
+                _colorMap[original] = new PixelColorGroup
+                {
+                    Number = _colorMap.Count + 1,
+                    OriginalColor = original,
+                    GrayColor = gray,
+                    Pixels = []
+                };
+            }
 
+            var point = new Point(i % width, i / width);
+            
+            _colorMap[original].Pixels.Add(new PixelData
+            {
+                Index = i,
+                TexturePosition = point,
+            });
+        }
+        
         _imageTexture.SetData(pixels);
+    }
+
+    public Dictionary<Color, PixelColorGroup> GetColorMap()
+    {
+        return _colorMap;
     }
 }
