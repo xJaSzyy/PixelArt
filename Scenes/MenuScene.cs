@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -11,15 +12,17 @@ namespace PixelArt.Scenes;
 public class MenuScene : IScene
 {
     private GraphicsDevice _graphicsDevice;
-    private SceneService _sceneService;
-    private MouseService _mouseService;
     private SpriteBatch _spriteBatch;
     
-    private List<Button> _buttons = [];
+    private SceneService _sceneService;
+    private MouseService _mouseService;
+    private PixelProcessorService _processorService;
+    
+    private readonly List<Button> _buttons = [];
     private const int _buttonSize = 128;
 
     
-    public void Initialize(SceneService sceneService, MouseService mouseService)
+    public void Initialize(SceneService sceneService, MouseService mouseService, DrawService drawService)
     {
         _sceneService = sceneService;
         _mouseService = mouseService;
@@ -40,6 +43,10 @@ public class MenuScene : IScene
             
             _buttons.Add(new Button(texture, rectangle));
         }
+        
+        _processorService = new PixelProcessorService(_buttons[0].Texture);
+        _processorService.GenerateColorMap();
+        _processorService.GenerateGrayImage();
     }
 
     public void Update(GameTime gameTime)
@@ -50,13 +57,10 @@ public class MenuScene : IScene
 
         if (_mouseService.IsLeftMouseButtonClicked(mouse))
         {
-            foreach (var button in _buttons)
+            foreach (var button in _buttons.Where(button => button.IsHovered))
             {
-                if (button.IsHovered)
-                {
-                    _sceneService.SetScene(new GameScene(button.Texture, button.Bounds));
-                    break;
-                }
+                _sceneService.SetScene(new GameScene(button.Texture, button.Bounds));
+                break;
             }
         }
 

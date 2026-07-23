@@ -12,18 +12,20 @@ public class SceneService
     private readonly ContentManager _content;
     
     private readonly MouseService _mouseService;
+    private readonly DrawService _drawService;
     
-    public SceneService(GraphicsDevice graphics, ContentManager content, MouseService mouseService)
+    public SceneService(GraphicsDevice graphics, ContentManager content, MouseService mouseService, DrawService drawService)
     {
         _graphics = graphics;
         _content = content;
         _mouseService = mouseService;
+        _drawService = drawService;
     }
     
     public void SetScene(IScene scene)
     {
         CurrentScene = scene;
-        CurrentScene.Initialize(this, _mouseService);
+        CurrentScene.Initialize(this, _mouseService,  _drawService);
         CurrentScene.LoadContent(_graphics, _content);
     }
 }

@@ -7,7 +7,7 @@ namespace PixelArt.Interfaces;
 
 public interface IScene
 {
-    void Initialize(SceneService sceneService, MouseService mouseService);
+    void Initialize(SceneService sceneService, MouseService mouseService, DrawService drawService);
     void LoadContent(GraphicsDevice graphicsDevice, ContentManager content);
     void Update(GameTime gameTime);
     void Draw(GameTime gameTime);
