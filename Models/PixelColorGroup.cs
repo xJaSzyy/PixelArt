@@ -22,7 +22,6 @@ public class PixelColorGroup
             return Pixels.Count(x => x.IsFinished) / (float)Pixels.Count;
         }
     }
-    
-    public int FinishedCount =>
-        Pixels.Count(x => x.IsFinished);
+
+    public bool IsFinished => Progress >= 1f;
 }

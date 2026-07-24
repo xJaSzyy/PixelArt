@@ -25,4 +25,14 @@ public class MouseService
     {
         _prevMouse = mouse;
     }
+    
+    public bool IsScroll(MouseState mouse)
+    {
+        return mouse.ScrollWheelValue != _prevMouse.ScrollWheelValue;
+    }
+
+    public int GetScrollDelta(MouseState mouse)
+    {
+        return mouse.ScrollWheelValue - _prevMouse.ScrollWheelValue;
+    }
 }

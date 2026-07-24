@@ -75,6 +75,20 @@ public class GameScene : IScene
             PaintPixelAtMousePosition(mouse);
         }
         
+        if (_mouseService.IsScroll(mouse))
+        {
+            var scrollDelta = _mouseService.GetScrollDelta(mouse);
+
+            if (scrollDelta > 0)
+            {
+                SelectNextButton();
+            }
+            else
+            {
+                SelectPrevButton();
+            }
+        }
+        
         if (_mouseService.IsRightMouseButtonClicked(mouse))
         {
             _sceneService.SetScene(new MenuScene());
@@ -89,17 +103,57 @@ public class GameScene : IScene
 
     private void UpdateSelectedButton()
     {
-        var clickedButton = _buttons.FirstOrDefault(x => x.IsHovered);
+        var clickedButtonIndex = _buttons.FindIndex(x => x.IsHovered);
 
-        if (clickedButton != null)
+        if (clickedButtonIndex != -1)
         {
-            foreach (var button in _buttons)
-            {
-                button.SetSelected(false);
-            }
-
-            clickedButton.SetSelected(true);
+            SelectButton(clickedButtonIndex);
         }
+    }
+    
+    private void SelectNextButton()
+    {
+        var currentIndex = _buttons.FindIndex(x => x.IsSelected);
+
+        if (currentIndex == -1)
+        {
+            _buttons[0].SetSelected(true);
+            return;
+        }
+
+        var nextIndex = (currentIndex + 1) % _buttons.Count;
+
+        SelectButton(nextIndex);
+    }
+
+    private void SelectPrevButton()
+    {
+        var currentIndex = _buttons.FindIndex(x => x.IsSelected);
+
+        if (currentIndex == -1)
+        {
+            _buttons[0].SetSelected(true);
+            return;
+        }
+
+        var prevIndex = currentIndex - 1;
+
+        if (prevIndex < 0)
+        {
+            prevIndex = _buttons.Count - 1;
+        }
+
+        SelectButton(prevIndex);
+    }
+    
+    private void SelectButton(int index)
+    {
+        foreach (var button in _buttons)
+        {
+            button.SetSelected(false);
+        }
+
+        _buttons[index].SetSelected(true);
     }
     
     private void PaintPixelAtMousePosition(MouseState mouse)
@@ -162,19 +216,27 @@ public class GameScene : IScene
         {
             colorButton.Draw(_spriteBatch, _pixelTexture);
 
+            var colorGroup = colorGroups[colorButton.Color];
+            var groupIsFinished = colorGroup.IsFinished;
+            
+            var text = groupIsFinished ? "x" : colorButton.Number.ToString();
+            
             _drawService.DrawString(
                 _spriteBatch,
-                colorButton.Number.ToString(),
+                text,
                 colorButton.GetDrawBounds().Center.ToVector2(),
                 colorButton.ColorIsDark() ? Color.White : Color.Black);
 
-            _drawService.DrawProgressBar(
-                _spriteBatch,
-                _pixelTexture,
-                colorButton.GetProgressBounds(),
-                colorGroups[colorButton.Color].Progress,
-                Color.White,
-                Color.Yellow);
+            if (!groupIsFinished)
+            {
+                _drawService.DrawProgressBar(
+                    _spriteBatch,
+                    _pixelTexture,
+                    colorButton.GetProgressBounds(),
+                    colorGroup.Progress,
+                    Color.White,
+                    Color.Black);
+            }
         }
     }
     
@@ -203,5 +265,7 @@ public class GameScene : IScene
             _buttons.Add(new ColorButton(group.OriginalColor, group.Number, new Rectangle(x, y, _buttonSize, _buttonSize)));
             x += _buttonSize + _buttonSpacing;
         }
+        
+        SelectButton(0);
     }
 }

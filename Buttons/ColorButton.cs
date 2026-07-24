@@ -57,11 +57,15 @@ public class ColorButton(Color color, int number, Rectangle bounds)
     
     public Rectangle GetProgressBounds()
     {
+        var rect = GetDrawBounds();
+        
+        const int height = 8;
+
         return new Rectangle(
-            Bounds.X + 5,
-            Bounds.Bottom - 8,
-            Bounds.Width - 10,
-            5);
+            rect.X,
+            rect.Bottom - height,
+            rect.Width,
+            height);
     }
     
     public bool ColorIsDark()
