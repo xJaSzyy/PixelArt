@@ -32,4 +32,23 @@ public class DrawService
             0f
         );
     }
+    
+    public void DrawProgressBar(SpriteBatch spriteBatch, Texture2D pixelTexture, Rectangle bounds, float progress, Color emptyColor, Color fillColor)
+    {
+        spriteBatch.Draw(
+            pixelTexture,
+            bounds,
+            emptyColor);
+
+        var fill = new Rectangle(
+            bounds.X,
+            bounds.Y,
+            (int)(bounds.Width * progress),
+            bounds.Height);
+
+        spriteBatch.Draw(
+            pixelTexture,
+            fill,
+            fillColor);
+    }
 }

@@ -7,6 +7,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using PixelArt.Buttons;
 using PixelArt.Interfaces;
+using PixelArt.Models;
 using PixelArt.Services;
 
 namespace PixelArt.Scenes;
@@ -131,19 +132,18 @@ public class GameScene : IScene
             Color.White
         );
 
-        DrawPixelNumbers();
-        DrawColorButtons();
+        var colorGroups = _processorService.GetPixelColorGroups();
+        DrawPixelNumbers(colorGroups);
+        DrawColorButtons(colorGroups);
 
         _spriteBatch.End();
     }
 
     #region Draw methods
     
-    private void DrawPixelNumbers()
+    private void DrawPixelNumbers(Dictionary<Color, PixelColorGroup> colorGroups)
     {
-        var colorMap = _processorService.GetColorMap();
-        
-        foreach (var color in colorMap.Values)
+        foreach (var color in colorGroups.Values)
         {
             foreach (var pixel in color.Pixels.Where(pixel => !pixel.IsFinished))
             {
@@ -156,17 +156,25 @@ public class GameScene : IScene
         }
     }
     
-    private void DrawColorButtons()
+    private void DrawColorButtons(Dictionary<Color, PixelColorGroup> colorGroups)
     {
         foreach (var colorButton in _buttons)
         {
             colorButton.Draw(_spriteBatch, _pixelTexture);
-            
+
             _drawService.DrawString(
-                _spriteBatch, 
-                colorButton.Number.ToString(), 
-                colorButton.GetDrawBounds().Center.ToVector2(), 
+                _spriteBatch,
+                colorButton.Number.ToString(),
+                colorButton.GetDrawBounds().Center.ToVector2(),
                 colorButton.ColorIsDark() ? Color.White : Color.Black);
+
+            _drawService.DrawProgressBar(
+                _spriteBatch,
+                _pixelTexture,
+                colorButton.GetProgressBounds(),
+                colorGroups[colorButton.Color].Progress,
+                Color.White,
+                Color.Yellow);
         }
     }
     
@@ -190,7 +198,7 @@ public class GameScene : IScene
         var x = _buttonSpacing;
         var y = _graphicsDevice.Viewport.Height - _buttonSize - _buttonSpacing;
 
-        foreach (var group in _processorService.GetColorMap().Values)
+        foreach (var group in _processorService.GetPixelColorGroups().Values)
         {
             _buttons.Add(new ColorButton(group.OriginalColor, group.Number, new Rectangle(x, y, _buttonSize, _buttonSize)));
             x += _buttonSize + _buttonSpacing;

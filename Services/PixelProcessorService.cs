@@ -9,7 +9,7 @@ namespace PixelArt.Services;
 public class PixelProcessorService
 {
     private Texture2D _imageTexture;
-    private readonly Dictionary<Color, PixelColorGroup> _colorMap = new();
+    private readonly Dictionary<Color, PixelColorGroup> _colorGroups = new();
     private readonly Dictionary<int, PixelData> _pixels = [];
     private Color[] _texturePixels;
 
@@ -24,19 +24,19 @@ public class PixelProcessorService
         var width = _imageTexture.Width;
         _imageTexture.GetData(_texturePixels);
         
-        _colorMap.Clear();
+        _colorGroups.Clear();
         _pixels.Clear();
         
         for (var i = 0; i < _texturePixels.Length; i++)
         {
-            Color original = _texturePixels[i];
+            var original = _texturePixels[i];
 
             if (original.A == 0)
             {
                 continue;
             }
             
-            byte grayValue = (byte)(
+            var grayValue = (byte)(
                 original.R * 0.299f +
                 original.G * 0.587f +
                 original.B * 0.114f
@@ -53,11 +53,11 @@ public class PixelProcessorService
             
             _texturePixels[i] = gray;
             
-            if (!_colorMap.ContainsKey(original))
+            if (!_colorGroups.ContainsKey(original))
             {
-                _colorMap[original] = new PixelColorGroup
+                _colorGroups[original] = new PixelColorGroup
                 {
-                    Number = _colorMap.Count + 1,
+                    Number = _colorGroups.Count + 1,
                     OriginalColor = original,
                     Pixels = []
                 };
@@ -73,7 +73,7 @@ public class PixelProcessorService
             };
             
             _pixels[i] = pixel;
-            _colorMap[original].Pixels.Add(pixel);
+            _colorGroups[original].Pixels.Add(pixel);
         }
         
         _imageTexture.SetData(_texturePixels);
@@ -93,17 +93,12 @@ public class PixelProcessorService
 
         pixel.CurrentColor = color;
         _texturePixels[index] = color;
-        
-        if (pixel.OriginalColor == color)
-        {
-            pixel.IsFinished = true;
-        }
 
         _imageTexture.SetData(_texturePixels);
     }
 
-    public Dictionary<Color, PixelColorGroup> GetColorMap()
+    public Dictionary<Color, PixelColorGroup> GetPixelColorGroups()
     {
-        return _colorMap;
+        return _colorGroups;
     }
 }

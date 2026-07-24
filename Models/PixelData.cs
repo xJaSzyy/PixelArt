@@ -7,7 +7,7 @@ public class PixelData
     public Point TexturePosition { get; set; }
     public Color OriginalColor { get; set; }
     public Color CurrentColor { get; set; }
-    public bool IsFinished { get; set; }
+    public bool IsFinished => OriginalColor == CurrentColor;
 
     public Vector2 GetScreenPosition(
         Rectangle bounds,
