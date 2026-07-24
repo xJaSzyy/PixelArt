@@ -11,6 +11,11 @@ public class MouseService
         return mouse.LeftButton == ButtonState.Pressed && _prevMouse.LeftButton == ButtonState.Released;
     }
     
+    public bool IsLeftMouseButtonPressed(MouseState mouse)
+    {
+        return mouse.LeftButton == ButtonState.Pressed;
+    }
+    
     public bool IsRightMouseButtonClicked(MouseState mouse)
     {
         return mouse.RightButton == ButtonState.Pressed && _prevMouse.RightButton == ButtonState.Released;

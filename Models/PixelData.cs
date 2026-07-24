@@ -4,11 +4,10 @@ namespace PixelArt.Models;
 
 public class PixelData
 {
-    public int Index { get; set; }
     public Point TexturePosition { get; set; }
     public Color OriginalColor { get; set; }
     public Color CurrentColor { get; set; }
-    public bool Finished { get; set; }
+    public bool IsFinished { get; set; }
 
     public Vector2 GetScreenPosition(
         Rectangle bounds,

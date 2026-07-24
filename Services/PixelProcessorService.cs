@@ -59,7 +59,6 @@ public class PixelProcessorService
                 {
                     Number = _colorMap.Count + 1,
                     OriginalColor = original,
-                    GrayColor = gray,
                     Pixels = []
                 };
             }
@@ -68,7 +67,6 @@ public class PixelProcessorService
 
             var pixel = new PixelData
             {
-                Index = i,
                 TexturePosition = point,
                 OriginalColor = original,
                 CurrentColor = gray
@@ -88,8 +86,18 @@ public class PixelProcessorService
             return;
         }
 
+        if (pixel.IsFinished)
+        {
+            return;
+        }
+
         pixel.CurrentColor = color;
         _texturePixels[index] = color;
+        
+        if (pixel.OriginalColor == color)
+        {
+            pixel.IsFinished = true;
+        }
 
         _imageTexture.SetData(_texturePixels);
     }

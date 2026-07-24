@@ -66,33 +66,12 @@ public class GameScene : IScene
 
         if (_mouseService.IsLeftMouseButtonClicked(mouse))
         {
-            #region Click on ColorButton check
+            UpdateSelectedButton();
+        }
 
-            var clickedButton = _buttons.FirstOrDefault(x => x.IsHovered);
-
-            if (clickedButton != null)
-            {
-                foreach (var button in _buttons)
-                {
-                    button.SetSelected(false);
-                }
-
-                clickedButton.SetSelected(true);
-            }
-
-            #endregion
-
-
-            var selectedButton = _buttons.FirstOrDefault(x => x.IsSelected);
-            if (selectedButton != null && _imageBounds.Contains(mouse.Position))
-            {
-                var x = (int)((mouse.X - _imageBounds.X) / _pixelWidth);
-                var y = (int)((mouse.Y - _imageBounds.Y) / _pixelHeight);
-                
-                var index = y * _imageTexture.Width + x;
-
-                _processorService.SetPixel(index, selectedButton.Color);
-            }
+        if (_mouseService.IsLeftMouseButtonPressed(mouse))
+        {
+            PaintPixelAtMousePosition(mouse);
         }
         
         if (_mouseService.IsRightMouseButtonClicked(mouse))
@@ -104,6 +83,39 @@ public class GameScene : IScene
         
         _mouseService.SetMouse(mouse);
     }
+
+    #region Update methods
+
+    private void UpdateSelectedButton()
+    {
+        var clickedButton = _buttons.FirstOrDefault(x => x.IsHovered);
+
+        if (clickedButton != null)
+        {
+            foreach (var button in _buttons)
+            {
+                button.SetSelected(false);
+            }
+
+            clickedButton.SetSelected(true);
+        }
+    }
+    
+    private void PaintPixelAtMousePosition(MouseState mouse)
+    {
+        var selectedButton = _buttons.FirstOrDefault(x => x.IsSelected);
+        if (selectedButton != null && _imageBounds.Contains(mouse.Position))
+        {
+            var x = (int)((mouse.X - _imageBounds.X) / _pixelWidth);
+            var y = (int)((mouse.Y - _imageBounds.Y) / _pixelHeight);
+                
+            var index = y * _imageTexture.Width + x;
+
+            _processorService.SetPixel(index, selectedButton.Color);
+        }
+    }
+
+    #endregion
 
     public void Draw(GameTime gameTime)
     {
@@ -119,11 +131,21 @@ public class GameScene : IScene
             Color.White
         );
 
+        DrawPixelNumbers();
+        DrawColorButtons();
+
+        _spriteBatch.End();
+    }
+
+    #region Draw methods
+    
+    private void DrawPixelNumbers()
+    {
         var colorMap = _processorService.GetColorMap();
         
         foreach (var color in colorMap.Values)
         {
-            foreach (var pixel in color.Pixels)
+            foreach (var pixel in color.Pixels.Where(pixel => !pixel.IsFinished))
             {
                 _drawService.DrawString(
                     _spriteBatch, 
@@ -132,7 +154,10 @@ public class GameScene : IScene
                     pixel.ColorIsDark() ? Color.White : Color.Black);
             }
         }
-        
+    }
+    
+    private void DrawColorButtons()
+    {
         foreach (var colorButton in _buttons)
         {
             colorButton.Draw(_spriteBatch, _pixelTexture);
@@ -143,10 +168,10 @@ public class GameScene : IScene
                 colorButton.GetDrawBounds().Center.ToVector2(), 
                 colorButton.ColorIsDark() ? Color.White : Color.Black);
         }
-
-        _spriteBatch.End();
     }
     
+    #endregion
+
     private void PlaceImageCenter()
     {
         _imageBounds.Size *= 4;
