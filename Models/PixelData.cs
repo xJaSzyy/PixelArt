@@ -6,6 +6,9 @@ public class PixelData
 {
     public int Index { get; set; }
     public Point TexturePosition { get; set; }
+    public Color OriginalColor { get; set; }
+    public Color CurrentColor { get; set; }
+    public bool Finished { get; set; }
 
     public Vector2 GetScreenPosition(
         Rectangle bounds,
@@ -19,5 +22,15 @@ public class PixelData
             bounds.X + TexturePosition.X * pixelWidth + pixelWidth / 2f,
             bounds.Y + TexturePosition.Y * pixelHeight + pixelHeight / 2f
         );
+    }
+    
+    public bool ColorIsDark()
+    {
+        var brightness =
+            0.299f * CurrentColor.R +
+            0.587f * CurrentColor.G +
+            0.114f * CurrentColor.B;
+
+        return brightness < 128;
     }
 }

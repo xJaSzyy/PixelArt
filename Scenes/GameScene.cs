@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework;
@@ -22,6 +23,8 @@ public class GameScene : IScene
 
     private readonly Texture2D _imageTexture;
     private Rectangle _imageBounds;
+    private float _pixelWidth;
+    private float _pixelHeight;
     
     private Texture2D _pixelTexture;
     private readonly List<ColorButton> _buttons = [];
@@ -63,6 +66,8 @@ public class GameScene : IScene
 
         if (_mouseService.IsLeftMouseButtonClicked(mouse))
         {
+            #region Click on ColorButton check
+
             var clickedButton = _buttons.FirstOrDefault(x => x.IsHovered);
 
             if (clickedButton != null)
@@ -73,6 +78,20 @@ public class GameScene : IScene
                 }
 
                 clickedButton.SetSelected(true);
+            }
+
+            #endregion
+
+
+            var selectedButton = _buttons.FirstOrDefault(x => x.IsSelected);
+            if (selectedButton != null && _imageBounds.Contains(mouse.Position))
+            {
+                var x = (int)((mouse.X - _imageBounds.X) / _pixelWidth);
+                var y = (int)((mouse.Y - _imageBounds.Y) / _pixelHeight);
+                
+                var index = y * _imageTexture.Width + x;
+
+                _processorService.SetPixel(index, selectedButton.Color);
             }
         }
         
@@ -104,15 +123,13 @@ public class GameScene : IScene
         
         foreach (var color in colorMap.Values)
         {
-            var numberColor = color.GrayColorIsDark() ? Color.White : Color.Black;
-            
             foreach (var pixel in color.Pixels)
             {
                 _drawService.DrawString(
                     _spriteBatch, 
                     color.Number.ToString(), 
                     pixel.GetScreenPosition(_imageBounds, _imageTexture.Width, _imageTexture.Height), 
-                    numberColor);
+                    pixel.ColorIsDark() ? Color.White : Color.Black);
             }
         }
         
@@ -138,6 +155,9 @@ public class GameScene : IScene
         var y = _graphicsDevice.Viewport.Height / 2 - _imageBounds.Height / 2;
         
         _imageBounds.Location = new Point(x, y);
+        
+        _pixelWidth = (float)_imageBounds.Width / _imageTexture.Width;
+        _pixelHeight = (float)_imageBounds.Height / _imageTexture.Height;
     }
     
     private void CreateColorButtons()

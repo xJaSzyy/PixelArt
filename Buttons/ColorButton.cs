@@ -6,11 +6,11 @@ namespace PixelArt.Buttons;
 
 public class ColorButton(Color color, int number, Rectangle bounds)
 {
-    private Color Color { get; } = color;
+    public Color Color { get; } = color;
     public int Number { get; } = number;
     private Rectangle Bounds { get; set; } = bounds;
     public bool IsHovered { get; set; }
-    private bool IsSelected { get; set; }
+    public bool IsSelected { get; set; }
     
     public void Update(MouseState mouse)
     {
