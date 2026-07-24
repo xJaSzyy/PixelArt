@@ -28,9 +28,11 @@ public class GameScene : IScene
     private float _pixelHeight;
     
     private Texture2D _pixelTexture;
-    private readonly List<ColorButton> _buttons = [];
+    private readonly List<ColorButton> _colorButtons = [];
     private const int _buttonSize = 56;
     private const int _buttonSpacing = 12;
+
+    private Button _menuButton;
 
     public GameScene(Texture2D imageTexture, Rectangle imageBounds)
     {
@@ -56,6 +58,8 @@ public class GameScene : IScene
         
         _pixelTexture = new Texture2D(_graphicsDevice, 1, 1);
         _pixelTexture.SetData([Color.White]);
+
+        _menuButton = new Button(_pixelTexture, new Rectangle(_graphicsDevice.Viewport.Width - _buttonSize - _buttonSpacing, _buttonSpacing, _buttonSize, _buttonSize));
         
         PlaceImageCenter();
         CreateColorButtons();
@@ -68,6 +72,11 @@ public class GameScene : IScene
         if (_mouseService.IsLeftMouseButtonClicked(mouse))
         {
             UpdateSelectedButton();
+            
+            if (_menuButton.IsHovered)
+            {
+                _sceneService.SetScene(new MenuScene());
+            }
         }
 
         if (_mouseService.IsLeftMouseButtonPressed(mouse))
@@ -88,13 +97,9 @@ public class GameScene : IScene
                 SelectPrevButton();
             }
         }
-        
-        if (_mouseService.IsRightMouseButtonClicked(mouse))
-        {
-            _sceneService.SetScene(new MenuScene());
-        }
-        
-        _buttons.ForEach(x => x.Update(mouse));
+
+        _menuButton.Update(mouse);
+        _colorButtons.ForEach(x => x.Update(mouse));
         
         _mouseService.SetMouse(mouse);
     }
@@ -103,7 +108,7 @@ public class GameScene : IScene
 
     private void UpdateSelectedButton()
     {
-        var clickedButtonIndex = _buttons.FindIndex(x => x.IsHovered);
+        var clickedButtonIndex = _colorButtons.FindIndex(x => x.IsHovered);
 
         if (clickedButtonIndex != -1)
         {
@@ -113,26 +118,26 @@ public class GameScene : IScene
     
     private void SelectNextButton()
     {
-        var currentIndex = _buttons.FindIndex(x => x.IsSelected);
+        var currentIndex = _colorButtons.FindIndex(x => x.IsSelected);
 
         if (currentIndex == -1)
         {
-            _buttons[0].SetSelected(true);
+            _colorButtons[0].SetSelected(true);
             return;
         }
 
-        var nextIndex = (currentIndex + 1) % _buttons.Count;
+        var nextIndex = (currentIndex + 1) % _colorButtons.Count;
 
         SelectButton(nextIndex);
     }
 
     private void SelectPrevButton()
     {
-        var currentIndex = _buttons.FindIndex(x => x.IsSelected);
+        var currentIndex = _colorButtons.FindIndex(x => x.IsSelected);
 
         if (currentIndex == -1)
         {
-            _buttons[0].SetSelected(true);
+            _colorButtons[0].SetSelected(true);
             return;
         }
 
@@ -140,7 +145,7 @@ public class GameScene : IScene
 
         if (prevIndex < 0)
         {
-            prevIndex = _buttons.Count - 1;
+            prevIndex = _colorButtons.Count - 1;
         }
 
         SelectButton(prevIndex);
@@ -148,17 +153,17 @@ public class GameScene : IScene
     
     private void SelectButton(int index)
     {
-        foreach (var button in _buttons)
+        foreach (var button in _colorButtons)
         {
             button.SetSelected(false);
         }
 
-        _buttons[index].SetSelected(true);
+        _colorButtons[index].SetSelected(true);
     }
     
     private void PaintPixelAtMousePosition(MouseState mouse)
     {
-        var selectedButton = _buttons.FirstOrDefault(x => x.IsSelected);
+        var selectedButton = _colorButtons.FirstOrDefault(x => x.IsSelected);
         if (selectedButton != null && _imageBounds.Contains(mouse.Position))
         {
             var x = (int)((mouse.X - _imageBounds.X) / _pixelWidth);
@@ -189,6 +194,8 @@ public class GameScene : IScene
         var colorGroups = _processorService.GetPixelColorGroups();
         DrawPixelNumbers(colorGroups);
         DrawColorButtons(colorGroups);
+        
+        _menuButton.Draw(_spriteBatch);
 
         _spriteBatch.End();
     }
@@ -212,7 +219,7 @@ public class GameScene : IScene
     
     private void DrawColorButtons(Dictionary<Color, PixelColorGroup> colorGroups)
     {
-        foreach (var colorButton in _buttons)
+        foreach (var colorButton in _colorButtons)
         {
             colorButton.Draw(_spriteBatch, _pixelTexture);
 
@@ -263,7 +270,7 @@ public class GameScene : IScene
 
         foreach (var group in _processorService.GetPixelColorGroups().Values)
         {
-            _buttons.Add(new ColorButton(group.OriginalColor, group.Number, new Rectangle(x, y, _buttonSize, _buttonSize)));
+            _colorButtons.Add(new ColorButton(group.OriginalColor, group.Number, new Rectangle(x, y, _buttonSize, _buttonSize)));
             x += _buttonSize + _buttonSpacing;
         }
         
