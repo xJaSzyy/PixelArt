@@ -84,7 +84,7 @@ public class GameScene : IScene
             }
         }
 
-        if (_mouseService.IsLeftMouseButtonPressed(mouse))
+        if (_mouseService.IsLeftMouseButtonPressed(mouse) && !IsMouseOverUI())
         {
             PaintPixelAtMousePosition(mouse);
         }
@@ -180,6 +180,21 @@ public class GameScene : IScene
         }
     }
 
+    private bool IsMouseOverUI()
+    {
+        if (_colorButtons.Any(x => x.IsHovered))
+        {
+            return true;
+        }
+
+        if (_menuButton.IsHovered)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
     #endregion
 
     public void Draw(GameTime gameTime)
@@ -273,12 +288,24 @@ public class GameScene : IScene
         var x = _buttonSpacing;
         var y = _graphicsDevice.Viewport.Height - _buttonSize - _buttonSpacing;
 
+        var maxWidth = _graphicsDevice.Viewport.Width - _buttonSpacing;
+
         foreach (var group in _processorService.GetPixelColorGroups().Values)
         {
-            _colorButtons.Add(new ColorButton(group.OriginalColor, group.Number, new Rectangle(x, y, _buttonSize, _buttonSize)));
+            if (x + _buttonSize > maxWidth)
+            {
+                x = _buttonSpacing;
+                y -= _buttonSize + _buttonSpacing; 
+            }
+
+            _colorButtons.Add(new ColorButton(
+                group.OriginalColor,
+                group.Number,
+                new Rectangle(x, y, _buttonSize, _buttonSize)));
+
             x += _buttonSize + _buttonSpacing;
         }
-        
+
         SelectButton(0);
     }
 }
