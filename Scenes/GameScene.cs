@@ -38,9 +38,9 @@ public class GameScene : IScene
     private Vector2 _cameraPosition;
     private float _zoom = 1f;
 
-    private const float MinZoom = 0.5f;
-    private const float MaxZoom = 8f;
-    private const float ZoomSpeed = 0.1f;
+    private const float _minZoom = 0.4f;
+    private const float _maxZoom = 2f;
+    private const float _zoomSpeed = 0.1f;
 
     private bool _isDragging;
     private Point _lastMousePosition;
@@ -104,10 +104,6 @@ public class GameScene : IScene
         {
             if (keyboard.IsKeyDown(Keys.LeftControl))
             {
-                ChangeZoom(mouse);
-            }
-            else
-            {
                 var scrollDelta = _mouseService.GetScrollDelta(mouse);
 
                 if (scrollDelta > 0)
@@ -118,6 +114,10 @@ public class GameScene : IScene
                 {
                     SelectPrevButton();
                 }
+            }
+            else
+            {
+                ChangeZoom(mouse);
             }
         }
 
@@ -245,8 +245,8 @@ public class GameScene : IScene
         var mouseWorld = (mouse.Position.ToVector2() - _cameraPosition) / oldZoom;
         var scrollDelta = _mouseService.GetScrollDelta(mouse);
 
-        _zoom += scrollDelta > 0 ? ZoomSpeed : -ZoomSpeed;
-        _zoom = MathHelper.Clamp(_zoom, MinZoom, MaxZoom);
+        _zoom += scrollDelta > 0 ? _zoomSpeed : -_zoomSpeed;
+        _zoom = MathHelper.Clamp(_zoom, _minZoom, _maxZoom);
 
         _cameraPosition = mouse.Position.ToVector2() - mouseWorld * _zoom;
     }
