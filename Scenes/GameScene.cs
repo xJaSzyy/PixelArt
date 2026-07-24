@@ -234,8 +234,9 @@ public class GameScene : IScene
                     _pixelTexture,
                     colorButton.GetProgressBounds(),
                     colorGroup.Progress,
+                    Color.White, 
                     Color.White,
-                    Color.Black);
+                    colorButton.Color);
             }
         }
     }

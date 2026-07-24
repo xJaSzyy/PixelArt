@@ -3,52 +3,63 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace PixelArt.Services;
 
-public class DrawService
+public class DrawService(SpriteFont font)
 {
-    private SpriteFont _font;
-
-    public DrawService(SpriteFont font)
-    {
-        _font = font;
-    }
-
-    public void DrawString(
-        SpriteBatch spriteBatch,
+    public void DrawString(SpriteBatch spriteBatch,
         string text,
         Vector2 position,
-        Color color)
+        Color color,
+        float scale = 1f)
     {
-        var size = _font.MeasureString(text);
+        var size = font.MeasureString(text);
 
         spriteBatch.DrawString(
-            _font,
+            font,
             text,
             position,
             color,
             0f,
             size / 2f,
-            1f,
+            scale,
             SpriteEffects.None,
             0f
         );
     }
     
-    public void DrawProgressBar(SpriteBatch spriteBatch, Texture2D pixelTexture, Rectangle bounds, float progress, Color emptyColor, Color fillColor)
+    public void DrawProgressBar(
+        SpriteBatch spriteBatch,
+        Texture2D pixelTexture,
+        Rectangle bounds,
+        float progress,
+        Color borderColor,
+        Color emptyColor,
+        Color fillColor)
     {
         spriteBatch.Draw(
             pixelTexture,
             bounds,
-            emptyColor);
+            borderColor);
 
-        var fill = new Rectangle(
-            bounds.X,
-            bounds.Y,
-            (int)(bounds.Width * progress),
-            bounds.Height);
+        var innerBounds = new Rectangle(
+            bounds.X + 1,
+            bounds.Y + 1,
+            bounds.Width - 2,
+            bounds.Height - 2);
 
         spriteBatch.Draw(
             pixelTexture,
-            fill,
+            innerBounds,
+            emptyColor);
+
+        var fillBounds = new Rectangle(
+            innerBounds.X,
+            innerBounds.Y,
+            (int)(innerBounds.Width * progress),
+            innerBounds.Height);
+
+        spriteBatch.Draw(
+            pixelTexture,
+            fillBounds,
             fillColor);
     }
 }
