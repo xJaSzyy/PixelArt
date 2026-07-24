@@ -26,11 +26,12 @@ public class GameScene : IScene
     private Rectangle _imageBounds;
     private float _pixelWidth;
     private float _pixelHeight;
-    
+
     private Texture2D _pixelTexture;
     private readonly List<ColorButton> _colorButtons = [];
     private const int _buttonSize = 56;
     private const int _buttonSpacing = 12;
+    private const int _sizeMultiplier = 6;
 
     private Button _menuButton;
 
@@ -59,7 +60,11 @@ public class GameScene : IScene
         _pixelTexture = new Texture2D(_graphicsDevice, 1, 1);
         _pixelTexture.SetData([Color.White]);
 
-        _menuButton = new Button(_pixelTexture, new Rectangle(_graphicsDevice.Viewport.Width - _buttonSize - _buttonSpacing, _buttonSpacing, _buttonSize, _buttonSize));
+        _menuButton = new Button(_pixelTexture, 
+            new Rectangle(_graphicsDevice.Viewport.Width - _buttonSize - _buttonSpacing, 
+                _buttonSpacing, 
+                _buttonSize, 
+                _buttonSize));
         
         PlaceImageCenter();
         CreateColorButtons();
@@ -252,7 +257,7 @@ public class GameScene : IScene
 
     private void PlaceImageCenter()
     {
-        _imageBounds.Size *= 4;
+        _imageBounds.Size *= _imageTexture.Width / 16 * _sizeMultiplier;
         
         var x = _graphicsDevice.Viewport.Width / 2 -  _imageBounds.Width / 2;
         var y = _graphicsDevice.Viewport.Height / 2 - _imageBounds.Height / 2;

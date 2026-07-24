@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework;
@@ -34,7 +35,7 @@ public class MenuScene : IScene
         
         _spriteBatch = new SpriteBatch(graphicsDevice);
 
-        const int buttonsCount = 2;
+        const int buttonsCount = 3;
 
         for (var i = 0; i < buttonsCount; i++)
         {
@@ -83,7 +84,7 @@ public class MenuScene : IScene
             source.Width,
             source.Height
         );
-
+        
         var pixels = new Color[source.Width * source.Height];
 
         source.GetData(pixels);
