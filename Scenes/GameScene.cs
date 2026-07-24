@@ -34,6 +34,16 @@ public class GameScene : IScene
     private const int _sizeMultiplier = 6;
 
     private Button _menuButton;
+    
+    private Vector2 _cameraPosition;
+    private float _zoom = 1f;
+
+    private const float MinZoom = 0.5f;
+    private const float MaxZoom = 8f;
+    private const float ZoomSpeed = 0.1f;
+
+    private bool _isDragging;
+    private Point _lastMousePosition;
 
     public GameScene(Texture2D imageTexture, Rectangle imageBounds)
     {
@@ -73,6 +83,7 @@ public class GameScene : IScene
     public void Update(GameTime gameTime)
     {
         var mouse = Mouse.GetState();
+        var keyboard = Keyboard.GetState();
 
         if (_mouseService.IsLeftMouseButtonClicked(mouse))
         {
@@ -91,20 +102,29 @@ public class GameScene : IScene
         
         if (_mouseService.IsScroll(mouse))
         {
-            var scrollDelta = _mouseService.GetScrollDelta(mouse);
-
-            if (scrollDelta > 0)
+            if (keyboard.IsKeyDown(Keys.LeftControl))
             {
-                SelectNextButton();
+                ChangeZoom(mouse);
             }
             else
             {
-                SelectPrevButton();
+                var scrollDelta = _mouseService.GetScrollDelta(mouse);
+
+                if (scrollDelta > 0)
+                {
+                    SelectNextButton();
+                }
+                else
+                {
+                    SelectPrevButton();
+                }
             }
         }
 
         _menuButton.Update(mouse);
         _colorButtons.ForEach(x => x.Update(mouse));
+        
+        HandleCamera(mouse);
         
         _mouseService.SetMouse(mouse);
     }
@@ -169,10 +189,12 @@ public class GameScene : IScene
     private void PaintPixelAtMousePosition(MouseState mouse)
     {
         var selectedButton = _colorButtons.FirstOrDefault(x => x.IsSelected);
-        if (selectedButton != null && _imageBounds.Contains(mouse.Position))
+        
+        var bounds = GetImageBounds();
+        if (selectedButton != null && bounds.Contains(mouse.Position))
         {
-            var x = (int)((mouse.X - _imageBounds.X) / _pixelWidth);
-            var y = (int)((mouse.Y - _imageBounds.Y) / _pixelHeight);
+            var x = (int)((mouse.X - bounds.X) / (_pixelWidth * _zoom));
+            var y = (int)((mouse.Y - bounds.Y) / (_pixelHeight * _zoom));
                 
             var index = y * _imageTexture.Width + x;
 
@@ -194,6 +216,40 @@ public class GameScene : IScene
 
         return false;
     }
+    
+    private void HandleCamera(MouseState mouse)
+    {
+        if (mouse.RightButton == ButtonState.Pressed)
+        {
+            if (!_isDragging)
+            {
+                _lastMousePosition = mouse.Position;
+                _isDragging = true;
+            }
+
+            var delta = mouse.Position - _lastMousePosition;
+
+            _cameraPosition += delta.ToVector2();
+
+            _lastMousePosition = mouse.Position;
+        }
+        else
+        {
+            _isDragging = false;
+        }
+    }
+    
+    private void ChangeZoom(MouseState mouse)
+    {
+        var oldZoom = _zoom;
+        var mouseWorld = (mouse.Position.ToVector2() - _cameraPosition) / oldZoom;
+        var scrollDelta = _mouseService.GetScrollDelta(mouse);
+
+        _zoom += scrollDelta > 0 ? ZoomSpeed : -ZoomSpeed;
+        _zoom = MathHelper.Clamp(_zoom, MinZoom, MaxZoom);
+
+        _cameraPosition = mouse.Position.ToVector2() - mouseWorld * _zoom;
+    }
 
     #endregion
 
@@ -205,14 +261,16 @@ public class GameScene : IScene
             samplerState: SamplerState.PointClamp
         );
 
+        var drawBounds = GetImageBounds();
+
         _spriteBatch.Draw(
             _imageTexture,
-            _imageBounds,
+            drawBounds,
             Color.White
         );
 
         var colorGroups = _processorService.GetPixelColorGroups();
-        DrawPixelNumbers(colorGroups);
+        DrawPixelNumbers(colorGroups, drawBounds);
         DrawColorButtons(colorGroups);
         
         _menuButton.Draw(_spriteBatch);
@@ -222,7 +280,7 @@ public class GameScene : IScene
 
     #region Draw methods
     
-    private void DrawPixelNumbers(Dictionary<Color, PixelColorGroup> colorGroups)
+    private void DrawPixelNumbers(Dictionary<Color, PixelColorGroup> colorGroups, Rectangle bounds)
     {
         foreach (var color in colorGroups.Values)
         {
@@ -231,8 +289,9 @@ public class GameScene : IScene
                 _drawService.DrawString(
                     _spriteBatch, 
                     color.Number.ToString(), 
-                    pixel.GetScreenPosition(_imageBounds, _imageTexture.Width, _imageTexture.Height), 
-                    pixel.ColorIsDark() ? Color.White : Color.Black);
+                    pixel.GetScreenPosition(bounds, _imageTexture.Width, _imageTexture.Height), 
+                    pixel.ColorIsDark() ? Color.White : Color.Black,
+                    _zoom);
             }
         }
     }
@@ -281,6 +340,24 @@ public class GameScene : IScene
         
         _pixelWidth = (float)_imageBounds.Width / _imageTexture.Width;
         _pixelHeight = (float)_imageBounds.Height / _imageTexture.Height;
+        
+        _cameraPosition = new Vector2(
+            _imageBounds.X,
+            _imageBounds.Y
+        );
+    }
+    
+    private Rectangle GetImageBounds()
+    {
+        var width = (int)(_imageTexture.Width * _pixelWidth * _zoom);
+        var height = (int)(_imageTexture.Height * _pixelHeight * _zoom);
+
+        return new Rectangle(
+            (int)_cameraPosition.X,
+            (int)_cameraPosition.Y,
+            width,
+            height
+        );
     }
     
     private void CreateColorButtons()
