@@ -65,8 +65,8 @@ public class GameScene : IScene
                 _buttonSize, 
                 _buttonSize));
 
-        _colorButtonsService = new ColorButtonsService(_graphicsDevice, _spriteBatch);
-        _colorButtonsService.LoadContent(_processorService, pixelTexture);
+        _colorButtonsService = new ColorButtonsService(_graphicsDevice, _spriteBatch, _processorService);
+        _colorButtonsService.LoadContent(pixelTexture);
         
         PlaceImageCenter();
     }
@@ -119,7 +119,31 @@ public class GameScene : IScene
         _mouseService.SetMouse(mouse);
     }
 
-    #region Update methods
+    public void Draw(GameTime gameTime)
+    {
+        _graphicsDevice.Clear(new Color(45, 45, 45));
+        
+        _spriteBatch.Begin(
+            samplerState: SamplerState.PointClamp
+        );
+
+        var drawBounds = GetImageBounds();
+
+        _spriteBatch.Draw(
+            _imageTexture,
+            drawBounds,
+            Color.White
+        );
+
+        var colorGroups = _processorService.GetPixelColorGroups();
+        DrawPixelNumbers(colorGroups, drawBounds);
+        
+        _colorButtonsService.Draw(colorGroups, _drawService);
+        
+        _menuButton.Draw(_spriteBatch);
+
+        _spriteBatch.End();
+    }
     
     private void PaintPixelAtMousePosition(MouseState mouse)
     {
@@ -151,36 +175,6 @@ public class GameScene : IScene
 
         return false;
     }
-
-    #endregion
-
-    public void Draw(GameTime gameTime)
-    {
-        _graphicsDevice.Clear(new Color(45, 45, 45));
-        
-        _spriteBatch.Begin(
-            samplerState: SamplerState.PointClamp
-        );
-
-        var drawBounds = GetImageBounds();
-
-        _spriteBatch.Draw(
-            _imageTexture,
-            drawBounds,
-            Color.White
-        );
-
-        var colorGroups = _processorService.GetPixelColorGroups();
-        DrawPixelNumbers(colorGroups, drawBounds);
-        
-        _colorButtonsService.Draw(colorGroups, _drawService);
-        
-        _menuButton.Draw(_spriteBatch);
-
-        _spriteBatch.End();
-    }
-
-    #region Draw methods
     
     private void DrawPixelNumbers(Dictionary<Color, PixelColorGroup> colorGroups, Rectangle bounds)
     {
@@ -197,8 +191,6 @@ public class GameScene : IScene
             }
         }
     }
-    
-    #endregion
 
     private void PlaceImageCenter()
     {

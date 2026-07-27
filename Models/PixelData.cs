@@ -4,8 +4,10 @@ namespace PixelArt.Models;
 
 public class PixelData
 {
+    public int Index { get; set; }
     public Point TexturePosition { get; set; }
     public Color OriginalColor { get; set; }
+    public Color GrayColor { get; set; }
     public Color CurrentColor { get; set; }
     public bool IsFinished => OriginalColor == CurrentColor;
 

@@ -9,7 +9,7 @@ using PixelArt.Models;
 
 namespace PixelArt.Services;
 
-public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spriteBatch)
+public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spriteBatch, PixelProcessorService processorService)
 {
     private readonly List<ColorButton> _colorButtons = [];
     private int _visibleStartIndex;
@@ -22,9 +22,9 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
 
     private Texture2D _pixelTexture;
 
-    private void CreateColorButtons(PixelProcessorService processorService)
+    private void CreateColorButtons()
     {
-        foreach (var group in processorService.GetPixelColorGroups().Values)
+        foreach (var group in processorService.GetPixelColorGroups().Values.OrderBy(x => x.Number))
         {
             _colorButtons.Add(new ColorButton(
                 group.OriginalColor,
@@ -36,10 +36,10 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
         SelectButton(0);
     }
 
-    public void LoadContent(PixelProcessorService processorService, Texture2D pixelTexture)
+    public void LoadContent(Texture2D pixelTexture)
     {
         _pixelTexture = pixelTexture;
-        CreateColorButtons(processorService);
+        CreateColorButtons();
     }
 
     public void Update(MouseState mouse)
@@ -110,16 +110,6 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
         }
     }
 
-    private void SelectButton(int index)
-    {
-        foreach (var button in _colorButtons)
-        {
-            button.SetSelected(false);
-        }
-
-        _colorButtons[index].SetSelected(true);
-    }
-
     public void UpdateSelectedButton()
     {
         var clickedButtonIndex = _colorButtons.FindIndex(x => x.IsHovered);
@@ -130,6 +120,50 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
         }
     }
     
+    private void SelectButton(int index)
+    {
+        foreach (var button in _colorButtons)
+        {
+            button.SetSelected(false);
+        }
+
+        _colorButtons[index].SetSelected(true);
+        HighlightPixels(index);
+    }
+
+    private void HighlightPixels(int colorButtonIndex)
+    {
+        var highlightColor = new Color(72, 72, 72);
+
+        var groups = processorService.GetPixelColorGroups();
+
+        foreach (var group in groups.Values)
+        {
+            foreach (var pixel in group.Pixels.Where(pixel => pixel.CurrentColor == highlightColor))
+            {
+                processorService.SetPixel(
+                    processorService.GetPixelIndex(pixel),
+                    pixel.GrayColor
+                );
+            }
+        }
+
+        var selectedColor = _colorButtons[colorButtonIndex].Color;
+
+        if (!groups.TryGetValue(selectedColor, out var selectedGroup))
+        {
+            return;
+        }
+
+        foreach (var pixel in selectedGroup.Pixels)
+        {
+            processorService.SetPixel(
+                processorService.GetPixelIndex(pixel),
+                highlightColor
+            );
+        }
+    }
+
     public void ScrollButtonsLeft()
     {
         _visibleStartIndex--;

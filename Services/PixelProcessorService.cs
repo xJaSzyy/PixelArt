@@ -1,5 +1,5 @@
-using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using PixelArt.Models;
@@ -12,18 +12,19 @@ public class PixelProcessorService
     private readonly Dictionary<Color, PixelColorGroup> _colorGroups = new();
     private readonly Dictionary<int, PixelData> _pixels = [];
     private Color[] _texturePixels;
-
+    
     public void SetTexture(Texture2D texture)
     {
         _imageTexture = texture;
     }
-    
+
     public void Generate()
     {
-        _texturePixels = new Color[_imageTexture.Width * _imageTexture.Height];
         var width = _imageTexture.Width;
+
+        _texturePixels = new Color[width * _imageTexture.Height];
         _imageTexture.GetData(_texturePixels);
-        
+
         _colorGroups.Clear();
         _pixels.Clear();
         
@@ -36,47 +37,82 @@ public class PixelProcessorService
                 continue;
             }
             
-            var grayValue = (byte)(
-                original.R * 0.299f +
-                original.G * 0.587f +
-                original.B * 0.114f
-            );
-
-            grayValue = (byte)(50 + grayValue * 0.8f);
-
-            var gray = new Color(
-                grayValue,
-                grayValue,
-                grayValue,
-                original.A
-            );
-            
-            _texturePixels[i] = gray;
-            
             if (!_colorGroups.ContainsKey(original))
             {
                 _colorGroups[original] = new PixelColorGroup
                 {
-                    Number = _colorGroups.Count + 1,
+                    Number = 0,
                     OriginalColor = original,
                     Pixels = []
                 };
             }
-
-            var point = new Point(i % width, i / width);
+            
+            var point = new Point(
+                i % width,
+                i / width
+            );
 
             var pixel = new PixelData
             {
+                Index = i,
                 TexturePosition = point,
                 OriginalColor = original,
-                CurrentColor = gray
+                CurrentColor = Color.White
             };
-            
+
             _pixels[i] = pixel;
             _colorGroups[original].Pixels.Add(pixel);
         }
         
+        var sortedGroups = _colorGroups.Values
+            .OrderByDescending(x => x.Pixels.Count)
+            .ToList();
+        
+        var total = sortedGroups.Count;
+
+        for (var i = 0; i < total; i++)
+        {
+            var gray = GenerateGrayValue(i, total);
+
+            var previewColor = new Color(gray,
+                gray,
+                gray);
+
+            var group = sortedGroups[i];
+
+            group.Number = i + 1;
+
+            foreach (var pixel in group.Pixels)
+            {
+                pixel.CurrentColor = previewColor;
+                pixel.GrayColor = previewColor;
+
+                var index =
+                    pixel.TexturePosition.Y * width +
+                    pixel.TexturePosition.X;
+
+                _texturePixels[index] = previewColor;
+            }
+        }
+
         _imageTexture.SetData(_texturePixels);
+    }
+
+    private byte GenerateGrayValue(int index, int total)
+    {
+        if (total <= 1)
+        {
+            return 220;
+        }
+        
+        var min = 150;
+        var max = 230;
+        
+        var value = max -
+                    index * (max - min) /
+                    (total - 1);
+        
+        return (byte)value;
     }
 
     public void SetPixel(int index, Color color)
@@ -92,11 +128,21 @@ public class PixelProcessorService
         }
 
         pixel.CurrentColor = color;
-        _texturePixels[index] = color;
 
+        _texturePixels[index] = color;
         _imageTexture.SetData(_texturePixels);
     }
 
+    public int GetPixelIndex(PixelData pixelData)
+    {
+        if (pixelData == null || _imageTexture == null)
+        {
+            return -1;
+        }
+
+        return pixelData.TexturePosition.Y * _imageTexture.Width + pixelData.TexturePosition.X;
+    }
+    
     public Dictionary<Color, PixelColorGroup> GetPixelColorGroups()
     {
         return _colorGroups;
