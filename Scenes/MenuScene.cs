@@ -35,7 +35,7 @@ public class MenuScene : IScene
         
         _spriteBatch = new SpriteBatch(graphicsDevice);
 
-        const int buttonsCount = 3;
+        const int buttonsCount = 6;
 
         for (var i = 0; i < buttonsCount; i++)
         {

@@ -5,7 +5,6 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using PixelArt.Buttons;
-using PixelArt.Models;
 
 namespace PixelArt.Services;
 
@@ -53,8 +52,10 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
         }
     }
     
-    public void Draw(Dictionary<Color, PixelColorGroup> colorGroups, DrawService drawService)
+    public void Draw(DrawService drawService)
     {
+        var colorGroups = processorService.GetPixelColorGroups();
+        
         foreach (var colorButton in _colorButtons.Skip(_visibleStartIndex).Take(VisibleButtons))
         {
             colorButton.Draw(spriteBatch, _pixelTexture);
