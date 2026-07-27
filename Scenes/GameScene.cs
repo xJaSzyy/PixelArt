@@ -20,6 +20,7 @@ public class GameScene : IScene
     private SceneService _sceneService;
     private MouseService _mouseService;
     private DrawService _drawService;
+    private CameraService _cameraService = new();
     private readonly PixelProcessorService _processorService;
 
     private readonly Texture2D _imageTexture;
@@ -34,16 +35,6 @@ public class GameScene : IScene
     private const int _sizeMultiplier = 6;
 
     private Button _menuButton;
-    
-    private Vector2 _cameraPosition;
-    private float _zoom = 1f;
-
-    private const float _minZoom = 0.4f;
-    private const float _maxZoom = 2f;
-    private const float _zoomSpeed = 0.1f;
-
-    private bool _isDragging;
-    private Point _lastMousePosition;
 
     public GameScene(Texture2D imageTexture, Rectangle imageBounds)
     {
@@ -102,10 +93,10 @@ public class GameScene : IScene
         
         if (_mouseService.IsScroll(mouse))
         {
+            var scrollDelta = _mouseService.GetScrollDelta(mouse);
+            
             if (keyboard.IsKeyDown(Keys.LeftControl))
             {
-                var scrollDelta = _mouseService.GetScrollDelta(mouse);
-
                 if (scrollDelta > 0)
                 {
                     SelectNextButton();
@@ -117,14 +108,14 @@ public class GameScene : IScene
             }
             else
             {
-                ChangeZoom(mouse);
+                _cameraService.ChangeZoom(mouse, scrollDelta);
             }
         }
 
         _menuButton.Update(mouse);
         _colorButtons.ForEach(x => x.Update(mouse));
         
-        HandleCamera(mouse);
+        _cameraService.Update(mouse);
         
         _mouseService.SetMouse(mouse);
     }
@@ -193,8 +184,8 @@ public class GameScene : IScene
         var bounds = GetImageBounds();
         if (selectedButton != null && bounds.Contains(mouse.Position))
         {
-            var x = (int)((mouse.X - bounds.X) / (_pixelWidth * _zoom));
-            var y = (int)((mouse.Y - bounds.Y) / (_pixelHeight * _zoom));
+            var x = (int)((mouse.X - bounds.X) / (_pixelWidth * _cameraService.Zoom));
+            var y = (int)((mouse.Y - bounds.Y) / (_pixelHeight * _cameraService.Zoom));
                 
             var index = y * _imageTexture.Width + x;
 
@@ -215,40 +206,6 @@ public class GameScene : IScene
         }
 
         return false;
-    }
-    
-    private void HandleCamera(MouseState mouse)
-    {
-        if (mouse.RightButton == ButtonState.Pressed)
-        {
-            if (!_isDragging)
-            {
-                _lastMousePosition = mouse.Position;
-                _isDragging = true;
-            }
-
-            var delta = mouse.Position - _lastMousePosition;
-
-            _cameraPosition += delta.ToVector2();
-
-            _lastMousePosition = mouse.Position;
-        }
-        else
-        {
-            _isDragging = false;
-        }
-    }
-    
-    private void ChangeZoom(MouseState mouse)
-    {
-        var oldZoom = _zoom;
-        var mouseWorld = (mouse.Position.ToVector2() - _cameraPosition) / oldZoom;
-        var scrollDelta = _mouseService.GetScrollDelta(mouse);
-
-        _zoom += scrollDelta > 0 ? _zoomSpeed : -_zoomSpeed;
-        _zoom = MathHelper.Clamp(_zoom, _minZoom, _maxZoom);
-
-        _cameraPosition = mouse.Position.ToVector2() - mouseWorld * _zoom;
     }
 
     #endregion
@@ -291,7 +248,7 @@ public class GameScene : IScene
                     color.Number.ToString(), 
                     pixel.GetScreenPosition(bounds, _imageTexture.Width, _imageTexture.Height), 
                     pixel.ColorIsDark() ? Color.White : Color.Black,
-                    _zoom);
+                    _cameraService.Zoom);
             }
         }
     }
@@ -341,20 +298,22 @@ public class GameScene : IScene
         _pixelWidth = (float)_imageBounds.Width / _imageTexture.Width;
         _pixelHeight = (float)_imageBounds.Height / _imageTexture.Height;
         
-        _cameraPosition = new Vector2(
+        _cameraService.SetPosition(new Vector2(
             _imageBounds.X,
             _imageBounds.Y
-        );
+        ));
     }
     
     private Rectangle GetImageBounds()
     {
-        var width = (int)(_imageTexture.Width * _pixelWidth * _zoom);
-        var height = (int)(_imageTexture.Height * _pixelHeight * _zoom);
+        var width = (int)(_imageTexture.Width * _pixelWidth * _cameraService.Zoom);
+        var height = (int)(_imageTexture.Height * _pixelHeight * _cameraService.Zoom);
 
+        var cameraPosition = _cameraService.GetPosition();
+        
         return new Rectangle(
-            (int)_cameraPosition.X,
-            (int)_cameraPosition.Y,
+            (int)cameraPosition.X,
+            (int)cameraPosition.Y,
             width,
             height
         );
