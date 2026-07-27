@@ -35,13 +35,24 @@ public class MenuScene : IScene
         
         _spriteBatch = new SpriteBatch(graphicsDevice);
 
-        const int buttonsCount = 6;
+        const int buttonsCount = 25;
 
-        for (var i = 0; i < buttonsCount; i++)
+        int screenWidth = graphicsDevice.Viewport.Width; 
+        int buttonsPerRow = Math.Max(1, screenWidth / _buttonSize);
+
+        for (int i = 0; i < buttonsCount; i++)
         {
             var texture = content.Load<Texture2D>($"Images/img{i + 1}");
-            var rectangle = new Rectangle(0 + i * _buttonSize, 0, _buttonSize, _buttonSize);
-            
+
+            int column = i % buttonsPerRow;
+            int row = i / buttonsPerRow;
+
+            var rectangle = new Rectangle(
+                column * _buttonSize,
+                row * _buttonSize,
+                _buttonSize,
+                _buttonSize);
+
             _buttons.Add(new Button(texture, rectangle));
         }
     }
