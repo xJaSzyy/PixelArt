@@ -20,7 +20,7 @@ public class GameScene : IScene
     private SceneService _sceneService;
     private MouseService _mouseService;
     private DrawService _drawService;
-    private CameraService _cameraService = new();
+    private readonly CameraService _cameraService = new();
     private readonly PixelProcessorService _processorService;
 
     private readonly Texture2D _imageTexture;
@@ -30,6 +30,10 @@ public class GameScene : IScene
 
     private Texture2D _pixelTexture;
     private readonly List<ColorButton> _colorButtons = [];
+    private int _visibleStartIndex;
+    private int VisibleButtons => Math.Max(1,
+        (_graphicsDevice.Viewport.Width - _buttonSpacing * 2) / (_buttonSize + _buttonSpacing));
+    
     private const int _buttonSize = 56;
     private const int _buttonSpacing = 12;
     private const int _sizeMultiplier = 6;
@@ -75,7 +79,7 @@ public class GameScene : IScene
     {
         var mouse = Mouse.GetState();
         var keyboard = Keyboard.GetState();
-
+        
         if (_mouseService.IsLeftMouseButtonClicked(mouse))
         {
             UpdateSelectedButton();
@@ -99,11 +103,11 @@ public class GameScene : IScene
             {
                 if (scrollDelta > 0)
                 {
-                    SelectNextButton();
+                    ScrollButtonsLeft();
                 }
                 else
                 {
-                    SelectPrevButton();
+                    ScrollButtonsRight();
                 }
             }
             else
@@ -113,7 +117,14 @@ public class GameScene : IScene
         }
 
         _menuButton.Update(mouse);
-        _colorButtons.ForEach(x => x.Update(mouse));
+        
+        LayoutVisibleButtons();
+        foreach (var button in _colorButtons
+                     .Skip(_visibleStartIndex)
+                     .Take(VisibleButtons))
+        {
+            button.Update(mouse);
+        }
         
         _cameraService.Update(mouse);
         
@@ -132,39 +143,49 @@ public class GameScene : IScene
         }
     }
     
-    private void SelectNextButton()
+    private void ScrollButtonsLeft()
     {
-        var currentIndex = _colorButtons.FindIndex(x => x.IsSelected);
+        _visibleStartIndex--;
 
-        if (currentIndex == -1)
-        {
-            _colorButtons[0].SetSelected(true);
-            return;
-        }
-
-        var nextIndex = (currentIndex + 1) % _colorButtons.Count;
-
-        SelectButton(nextIndex);
+        if (_visibleStartIndex < 0)
+            _visibleStartIndex = 0;
     }
 
-    private void SelectPrevButton()
+    private void ScrollButtonsRight()
     {
-        var currentIndex = _colorButtons.FindIndex(x => x.IsSelected);
+        var max = Math.Max(0, _colorButtons.Count - VisibleButtons);
 
-        if (currentIndex == -1)
+        _visibleStartIndex++;
+
+        if (_visibleStartIndex > max)
+            _visibleStartIndex = max;
+    }
+    
+    private void LayoutVisibleButtons()
+    {
+        int x = _buttonSpacing;
+        int y = _graphicsDevice.Viewport.Height - _buttonSize - _buttonSpacing;
+
+        foreach (var button in _colorButtons)
         {
-            _colorButtons[0].SetSelected(true);
-            return;
+            button.Bounds = Rectangle.Empty;
         }
 
-        var prevIndex = currentIndex - 1;
-
-        if (prevIndex < 0)
+        for (int i = 0; i < VisibleButtons; i++)
         {
-            prevIndex = _colorButtons.Count - 1;
-        }
+            int index = _visibleStartIndex + i;
 
-        SelectButton(prevIndex);
+            if (index >= _colorButtons.Count)
+                break;
+
+            _colorButtons[index].Bounds = new Rectangle(
+                x,
+                y,
+                _buttonSize,
+                _buttonSize);
+
+            x += _buttonSize + _buttonSpacing;
+        }
     }
     
     private void SelectButton(int index)
@@ -255,15 +276,15 @@ public class GameScene : IScene
     
     private void DrawColorButtons(Dictionary<Color, PixelColorGroup> colorGroups)
     {
-        foreach (var colorButton in _colorButtons)
+        foreach (var colorButton in _colorButtons.Skip(_visibleStartIndex).Take(VisibleButtons))
         {
             colorButton.Draw(_spriteBatch, _pixelTexture);
 
             var colorGroup = colorGroups[colorButton.Color];
             var groupIsFinished = colorGroup.IsFinished;
-            
+
             var text = groupIsFinished ? "x" : colorButton.Number.ToString();
-            
+
             _drawService.DrawString(
                 _spriteBatch,
                 text,
@@ -277,7 +298,7 @@ public class GameScene : IScene
                     _pixelTexture,
                     colorButton.GetProgressBounds(),
                     colorGroup.Progress,
-                    Color.White, 
+                    Color.White,
                     Color.White,
                     colorButton.Color);
             }
@@ -321,27 +342,15 @@ public class GameScene : IScene
     
     private void CreateColorButtons()
     {
-        var x = _buttonSpacing;
-        var y = _graphicsDevice.Viewport.Height - _buttonSize - _buttonSpacing;
-
-        var maxWidth = _graphicsDevice.Viewport.Width - _buttonSpacing;
-
         foreach (var group in _processorService.GetPixelColorGroups().Values)
         {
-            if (x + _buttonSize > maxWidth)
-            {
-                x = _buttonSpacing;
-                y -= _buttonSize + _buttonSpacing; 
-            }
-
             _colorButtons.Add(new ColorButton(
                 group.OriginalColor,
                 group.Number,
-                new Rectangle(x, y, _buttonSize, _buttonSize)));
-
-            x += _buttonSize + _buttonSpacing;
+                Rectangle.Empty));
         }
 
+        LayoutVisibleButtons();
         SelectButton(0);
     }
 }

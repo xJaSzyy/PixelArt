@@ -8,7 +8,7 @@ public class ColorButton(Color color, int number, Rectangle bounds)
 {
     public Color Color { get; } = color;
     public int Number { get; } = number;
-    private Rectangle Bounds { get; set; } = bounds;
+    public Rectangle Bounds { get; set; } = bounds;
     public bool IsHovered { get; set; }
     public bool IsSelected { get; set; }
     
