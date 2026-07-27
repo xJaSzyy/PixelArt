@@ -28,7 +28,7 @@ public class GameScene : IScene
     private const int _buttonSize = 56;
     private const int _buttonSpacing = 12;
     
-    private Button _menuButton;
+    private Button _homeButton;
 
     public GameScene(Texture2D imageTexture, Rectangle imageBounds)
     {
@@ -52,15 +52,17 @@ public class GameScene : IScene
         _graphicsDevice = graphicsDevice;
         _spriteBatch = new SpriteBatch(graphicsDevice);
         
-        var pixelTexture = new Texture2D(_graphicsDevice, 1, 1);
-        pixelTexture.SetData([Color.White]);
-
-        _menuButton = new Button(pixelTexture, 
+        
+        var homeTexture = content.Load<Texture2D>("Icons/home");
+        _homeButton = new Button(homeTexture, 
             new Rectangle(_graphicsDevice.Viewport.Width - _buttonSize - _buttonSpacing, 
                 _buttonSpacing, 
                 _buttonSize, 
                 _buttonSize));
 
+        var pixelTexture = new Texture2D(_graphicsDevice, 1, 1);
+        pixelTexture.SetData([Color.White]);
+        
         _colorButtonsService = new ColorButtonsService(_graphicsDevice, _spriteBatch, _processorService);
         _colorButtonsService.LoadContent(pixelTexture);
         
@@ -76,7 +78,7 @@ public class GameScene : IScene
         {
             _colorButtonsService.UpdateSelectedButton();
             
-            if (_menuButton.IsHovered)
+            if (_homeButton.IsHovered)
             {
                 _sceneService.SetScene(new MenuScene());
             }
@@ -109,7 +111,7 @@ public class GameScene : IScene
             }
         }
 
-        _menuButton.Update(mouse);
+        _homeButton.Update(mouse);
         _colorButtonsService.Update(mouse);
         _cameraService.Update(mouse);
         
@@ -128,7 +130,7 @@ public class GameScene : IScene
         
         _colorButtonsService.Draw(_drawService);
         
-        _menuButton.Draw(_spriteBatch);
+        _homeButton.Draw(_spriteBatch);
 
         _spriteBatch.End();
     }
@@ -140,7 +142,7 @@ public class GameScene : IScene
             return true;
         }
 
-        if (_menuButton.IsHovered)
+        if (_homeButton.IsHovered)
         {
             return true;
         }
