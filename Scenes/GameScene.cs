@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework;
@@ -20,6 +19,7 @@ public class GameScene : IScene
     private SceneService _sceneService;
     private MouseService _mouseService;
     private DrawService _drawService;
+    private ColorButtonsService _colorButtonsService;
     private readonly CameraService _cameraService = new();
     private readonly PixelProcessorService _processorService;
 
@@ -28,16 +28,10 @@ public class GameScene : IScene
     private float _pixelWidth;
     private float _pixelHeight;
 
-    private Texture2D _pixelTexture;
-    private readonly List<ColorButton> _colorButtons = [];
-    private int _visibleStartIndex;
-    private int VisibleButtons => Math.Max(1,
-        (_graphicsDevice.Viewport.Width - _buttonSpacing * 2) / (_buttonSize + _buttonSpacing));
-    
+    private const int _sizeMultiplier = 6;
     private const int _buttonSize = 56;
     private const int _buttonSpacing = 12;
-    private const int _sizeMultiplier = 6;
-
+    
     private Button _menuButton;
 
     public GameScene(Texture2D imageTexture, Rectangle imageBounds)
@@ -62,17 +56,19 @@ public class GameScene : IScene
         _graphicsDevice = graphicsDevice;
         _spriteBatch = new SpriteBatch(graphicsDevice);
         
-        _pixelTexture = new Texture2D(_graphicsDevice, 1, 1);
-        _pixelTexture.SetData([Color.White]);
+        var pixelTexture = new Texture2D(_graphicsDevice, 1, 1);
+        pixelTexture.SetData([Color.White]);
 
-        _menuButton = new Button(_pixelTexture, 
+        _menuButton = new Button(pixelTexture, 
             new Rectangle(_graphicsDevice.Viewport.Width - _buttonSize - _buttonSpacing, 
                 _buttonSpacing, 
                 _buttonSize, 
                 _buttonSize));
+
+        _colorButtonsService = new ColorButtonsService(_graphicsDevice, _spriteBatch);
+        _colorButtonsService.LoadContent(_processorService, pixelTexture);
         
         PlaceImageCenter();
-        CreateColorButtons();
     }
 
     public void Update(GameTime gameTime)
@@ -82,7 +78,7 @@ public class GameScene : IScene
         
         if (_mouseService.IsLeftMouseButtonClicked(mouse))
         {
-            UpdateSelectedButton();
+            _colorButtonsService.UpdateSelectedButton();
             
             if (_menuButton.IsHovered)
             {
@@ -101,106 +97,33 @@ public class GameScene : IScene
             
             if (keyboard.IsKeyDown(Keys.LeftControl))
             {
-                if (scrollDelta > 0)
-                {
-                    ScrollButtonsLeft();
-                }
-                else
-                {
-                    ScrollButtonsRight();
-                }
+                _cameraService.ChangeZoom(mouse, scrollDelta);
             }
             else
             {
-                _cameraService.ChangeZoom(mouse, scrollDelta);
+                if (scrollDelta > 0)
+                {
+                    _colorButtonsService.ScrollButtonsLeft();
+                }
+                else
+                {
+                    _colorButtonsService.ScrollButtonsRight();
+                }
             }
         }
 
         _menuButton.Update(mouse);
-        
-        LayoutVisibleButtons();
-        foreach (var button in _colorButtons
-                     .Skip(_visibleStartIndex)
-                     .Take(VisibleButtons))
-        {
-            button.Update(mouse);
-        }
-        
+        _colorButtonsService.Update(mouse);
         _cameraService.Update(mouse);
         
         _mouseService.SetMouse(mouse);
     }
 
     #region Update methods
-
-    private void UpdateSelectedButton()
-    {
-        var clickedButtonIndex = _colorButtons.FindIndex(x => x.IsHovered);
-
-        if (clickedButtonIndex != -1)
-        {
-            SelectButton(clickedButtonIndex);
-        }
-    }
-    
-    private void ScrollButtonsLeft()
-    {
-        _visibleStartIndex--;
-
-        if (_visibleStartIndex < 0)
-            _visibleStartIndex = 0;
-    }
-
-    private void ScrollButtonsRight()
-    {
-        var max = Math.Max(0, _colorButtons.Count - VisibleButtons);
-
-        _visibleStartIndex++;
-
-        if (_visibleStartIndex > max)
-            _visibleStartIndex = max;
-    }
-    
-    private void LayoutVisibleButtons()
-    {
-        int x = _buttonSpacing;
-        int y = _graphicsDevice.Viewport.Height - _buttonSize - _buttonSpacing;
-
-        foreach (var button in _colorButtons)
-        {
-            button.Bounds = Rectangle.Empty;
-        }
-
-        for (int i = 0; i < VisibleButtons; i++)
-        {
-            int index = _visibleStartIndex + i;
-
-            if (index >= _colorButtons.Count)
-                break;
-
-            _colorButtons[index].Bounds = new Rectangle(
-                x,
-                y,
-                _buttonSize,
-                _buttonSize);
-
-            x += _buttonSize + _buttonSpacing;
-        }
-    }
-    
-    private void SelectButton(int index)
-    {
-        foreach (var button in _colorButtons)
-        {
-            button.SetSelected(false);
-        }
-
-        _colorButtons[index].SetSelected(true);
-    }
     
     private void PaintPixelAtMousePosition(MouseState mouse)
     {
-        var selectedButton = _colorButtons.FirstOrDefault(x => x.IsSelected);
+        var selectedButton = _colorButtonsService.GetButtons().FirstOrDefault(x => x.IsSelected);
         
         var bounds = GetImageBounds();
         if (selectedButton != null && bounds.Contains(mouse.Position))
@@ -216,7 +139,7 @@ public class GameScene : IScene
 
     private bool IsMouseOverUI()
     {
-        if (_colorButtons.Any(x => x.IsHovered))
+        if (_colorButtonsService.GetButtons().Any(x => x.IsHovered))
         {
             return true;
         }
@@ -249,7 +172,8 @@ public class GameScene : IScene
 
         var colorGroups = _processorService.GetPixelColorGroups();
         DrawPixelNumbers(colorGroups, drawBounds);
-        DrawColorButtons(colorGroups);
+        
+        _colorButtonsService.Draw(colorGroups, _drawService);
         
         _menuButton.Draw(_spriteBatch);
 
@@ -270,37 +194,6 @@ public class GameScene : IScene
                     pixel.GetScreenPosition(bounds, _imageTexture.Width, _imageTexture.Height), 
                     pixel.ColorIsDark() ? Color.White : Color.Black,
                     _cameraService.Zoom);
-            }
-        }
-    }
-    
-    private void DrawColorButtons(Dictionary<Color, PixelColorGroup> colorGroups)
-    {
-        foreach (var colorButton in _colorButtons.Skip(_visibleStartIndex).Take(VisibleButtons))
-        {
-            colorButton.Draw(_spriteBatch, _pixelTexture);
-
-            var colorGroup = colorGroups[colorButton.Color];
-            var groupIsFinished = colorGroup.IsFinished;
-
-            var text = groupIsFinished ? "x" : colorButton.Number.ToString();
-
-            _drawService.DrawString(
-                _spriteBatch,
-                text,
-                colorButton.GetDrawBounds().Center.ToVector2(),
-                colorButton.ColorIsDark() ? Color.White : Color.Black);
-
-            if (!groupIsFinished)
-            {
-                _drawService.DrawProgressBar(
-                    _spriteBatch,
-                    _pixelTexture,
-                    colorButton.GetProgressBounds(),
-                    colorGroup.Progress,
-                    Color.White,
-                    Color.White,
-                    colorButton.Color);
             }
         }
     }
@@ -338,19 +231,5 @@ public class GameScene : IScene
             width,
             height
         );
-    }
-    
-    private void CreateColorButtons()
-    {
-        foreach (var group in _processorService.GetPixelColorGroups().Values)
-        {
-            _colorButtons.Add(new ColorButton(
-                group.OriginalColor,
-                group.Number,
-                Rectangle.Empty));
-        }
-
-        LayoutVisibleButtons();
-        SelectButton(0);
     }
 }
