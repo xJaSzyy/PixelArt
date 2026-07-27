@@ -86,7 +86,7 @@ public class GameScene : IScene
             }
         }
 
-        if (_mouseService.IsLeftMouseButtonPressed(mouse) && !IsMouseOverUI())
+        if (_mouseService.IsLeftMouseButtonPressed(mouse) && !IsMouseOverUI() && GetNumberAlpha() > 0)
         {
             PaintPixelAtMousePosition(mouse);
         }
@@ -186,10 +186,25 @@ public class GameScene : IScene
                     _spriteBatch, 
                     color.Number.ToString(), 
                     pixel.GetScreenPosition(bounds, _imageTexture.Width, _imageTexture.Height), 
-                    pixel.ColorIsDark() ? Color.White : Color.Black,
+                    Color.Lerp(
+                        Color.Transparent,
+                        pixel.ColorIsDark() ? Color.White : Color.Black,
+                        GetNumberAlpha()
+                    ),
                     _cameraService.Zoom);
             }
         }
+    }
+    
+    private float GetNumberAlpha()
+    {
+        var zoom = _cameraService.Zoom;
+
+        return MathHelper.Clamp(
+            (zoom - 0.4f) / 0.4f,
+            0,
+            1
+        );
     }
 
     private void PlaceImageCenter()
