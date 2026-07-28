@@ -1,5 +1,7 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System.Collections.Generic;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using PixelArt.Models;
 using PixelArt.Scenes;
 using PixelArt.Services;
 
@@ -11,7 +13,7 @@ public class Game1 : Game
     private SceneService _sceneService;
     private MouseService _mouseService;
     private DrawService _drawService;
-
+    
     public Game1()
     {
         _graphics = new GraphicsDeviceManager(this);

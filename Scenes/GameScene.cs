@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using PixelArt.Buttons;
 using PixelArt.Interfaces;
+using PixelArt.Models;
 using PixelArt.Services;
 
 namespace PixelArt.Scenes;
@@ -20,9 +21,9 @@ public class GameScene : IScene
     private ColorButtonsService _colorButtonsService;
     private readonly CameraService _cameraService = new();
     private readonly PixelProcessorService _processorService;
+    private readonly IScene _menuScene;
 
-    private readonly Texture2D _imageTexture;
-    private Rectangle _imageBounds;
+    private readonly LevelData _level;
 
     private const int _sizeMultiplier = 6;
     private const int _buttonSize = 56;
@@ -30,14 +31,11 @@ public class GameScene : IScene
     
     private Button _homeButton;
 
-    public GameScene(Texture2D imageTexture, Rectangle imageBounds)
+    public GameScene(LevelData level, PixelProcessorService processorService, IScene menuScene)
     {
-        _imageTexture = imageTexture;
-        _imageBounds = imageBounds;
-        
-        _processorService = new PixelProcessorService(_cameraService);
-        _processorService.SetTexture(_imageTexture);
-        _processorService.Generate();
+        _level = level;
+        _processorService = processorService;
+        _menuScene = menuScene;
     }
 
     public void Initialize(SceneService sceneService, MouseService mouseService, DrawService drawService)
@@ -80,14 +78,17 @@ public class GameScene : IScene
             
             if (_homeButton.IsHovered)
             {
-                _sceneService.SetScene(new MenuScene());
+                _sceneService.SetScene(_menuScene);
             }
         }
 
-        if (_mouseService.IsLeftMouseButtonPressed(mouse) && !IsMouseOverUI() && _processorService.GetNumberAlpha() > 0)
+        if (_mouseService.IsLeftMouseButtonPressed(mouse) && !IsMouseOverUI() && _processorService.GetNumberAlpha(_cameraService.MinZoom, _cameraService.Zoom) > 0)
         {
             var selectedButton = _colorButtonsService.GetButtons().FirstOrDefault(x => x.IsSelected);
-            _processorService.PaintPixelAtMousePosition(mouse, selectedButton);
+            if (selectedButton != null)
+            {
+                _processorService.PaintPixelAtMousePosition(mouse, selectedButton.Color, _cameraService);
+            }
         }
         
         if (_mouseService.IsScroll(mouse))
@@ -126,7 +127,7 @@ public class GameScene : IScene
             samplerState: SamplerState.PointClamp
         );
 
-        _processorService.Draw(_spriteBatch, _drawService);
+        _processorService.Draw(_spriteBatch, _drawService, _cameraService);
         
         _colorButtonsService.Draw(_drawService);
         
@@ -152,19 +153,21 @@ public class GameScene : IScene
 
     private void PlaceImageCenter()
     {
-        _imageBounds.Size *= _imageTexture.Width / 16 * _sizeMultiplier;
+        var bounds = _level.Button.Bounds;
         
-        var x = _graphicsDevice.Viewport.Width / 2 -  _imageBounds.Width / 2;
-        var y = _graphicsDevice.Viewport.Height / 2 - _imageBounds.Height / 2;
+        bounds.Size *= _level.Texture.Width / 16 * _sizeMultiplier;
         
-        _imageBounds.Location = new Point(x, y);
+        var x = _graphicsDevice.Viewport.Width / 2 -  bounds.Width / 2;
+        var y = _graphicsDevice.Viewport.Height / 2 - bounds.Height / 2;
+        
+        bounds.Location = new Point(x, y);
 
-        _processorService.SetPixelSize((float)_imageBounds.Width / _imageTexture.Width,
-            (float)_imageBounds.Height / _imageTexture.Height);
+        _processorService.SetPixelSize((float)bounds.Width / _level.Texture.Width,
+            (float)bounds.Height / _level.Texture.Height);
         
         _cameraService.SetPosition(new Vector2(
-            _imageBounds.X,
-            _imageBounds.Y
+            bounds.X,
+            bounds.Y
         ));
     }
 }

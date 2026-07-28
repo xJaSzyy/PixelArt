@@ -23,7 +23,7 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
 
     private void CreateColorButtons()
     {
-        foreach (var group in processorService.GetPixelColorGroups().Values.OrderBy(x => x.Number))
+        foreach (var group in processorService.CurrentLevel.ColorGroups.Values.OrderBy(x => x.Number))
         {
             _colorButtons.Add(new ColorButton(
                 group.OriginalColor,
@@ -54,7 +54,7 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
     
     public void Draw(DrawService drawService)
     {
-        var colorGroups = processorService.GetPixelColorGroups();
+        var colorGroups = processorService.CurrentLevel.ColorGroups;
         
         foreach (var colorButton in _colorButtons.Skip(_visibleStartIndex).Take(VisibleButtons))
         {
@@ -136,7 +136,7 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
     {
         var highlightColor = new Color(72, 72, 72);
 
-        var groups = processorService.GetPixelColorGroups();
+        var groups = processorService.CurrentLevel.ColorGroups;
 
         foreach (var group in groups.Values)
         {

@@ -1,50 +1,43 @@
-using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using PixelArt.Buttons;
 using PixelArt.Models;
 
 namespace PixelArt.Services;
 
-public class PixelProcessorService(CameraService cameraService)
+public class PixelProcessorService
 {
-    private Texture2D _imageTexture;
-    private readonly Dictionary<Color, PixelColorGroup> _colorGroups = new();
-    private readonly Dictionary<int, PixelData> _pixels = [];
-    private Color[] _texturePixels;
+    public LevelData CurrentLevel { get; set; }
     
     private float _pixelWidth;
     private float _pixelHeight;
-    
-    public void SetTexture(Texture2D texture)
+
+    public void ChangeLevel(LevelData levelData)
     {
-        _imageTexture = texture;
+        CurrentLevel = levelData;
     }
 
     public void Generate()
     {
-        var width = _imageTexture.Width;
+        CurrentLevel.TexturePixels = new Color[CurrentLevel.Texture.Width * CurrentLevel.Texture.Height];
+        CurrentLevel.Texture.GetData(CurrentLevel.TexturePixels);
 
-        _texturePixels = new Color[width * _imageTexture.Height];
-        _imageTexture.GetData(_texturePixels);
-
-        _colorGroups.Clear();
-        _pixels.Clear();
+        CurrentLevel.ColorGroups.Clear();
+        CurrentLevel.Pixels.Clear();
         
-        for (var i = 0; i < _texturePixels.Length; i++)
+        for (var i = 0; i < CurrentLevel.TexturePixels.Length; i++)
         {
-            var original = _texturePixels[i];
+            var original = CurrentLevel.TexturePixels[i];
 
             if (original.A == 0)
             {
                 continue;
             }
             
-            if (!_colorGroups.ContainsKey(original))
+            if (!CurrentLevel.ColorGroups.ContainsKey(original))
             {
-                _colorGroups[original] = new PixelColorGroup
+                CurrentLevel.ColorGroups[original] = new PixelColorGroup
                 {
                     Number = 0,
                     OriginalColor = original,
@@ -53,8 +46,8 @@ public class PixelProcessorService(CameraService cameraService)
             }
             
             var point = new Point(
-                i % width,
-                i / width
+                i % CurrentLevel.Texture.Width,
+                i / CurrentLevel.Texture.Width
             );
 
             var pixel = new PixelData
@@ -65,11 +58,11 @@ public class PixelProcessorService(CameraService cameraService)
                 CurrentColor = Color.White
             };
 
-            _pixels[i] = pixel;
-            _colorGroups[original].Pixels.Add(pixel);
+            CurrentLevel.Pixels[i] = pixel;
+            CurrentLevel.ColorGroups[original].Pixels.Add(pixel);
         }
         
-        var sortedGroups = _colorGroups.Values
+        var sortedGroups = CurrentLevel.ColorGroups.Values
             .OrderByDescending(x => x.Pixels.Count)
             .ToList();
         
@@ -93,14 +86,14 @@ public class PixelProcessorService(CameraService cameraService)
                 pixel.GrayColor = previewColor;
 
                 var index =
-                    pixel.TexturePosition.Y * width +
+                    pixel.TexturePosition.Y * CurrentLevel.Texture.Width +
                     pixel.TexturePosition.X;
 
-                _texturePixels[index] = previewColor;
+                CurrentLevel.TexturePixels[index] = previewColor;
             }
         }
 
-        _imageTexture.SetData(_texturePixels);
+        CurrentLevel.Texture.SetData(CurrentLevel.TexturePixels);
     }
 
     private byte GenerateGrayValue(int index, int total)
@@ -120,25 +113,24 @@ public class PixelProcessorService(CameraService cameraService)
         return (byte)value;
     }
     
-    public void PaintPixelAtMousePosition(MouseState mouse, ColorButton selectedButton)
+    public void PaintPixelAtMousePosition(MouseState mouse, Color color, CameraService cameraService)
     {
-        
-        var bounds = GetImageBounds();
-        if (selectedButton != null && bounds.Contains(mouse.Position))
+        var bounds = GetImageBounds(cameraService);
+        if (bounds.Contains(mouse.Position))
         {
             var x = (int)((mouse.X - bounds.X) / (_pixelWidth * cameraService.Zoom));
             var y = (int)((mouse.Y - bounds.Y) / (_pixelHeight * cameraService.Zoom));
                 
-            var index = y * _imageTexture.Width + x;
+            var index = y * CurrentLevel.Texture.Width + x;
 
-            SetPixel(index, selectedButton.Color);
+            SetPixel(index, color);
         }
     }
     
-    private Rectangle GetImageBounds()
+    private Rectangle GetImageBounds(CameraService cameraService)
     {
-        var width = (int)(_imageTexture.Width * _pixelWidth * cameraService.Zoom);
-        var height = (int)(_imageTexture.Height * _pixelHeight * cameraService.Zoom);
+        var width = (int)(CurrentLevel.Texture.Width * _pixelWidth * cameraService.Zoom);
+        var height = (int)(CurrentLevel.Texture.Height * _pixelHeight * cameraService.Zoom);
 
         var cameraPosition = cameraService.GetPosition();
         
@@ -152,7 +144,7 @@ public class PixelProcessorService(CameraService cameraService)
 
     public void SetPixel(int index, Color color)
     {
-        if (!_pixels.TryGetValue(index, out var pixel))
+        if (!CurrentLevel.Pixels.TryGetValue(index, out var pixel))
         {
             return;
         }
@@ -164,59 +156,57 @@ public class PixelProcessorService(CameraService cameraService)
 
         pixel.CurrentColor = color;
 
-        _texturePixels[index] = color;
-        _imageTexture.SetData(_texturePixels);
+        CurrentLevel.TexturePixels[index] = color;
+        CurrentLevel.Texture.SetData(CurrentLevel.TexturePixels);
     }
 
     public int GetPixelIndex(PixelData pixelData)
     {
-        if (pixelData == null || _imageTexture == null)
+        if (pixelData == null || CurrentLevel.Texture == null)
         {
             return -1;
         }
 
-        return pixelData.TexturePosition.Y * _imageTexture.Width + pixelData.TexturePosition.X;
+        return pixelData.TexturePosition.Y * CurrentLevel.Texture.Width + pixelData.TexturePosition.X;
     }
 
-    public void Draw(SpriteBatch spriteBatch, DrawService drawService)
+    public void Draw(SpriteBatch spriteBatch, DrawService drawService, CameraService cameraService)
     {
-        var drawBounds = GetImageBounds();
+        var drawBounds = GetImageBounds(cameraService);
 
         spriteBatch.Draw(
-            _imageTexture,
+            CurrentLevel.Texture,
             drawBounds,
             Color.White
         );
         
-        DrawPixelNumbers(drawBounds, spriteBatch, drawService);
+        DrawPixelNumbers(drawBounds, spriteBatch, drawService, cameraService);
     }
     
-    private void DrawPixelNumbers(Rectangle bounds, SpriteBatch spriteBatch, DrawService drawService)
+    private void DrawPixelNumbers(Rectangle bounds, SpriteBatch spriteBatch, DrawService drawService, CameraService cameraService)
     {
-        foreach (var color in _colorGroups.Values)
+        foreach (var color in CurrentLevel.ColorGroups.Values)
         {
             foreach (var pixel in color.Pixels.Where(pixel => !pixel.IsFinished))
             {
                 drawService.DrawString(
                     spriteBatch, 
                     color.Number.ToString(), 
-                    pixel.GetScreenPosition(bounds, _imageTexture.Width, _imageTexture.Height), 
+                    pixel.GetScreenPosition(bounds, CurrentLevel.Texture.Width, CurrentLevel.Texture.Height), 
                     Color.Lerp(
                         Color.Transparent,
                         pixel.ColorIsDark() ? Color.White : Color.Black,
-                        GetNumberAlpha()
+                        GetNumberAlpha(cameraService.MinZoom, cameraService.Zoom)
                     ),
                     cameraService.Zoom);
             }
         }
     }
 
-    public float GetNumberAlpha()
+    public float GetNumberAlpha(float minZoom, float zoom)
     {
-        var zoom = cameraService.Zoom;
-
         return MathHelper.Clamp(
-            (zoom - cameraService.MinZoom) / cameraService.MinZoom,
+            (zoom - minZoom) / minZoom,
             0,
             1
         );
@@ -226,10 +216,5 @@ public class PixelProcessorService(CameraService cameraService)
     {
         _pixelWidth = pixelWidth;
         _pixelHeight = pixelHeight;
-    }
-    
-    public Dictionary<Color, PixelColorGroup> GetPixelColorGroups()
-    {
-        return _colorGroups;
     }
 }

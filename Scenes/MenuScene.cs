@@ -7,6 +7,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using PixelArt.Buttons;
 using PixelArt.Interfaces;
+using PixelArt.Models;
 using PixelArt.Services;
 
 namespace PixelArt.Scenes;
@@ -18,13 +19,14 @@ public class MenuScene : IScene
     
     private SceneService _sceneService;
     private MouseService _mouseService;
+    private PixelProcessorService _processorService;
     
-    private readonly List<Button> _buttons = [];
+    private readonly List<LevelData> _levels = [];
     private const int _buttonSize = 128;
-
     
     public void Initialize(SceneService sceneService, MouseService mouseService, DrawService drawService)
     {
+        
         _sceneService = sceneService;
         _mouseService = mouseService;
     }
@@ -37,23 +39,39 @@ public class MenuScene : IScene
 
         const int buttonsCount = 25;
 
-        int screenWidth = graphicsDevice.Viewport.Width; 
-        int buttonsPerRow = Math.Max(1, screenWidth / _buttonSize);
-
-        for (int i = 0; i < buttonsCount; i++)
+        if (_levels.Count != buttonsCount)
         {
-            var texture = content.Load<Texture2D>($"Images/img{i + 1}");
+            _levels.Clear();
+            
+            var buttonsPerRow = Math.Max(1, graphicsDevice.Viewport.Width / _buttonSize);
 
-            int column = i % buttonsPerRow;
-            int row = i / buttonsPerRow;
+            _processorService = new PixelProcessorService();
+        
+            for (var i = 0; i < buttonsCount; i++)
+            {
+                var texture = content.Load<Texture2D>($"Images/img{i + 1}");
 
-            var rectangle = new Rectangle(
-                column * _buttonSize,
-                row * _buttonSize,
-                _buttonSize,
-                _buttonSize);
+                var column = i % buttonsPerRow;
+                var row = i / buttonsPerRow;
 
-            _buttons.Add(new Button(texture, rectangle));
+                var rectangle = new Rectangle(
+                    column * _buttonSize,
+                    row * _buttonSize,
+                    _buttonSize,
+                    _buttonSize);
+
+                var newLevel = new LevelData
+                {
+                    Texture = texture,
+                    IsGenerated = true,
+                    Button = new Button(texture, rectangle)
+                };
+            
+                _processorService.ChangeLevel(newLevel);
+                _processorService.Generate();
+            
+                _levels.Add(newLevel);
+            }
         }
     }
 
@@ -61,13 +79,14 @@ public class MenuScene : IScene
     {
         var mouse = Mouse.GetState();
 
-        _buttons.ForEach(x => x.Update(mouse));
+        _levels.ForEach(l => l.Button.Update(mouse));
 
         if (_mouseService.IsLeftMouseButtonClicked(mouse))
         {
-            foreach (var button in _buttons.Where(button => button.IsHovered))
+            foreach (var level in _levels.Where(l => l.Button.IsHovered))
             {
-                _sceneService.SetScene(new GameScene(CloneTexture(button.Texture), button.Bounds));
+                _processorService.ChangeLevel(level);
+                _sceneService.SetScene(new GameScene(level, _processorService, this));
                 break;
             }
         }
@@ -83,12 +102,12 @@ public class MenuScene : IScene
             samplerState: SamplerState.PointClamp
         );
 
-        _buttons.ForEach(x => x.Draw(_spriteBatch));
+        _levels.ForEach(l => l.Button.Draw(_spriteBatch));
 
         _spriteBatch.End();
     }
     
-    private Texture2D CloneTexture(Texture2D source)
+    /*private Texture2D CloneTexture(Texture2D source)
     {
         var clone = new Texture2D(
             _graphicsDevice,
@@ -102,5 +121,5 @@ public class MenuScene : IScene
         clone.SetData(pixels);
 
         return clone;
-    }
+    }*/
 }
