@@ -20,58 +20,66 @@ public class MenuScene : IScene
     private SceneService _sceneService;
     private MouseService _mouseService;
     private PixelProcessorService _processorService;
-    
+
+    private const int _levelsCount = 25;
     private readonly List<LevelData> _levels = [];
     private const int _buttonSize = 128;
     
     public void Initialize(SceneService sceneService, MouseService mouseService, DrawService drawService)
     {
-        
         _sceneService = sceneService;
         _mouseService = mouseService;
+
+        if (_levels.Count == _levelsCount)
+        {
+            return;
+        }
+        
+        _levels.Clear();
+        for (var i = 0; i < _levelsCount; i++)
+        {
+            _levels.Add(new LevelData
+            {
+                IsLoaded = false,
+            });
+        }
     }
 
     public void LoadContent(GraphicsDevice graphicsDevice, ContentManager content)
     {
         _graphicsDevice = graphicsDevice;
-        
+
         _spriteBatch = new SpriteBatch(graphicsDevice);
 
-        const int buttonsCount = 25;
-
-        if (_levels.Count != buttonsCount)
+        if (_levels.All(l => l.IsLoaded))
         {
-            _levels.Clear();
-            
-            var buttonsPerRow = Math.Max(1, graphicsDevice.Viewport.Width / _buttonSize);
-
-            _processorService = new PixelProcessorService();
+            return;
+        }
         
-            for (var i = 0; i < buttonsCount; i++)
-            {
-                var texture = content.Load<Texture2D>($"Images/img{i + 1}");
-
-                var column = i % buttonsPerRow;
-                var row = i / buttonsPerRow;
-
-                var rectangle = new Rectangle(
-                    column * _buttonSize,
-                    row * _buttonSize,
-                    _buttonSize,
-                    _buttonSize);
-
-                var newLevel = new LevelData
-                {
-                    Texture = texture,
-                    IsGenerated = true,
-                    Button = new Button(texture, rectangle)
-                };
+        _processorService = new PixelProcessorService();
+        
+        var buttonsPerRow = Math.Max(1, graphicsDevice.Viewport.Width / _buttonSize);
+        for (var i = 0; i < _levels.Count; i++)
+        {
+            var level = _levels[i];
             
-                _processorService.ChangeLevel(newLevel);
-                _processorService.Generate();
-            
-                _levels.Add(newLevel);
-            }
+            var texture = content.Load<Texture2D>($"Images/img{i + 1}");
+
+            var column = i % buttonsPerRow;
+            var row = i / buttonsPerRow;
+
+            var rectangle = new Rectangle(
+                column * _buttonSize,
+                row * _buttonSize,
+                _buttonSize,
+                _buttonSize);
+
+            level.Texture = texture;
+            level.Button = new Button(texture, rectangle);
+            level.IsLoaded = true;
+
+            _processorService.ChangeLevel(level);
+            _processorService.Generate();
         }
     }
 
@@ -106,20 +114,4 @@ public class MenuScene : IScene
 
         _spriteBatch.End();
     }
-    
-    /*private Texture2D CloneTexture(Texture2D source)
-    {
-        var clone = new Texture2D(
-            _graphicsDevice,
-            source.Width,
-            source.Height
-        );
-        
-        var pixels = new Color[source.Width * source.Height];
-
-        source.GetData(pixels);
-        clone.SetData(pixels);
-
-        return clone;
-    }*/
 }

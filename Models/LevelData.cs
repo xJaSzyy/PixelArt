@@ -12,6 +12,6 @@ public class LevelData
     public Dictionary<int, PixelData> Pixels { get; set; } = [];
     public Color[] TexturePixels { get; set; }
     
-    public bool IsGenerated { get; set; }
+    public bool IsLoaded { get; set; }
     public Button Button { get; set; }
 }

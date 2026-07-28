@@ -6,7 +6,7 @@ namespace PixelArt.Buttons;
 
 public class Button(Texture2D texture, Rectangle bounds)
 {
-    public Texture2D Texture { get; set; } = texture;
+    private Texture2D Texture { get; set; } = texture;
     public Rectangle Bounds { get; set; } = bounds;
 
     public bool IsHovered { get; set; }
