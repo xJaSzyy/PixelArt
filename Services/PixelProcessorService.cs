@@ -1,4 +1,4 @@
-using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -143,7 +143,7 @@ public class PixelProcessorService
         );
     }
 
-    public void SetPixel(int index, Color color)
+    private void SetPixel(int index, Color color)
     {
         if (!CurrentLevel.Pixels.TryGetValue(index, out var pixel))
         {
@@ -156,8 +156,32 @@ public class PixelProcessorService
         }
 
         pixel.CurrentColor = color;
-
         CurrentLevel.TexturePixels[index] = color;
+    }
+
+    public void ApplyPixelChanges()
+    {
+        CurrentLevel.Texture.SetData(CurrentLevel.TexturePixels);
+    }
+    
+    public void SetPixels(IEnumerable<(int Index, Color Color)> pixels)
+    {
+        foreach (var (index, color) in pixels)
+        {
+            if (!CurrentLevel.Pixels.TryGetValue(index, out var pixel))
+            {
+                continue;
+            }
+
+            if (pixel.IsFinished)
+            {
+                continue;
+            }
+
+            pixel.CurrentColor = color;
+            CurrentLevel.TexturePixels[index] = color;
+        }
+
         CurrentLevel.Texture.SetData(CurrentLevel.TexturePixels);
     }
 

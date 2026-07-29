@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using PixelArt.Buttons;
+using PixelArt.Models;
 
 namespace PixelArt.Services;
 
@@ -17,6 +18,8 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
     private const float _scrollSpeed = 0.2f;
     private const int _buttonSize = 56;
     private const int _buttonSpacing = 12;
+    private Color _highlightColor = new(72, 72, 72);
+    
 
     private Texture2D _pixelTexture;
 
@@ -150,35 +153,45 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
 
     private void HighlightPixels(int colorButtonIndex)
     {
-        var highlightColor = new Color(72, 72, 72);
+        var changes = ClearHighlight(false);
 
-        var groups = processorService.CurrentLevel.ColorGroups;
-
-        foreach (var group in groups.Values)
-        {
-            foreach (var pixel in group.Pixels.Where(pixel => pixel.CurrentColor == highlightColor))
-            {
-                processorService.SetPixel(
-                    processorService.GetPixelIndex(pixel),
-                    pixel.GrayColor
-                );
-            }
-        }
-
-        var selectedColor = _colorButtons[colorButtonIndex].Color;
-
-        if (!groups.TryGetValue(selectedColor, out var selectedGroup))
+        if (!processorService.CurrentLevel.ColorGroups.TryGetValue(_colorButtons[colorButtonIndex].Color, out var selectedGroup))
         {
             return;
         }
 
         foreach (var pixel in selectedGroup.Pixels)
         {
-            processorService.SetPixel(
+            changes.Add((
                 processorService.GetPixelIndex(pixel),
-                highlightColor
-            );
+                _highlightColor
+            ));
         }
+        
+        processorService.SetPixels(changes);
+    }
+
+    public List<(int Index, Color Color)> ClearHighlight(bool applyChanges = false)
+    {
+        var changes = new List<(int Index, Color Color)>();
+        
+        foreach (var group in processorService.CurrentLevel.ColorGroups.Values)
+        {
+            foreach (var pixel in group.Pixels.Where(p => p.CurrentColor == _highlightColor))
+            {
+                changes.Add((
+                    processorService.GetPixelIndex(pixel),
+                    pixel.GrayColor
+                ));
+            }
+        }
+
+        if (applyChanges)
+        {
+            processorService.SetPixels(changes);
+        }
+
+        return changes;
     }
 
     public void ScrollButtonsLeft()

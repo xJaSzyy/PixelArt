@@ -79,6 +79,7 @@ public class GameScene : IScene
             
             if (_homeButton.IsHovered)
             {
+                _colorButtonsService.ClearHighlight(true);
                 _sceneService.SetScene(_menuScene);
             }
         }
@@ -112,9 +113,7 @@ public class GameScene : IScene
                 }
             }
         }
-
-        _homeButton.Update(mouse);
-
+        
         if (!ColoringIsCompleted)
         {
             _colorButtonsService.Update(mouse);
@@ -127,6 +126,8 @@ public class GameScene : IScene
             }
         }
 
+        _homeButton.Update(mouse);
+        _processorService.ApplyPixelChanges();
         _mouseService.SetMouse(mouse);
     }
 
