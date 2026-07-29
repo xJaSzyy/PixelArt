@@ -13,6 +13,8 @@ namespace PixelArt.Scenes;
 
 public class GameScene : IScene
 {
+    private bool ColoringIsCompleted { get; set; }
+    
     private GraphicsDevice _graphicsDevice;
     private SpriteBatch _spriteBatch;
     
@@ -26,7 +28,6 @@ public class GameScene : IScene
 
     private readonly LevelData _level;
 
-    private const int _sizeMultiplier = 6;
     private const int _buttonSize = 56;
     private const int _buttonSpacing = 12;
     
@@ -50,7 +51,6 @@ public class GameScene : IScene
     {
         _graphicsDevice = graphicsDevice;
         _spriteBatch = new SpriteBatch(graphicsDevice);
-        
         
         var homeTexture = content.Load<Texture2D>("Icons/home");
         _homeButton = new Button(homeTexture, 
@@ -113,15 +113,20 @@ public class GameScene : IScene
             }
         }
 
-        if (!_colorButtonsService.IsActive)
+        _homeButton.Update(mouse);
+
+        if (!ColoringIsCompleted)
         {
-            PlaceImageCenter();
+            _colorButtonsService.Update(mouse);
+            _cameraService.Update(mouse);
+            
+            if (_processorService.CurrentLevel.ColorGroups.All(x => x.Value.IsFinished))
+            {
+                ColoringIsCompleted = true;
+                PlaceImageCenter();
+            }
         }
 
-        _homeButton.Update(mouse);
-        _colorButtonsService.Update(mouse);
-        _cameraService.Update(mouse);
-        
         _mouseService.SetMouse(mouse);
     }
 
@@ -134,9 +139,12 @@ public class GameScene : IScene
         );
 
         _processorService.Draw(_spriteBatch, _drawService, _cameraService);
-        
-        _colorButtonsService.Draw(_drawService);
-        
+
+        if (!ColoringIsCompleted)
+        {
+            _colorButtonsService.Draw(_drawService);
+        }
+
         _homeButton.Draw(_spriteBatch);
 
         _spriteBatch.End();
@@ -168,10 +176,12 @@ public class GameScene : IScene
 
         _processorService.SetPixelSize((float)bounds.Width / _level.Texture.Width,
             (float)bounds.Height / _level.Texture.Height);
+
+        var imageBounds = _processorService.GetImageBounds(_cameraService);
         
         _cameraService.SetPosition(new Vector2(
-            bounds.X,
-            bounds.Y
+            bounds.X + _graphicsDevice.Viewport.Width * 0.5f - imageBounds.Width * 0.5f,
+            bounds.X + _graphicsDevice.Viewport.Height * 0.5f - imageBounds.Height * 0.5f
         ));
     }
 }

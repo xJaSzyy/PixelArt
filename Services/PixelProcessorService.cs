@@ -128,13 +128,13 @@ public class PixelProcessorService
         }
     }
     
-    private Rectangle GetImageBounds(CameraService cameraService)
+    public Rectangle GetImageBounds(CameraService cameraService)
     {
         var width = (int)(CurrentLevel.Texture.Width * _pixelWidth * cameraService.Zoom);
         var height = (int)(CurrentLevel.Texture.Height * _pixelHeight * cameraService.Zoom);
 
         var cameraPosition = cameraService.GetPosition();
-        
+
         return new Rectangle(
             (int)cameraPosition.X,
             (int)cameraPosition.Y,
@@ -199,7 +199,7 @@ public class PixelProcessorService
                         pixel.ColorIsDark() ? Color.White : Color.Black,
                         GetNumberAlpha(cameraService.MinZoom, cameraService.Zoom)
                     ),
-                    cameraService.Zoom);
+                    cameraService.Zoom  + _pixelWidth * 0.004f);
             }
         }
     }

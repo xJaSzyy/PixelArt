@@ -1,3 +1,4 @@
+using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 
@@ -6,7 +7,7 @@ namespace PixelArt.Services;
 public class CameraService
 {
     public float Zoom { get; set; } = 1f;
-    public float MinZoom { get; private set; } = 0.3f;
+    public float MinZoom { get; private set; } = 0.2f;
     
     private Vector2 _cameraPosition;
 

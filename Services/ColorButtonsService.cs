@@ -10,8 +10,6 @@ namespace PixelArt.Services;
 
 public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spriteBatch, PixelProcessorService processorService)
 {
-    public bool IsActive { get; set; } = true;
-    
     private readonly List<ColorButton> _colorButtons = [];
     private int _visibleStartIndex;
 
@@ -45,11 +43,6 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
 
     public void Update(MouseState mouse)
     {
-        if (!IsActive)
-        {
-            return;
-        }
-        
         LayoutVisibleButtons();
         foreach (var button in _colorButtons
                      .Skip(_visibleStartIndex)
@@ -57,20 +50,10 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
         {
             button.Update(mouse);
         }
-        
-        if (processorService.CurrentLevel.ColorGroups.All(x => x.Value.IsFinished))
-        {
-            IsActive = false;
-        }
     }
     
     public void Draw(DrawService drawService)
     {
-        if (!IsActive)
-        {
-            return;
-        }
-        
         var colorGroups = processorService.CurrentLevel.ColorGroups;
         foreach (var colorButton in _colorButtons.Skip(_visibleStartIndex).Take(VisibleButtons))
         {
