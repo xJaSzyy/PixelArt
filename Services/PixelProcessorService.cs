@@ -210,32 +210,36 @@ public class PixelProcessorService
     
     private void DrawPixelNumbers(Rectangle bounds, SpriteBatch spriteBatch, DrawService drawService, CameraService cameraService)
     {
-        foreach (var color in CurrentLevel.ColorGroups.Values)
+        foreach (var colorGroup in CurrentLevel.ColorGroups.Values)
         {
-            foreach (var pixel in color.Pixels.Where(pixel => !pixel.IsFinished))
+            foreach (var pixel in colorGroup.Pixels.Where(pixel => !pixel.IsFinished))
             {
+                var color = Color.Lerp(
+                    Color.Transparent,
+                    pixel.ColorIsDark() ? Color.White : Color.Black,
+                    Utils.Remap(cameraService.Zoom, cameraService.MinZoom, cameraService.MinZoom * 2f, 0f, 1f)
+                );
+                var scale = cameraService.Zoom + _pixelWidth * (colorGroup.Number.ToString().Length == 1 ? 0.0045f : 0.003f);
+
                 drawService.DrawString(
-                    spriteBatch, 
-                    color.Number.ToString(), 
-                    pixel.GetScreenPosition(bounds, CurrentLevel.Texture.Width, CurrentLevel.Texture.Height), 
-                    Color.Lerp(
-                        Color.Transparent,
-                        pixel.ColorIsDark() ? Color.White : Color.Black,
-                        GetNumberAlpha(cameraService.MinZoom, cameraService.Zoom)
-                    ),
-                    cameraService.Zoom  + _pixelWidth * 0.004f);
+                    spriteBatch,
+                    colorGroup.Number.ToString(),
+                    pixel.GetScreenPosition(bounds, CurrentLevel.Texture.Width, CurrentLevel.Texture.Height),
+                    color,
+                    scale
+                );
             }
         }
     }
 
-    public float GetNumberAlpha(float minZoom, float zoom)
+    /*public float GetNumberAlpha(float minZoom, float zoom)
     {
         return MathHelper.Clamp(
             (zoom - minZoom) / minZoom,
             0,
             1
         );
-    }
+    }*/
 
     public void SetPixelSize(float pixelWidth, float pixelHeight)
     {

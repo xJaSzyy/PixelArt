@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -84,7 +83,7 @@ public class GameScene : IScene
             }
         }
 
-        if (_mouseService.IsLeftMouseButtonPressed(mouse) && !IsMouseOverUI() && _processorService.GetNumberAlpha(_cameraService.MinZoom, _cameraService.Zoom) > 0)
+        if (_mouseService.IsLeftMouseButtonPressed(mouse) && !IsMouseOverUI() && Utils.Remap(_cameraService.Zoom, _cameraService.MinZoom, _cameraService.MinZoom * 2, 0f, 1f) > 0)
         {
             var selectedButton = _colorButtonsService.GetButtons().FirstOrDefault(x => x.IsSelected);
             if (selectedButton != null)

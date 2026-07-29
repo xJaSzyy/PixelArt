@@ -22,7 +22,7 @@ public class MenuScene : IScene
     private PixelProcessorService _processorService;
 
     private const int _levelsCount = 25;
-    private readonly List<LevelData> _levels = [];
+    private List<LevelData> _levels = [];
     private const int _buttonSize = 128;
     
     public void Initialize(SceneService sceneService, MouseService mouseService, DrawService drawService)
@@ -58,12 +58,18 @@ public class MenuScene : IScene
         
         _processorService = new PixelProcessorService();
         
+        var imageNames = Enumerable.Range(1, _levelsCount)
+            .Select(i => $"img{i}")
+            .ToList();
+
+        imageNames.Shuffle();
+        
         var buttonsPerRow = Math.Max(1, graphicsDevice.Viewport.Width / _buttonSize);
         for (var i = 0; i < _levels.Count; i++)
         {
             var level = _levels[i];
             
-            var texture = content.Load<Texture2D>($"Images/img{i + 1}");
+            var texture = content.Load<Texture2D>($"Images/{imageNames[i]}");
 
             var column = i % buttonsPerRow;
             var row = i / buttonsPerRow;
@@ -81,6 +87,8 @@ public class MenuScene : IScene
             _processorService.ChangeLevel(level);
             _processorService.Generate();
         }
+
+        _levels = _levels.OrderBy(_ => Guid.NewGuid()).ToList();
     }
 
     public void Update(GameTime gameTime)

@@ -8,10 +8,10 @@ public class CameraService
 {
     public float Zoom { get; set; } = 1f;
     public float MinZoom { get; private set; } = 0.2f;
+    public float MaxZoom { get; private set; } = 2f;
     
     private Vector2 _cameraPosition;
 
-    private const float _maxZoom = 2f;
     private const float _zoomSpeed = 0.1f;
 
     private bool _isDragging;
@@ -45,7 +45,7 @@ public class CameraService
         var mouseWorld = (mouse.Position.ToVector2() - _cameraPosition) / oldZoom;
 
         Zoom += scrollDelta > 0 ? _zoomSpeed : -_zoomSpeed;
-        Zoom = MathHelper.Clamp(Zoom, MinZoom, _maxZoom);
+        Zoom = MathHelper.Clamp(Zoom, MinZoom, MaxZoom);
 
         _cameraPosition = mouse.Position.ToVector2() - mouseWorld * Zoom;
     }
