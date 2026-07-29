@@ -232,15 +232,6 @@ public class PixelProcessorService
         }
     }
 
-    /*public float GetNumberAlpha(float minZoom, float zoom)
-    {
-        return MathHelper.Clamp(
-            (zoom - minZoom) / minZoom,
-            0,
-            1
-        );
-    }*/
-
     public void SetPixelSize(float pixelWidth, float pixelHeight)
     {
         _pixelWidth = pixelWidth;
