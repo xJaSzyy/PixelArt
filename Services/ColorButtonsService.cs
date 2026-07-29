@@ -11,11 +11,10 @@ namespace PixelArt.Services;
 public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spriteBatch, PixelProcessorService processorService)
 {
     private readonly List<ColorButton> _colorButtons = [];
-    private int _visibleStartIndex;
+    private float _scroll;
+    private float _targetScroll;
 
-    private int VisibleButtons => Math.Max(1,
-        (graphicsDevice.Viewport.Width - _buttonSpacing * 2) / (_buttonSize + _buttonSpacing));
-
+    private const float _scrollSpeed = 0.2f;
     private const int _buttonSize = 56;
     private const int _buttonSpacing = 12;
 
@@ -31,7 +30,7 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
                 Rectangle.Empty));
         }
 
-        LayoutVisibleButtons();
+        LayoutButtons();
         SelectButton(0);
     }
 
@@ -43,10 +42,11 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
 
     public void Update(MouseState mouse)
     {
-        LayoutVisibleButtons();
-        foreach (var button in _colorButtons
-                     .Skip(_visibleStartIndex)
-                     .Take(VisibleButtons))
+        _scroll = MathHelper.Lerp(_scroll, _targetScroll, _scrollSpeed);
+
+        LayoutButtons();
+
+        foreach (var button in _colorButtons)
         {
             button.Update(mouse);
         }
@@ -54,8 +54,22 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
     
     public void Draw(DrawService drawService)
     {
+        var old = graphicsDevice.ScissorRectangle;
+
+        graphicsDevice.ScissorRectangle = new Rectangle(0, graphicsDevice.Viewport.Height - _buttonSize - _buttonSpacing * 2,
+            graphicsDevice.Viewport.Width, _buttonSize + _buttonSpacing * 2);
+
+        spriteBatch.End();
+
+        spriteBatch.Begin(
+            samplerState: SamplerState.PointClamp,
+            rasterizerState: new RasterizerState
+            {
+                ScissorTestEnable = true
+            });
+        
         var colorGroups = processorService.CurrentLevel.ColorGroups;
-        foreach (var colorButton in _colorButtons.Skip(_visibleStartIndex).Take(VisibleButtons))
+        foreach (var colorButton in _colorButtons)
         {
             colorButton.Draw(spriteBatch, _pixelTexture);
 
@@ -82,29 +96,26 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
                     colorButton.Color);
             }
         }
+        
+        spriteBatch.End();
+
+        graphicsDevice.ScissorRectangle = old;
+
+        spriteBatch.Begin(samplerState: SamplerState.PointClamp);
     }
     
-    private void LayoutVisibleButtons()
+    private void LayoutButtons()
     {
-        var x = _buttonSpacing;
+        var x = _buttonSpacing - (int)_scroll;
         var y = graphicsDevice.Viewport.Height - _buttonSize - _buttonSpacing;
 
         foreach (var button in _colorButtons)
         {
-            button.Bounds = Rectangle.Empty;
-        }
-
-        for (var i = 0; i < VisibleButtons; i++)
-        {
-            var index = _visibleStartIndex + i;
-
-            if (index >= _colorButtons.Count)
-            {
-                break;
-            }
-
-            _colorButtons[index].Bounds = new Rectangle(x, y,
-                _buttonSize, _buttonSize);
+            button.Bounds = new Rectangle(
+                x,
+                y,
+                _buttonSize,
+                _buttonSize);
 
             x += _buttonSize + _buttonSpacing;
         }
@@ -114,7 +125,13 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
     {
         var clickedButtonIndex = _colorButtons.FindIndex(x => x.IsHovered);
 
-        if (clickedButtonIndex != -1)
+        if (clickedButtonIndex == -1)
+        {
+            return;
+        }
+        
+        var colorGroup = processorService.CurrentLevel.ColorGroups[_colorButtons[clickedButtonIndex].Color];
+        if (!colorGroup.IsFinished)
         {
             SelectButton(clickedButtonIndex);
         }
@@ -166,23 +183,23 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
 
     public void ScrollButtonsLeft()
     {
-        _visibleStartIndex--;
+        _targetScroll -= _buttonSize + _buttonSpacing;
 
-        if (_visibleStartIndex < 0)
+        if (_targetScroll < 0)
         {
-            _visibleStartIndex = 0;
+            _targetScroll = 0;
         }
     }
-
+    
     public void ScrollButtonsRight()
     {
-        var max = Math.Max(0, _colorButtons.Count - VisibleButtons);
+        var max = Math.Max(0, _colorButtons.Count * (_buttonSize + _buttonSpacing) - graphicsDevice.Viewport.Width + _buttonSpacing * 2);
 
-        _visibleStartIndex++;
+        _targetScroll += _buttonSize + _buttonSpacing;
 
-        if (_visibleStartIndex > max)
+        if (_targetScroll > max)
         {
-            _visibleStartIndex = max;
+            _targetScroll = max;
         }
     }
 
