@@ -5,7 +5,7 @@ namespace PixelArt.Services;
 
 public class CameraService
 {
-    public float Zoom { get; private set; } = 1f;
+    public float Zoom { get; set; } = 1f;
     public float MinZoom { get; private set; } = 0.3f;
     
     private Vector2 _cameraPosition;

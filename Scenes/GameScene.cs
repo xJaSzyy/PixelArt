@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -112,6 +113,11 @@ public class GameScene : IScene
             }
         }
 
+        if (!_colorButtonsService.IsActive)
+        {
+            PlaceImageCenter();
+        }
+
         _homeButton.Update(mouse);
         _colorButtonsService.Update(mouse);
         _cameraService.Update(mouse);
@@ -153,14 +159,12 @@ public class GameScene : IScene
 
     private void PlaceImageCenter()
     {
+        _cameraService.Zoom = _cameraService.MinZoom;
+        
         var bounds = _level.Button.Bounds;
         
-        bounds.Size *= _level.Texture.Width / 16 * _sizeMultiplier;
-        
-        var x = _graphicsDevice.Viewport.Width / 2 -  bounds.Width / 2;
-        var y = _graphicsDevice.Viewport.Height / 2 - bounds.Height / 2;
-        
-        bounds.Location = new Point(x, y);
+        bounds.Size *= _level.Texture.Width / 2;
+        bounds.Location = Point.Zero;
 
         _processorService.SetPixelSize((float)bounds.Width / _level.Texture.Width,
             (float)bounds.Height / _level.Texture.Height);
