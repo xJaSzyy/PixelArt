@@ -72,7 +72,7 @@ public class GameScene : IScene
         var mouse = Mouse.GetState();
         var keyboard = Keyboard.GetState();
         
-        if (_mouseService.IsLeftMouseButtonClicked(mouse))
+        if (_mouseService.IsLeftMouseButtonClicked(mouse) || keyboard.IsKeyDown(Keys.Space))
         {
             _colorButtonsService.UpdateSelectedButton();
             
@@ -83,7 +83,8 @@ public class GameScene : IScene
             }
         }
 
-        if (_mouseService.IsLeftMouseButtonPressed(mouse) && !IsMouseOverUI() && Utils.Remap(_cameraService.Zoom, _cameraService.MinZoom, _cameraService.MinZoom * 2, 0f, 1f) > 0)
+        if ((_mouseService.IsLeftMouseButtonPressed(mouse) || keyboard.IsKeyDown(Keys.Space)) && !IsMouseOverUI() && 
+            Utils.Remap(_cameraService.Zoom, _cameraService.MinZoom, _cameraService.MinZoom * 2, 0f, 1f) > 0)
         {
             var selectedButton = _colorButtonsService.GetButtons().FirstOrDefault(x => x.IsSelected);
             if (selectedButton != null)
@@ -112,6 +113,11 @@ public class GameScene : IScene
                 }
             }
         }
+
+        if (keyboard.IsKeyDown(Keys.R))
+        {
+            _processorService.Replay();
+        }
         
         if (!ColoringIsCompleted)
         {
@@ -125,6 +131,7 @@ public class GameScene : IScene
             }
         }
 
+        _processorService.Update(gameTime);
         _homeButton.Update(mouse);
         _processorService.ApplyPixelChanges();
         _mouseService.SetMouse(mouse);

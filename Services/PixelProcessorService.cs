@@ -13,7 +13,57 @@ public class PixelProcessorService
     
     private float _pixelWidth;
     private float _pixelHeight;
+    
+    private int _historyIndex;
+    private bool _isReplay;
 
+    private const float _replayDuration = 1f;
+    private float _pixelsAccumulator;
+
+    public void Update(GameTime gameTime)
+    {
+        if (!_isReplay)
+        {
+            return;
+        }
+
+        if (CurrentLevel.History.Count == 0)
+        {
+            _isReplay = false;
+            return;
+        }
+
+        var pixelsPerSecond = CurrentLevel.History.Count / _replayDuration;
+
+        _pixelsAccumulator += pixelsPerSecond * (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+        var changed = false;
+
+        while (_pixelsAccumulator >= 1f && _historyIndex < CurrentLevel.History.Count)
+        {
+            var pixelIndex = CurrentLevel.History[_historyIndex++];
+
+            if (CurrentLevel.Pixels.TryGetValue(pixelIndex, out var pixel))
+            {
+                pixel.CurrentColor = pixel.OriginalColor;
+                CurrentLevel.TexturePixels[pixelIndex] = pixel.OriginalColor;
+                changed = true;
+            }
+
+            _pixelsAccumulator -= 1f;
+        }
+
+        if (changed)
+        {
+            CurrentLevel.Texture.SetData(CurrentLevel.TexturePixels);
+        }
+
+        if (_historyIndex >= CurrentLevel.History.Count)
+        {
+            _isReplay = false;
+        }
+    }
+    
     public void ChangeLevel(LevelData levelData)
     {
         CurrentLevel = levelData;
@@ -154,9 +204,14 @@ public class PixelProcessorService
         {
             return;
         }
-
+        
         pixel.CurrentColor = color;
         CurrentLevel.TexturePixels[index] = color;
+
+        if (pixel.CurrentColor == pixel.OriginalColor)
+        {
+            CurrentLevel.History.Add(index);
+        }
     }
 
     public void ApplyPixelChanges()
@@ -236,5 +291,20 @@ public class PixelProcessorService
     {
         _pixelWidth = pixelWidth;
         _pixelHeight = pixelHeight;
+    }
+
+    public void Replay()
+    {
+        foreach (var pixel in CurrentLevel.Pixels)
+        {
+            pixel.Value.CurrentColor = pixel.Value.GrayColor;
+            CurrentLevel.TexturePixels[pixel.Key] = pixel.Value.GrayColor;
+        }
+
+        CurrentLevel.Texture.SetData(CurrentLevel.TexturePixels);
+
+        _historyIndex = 0;
+        _pixelsAccumulator = 0;
+        _isReplay = true;
     }
 }
