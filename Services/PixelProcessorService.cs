@@ -9,27 +9,27 @@ namespace PixelArt.Services;
 
 public class PixelProcessorService
 {
-    public LevelData CurrentLevel { get; set; }
+    public LevelData CurrentLevel { get; private set; }
+    public bool ReplayLaunched { get; private set; }
+    
     
     private float _pixelWidth;
     private float _pixelHeight;
     
     private int _historyIndex;
-    private bool _isReplay;
-
     private const float _replayDuration = 1f;
     private float _pixelsAccumulator;
 
     public void Update(GameTime gameTime)
     {
-        if (!_isReplay)
+        if (!ReplayLaunched)
         {
             return;
         }
 
         if (CurrentLevel.History.Count == 0)
         {
-            _isReplay = false;
+            ReplayLaunched = false;
             return;
         }
 
@@ -60,7 +60,7 @@ public class PixelProcessorService
 
         if (_historyIndex >= CurrentLevel.History.Count)
         {
-            _isReplay = false;
+            ReplayLaunched = false;
         }
     }
     
@@ -305,6 +305,6 @@ public class PixelProcessorService
 
         _historyIndex = 0;
         _pixelsAccumulator = 0;
-        _isReplay = true;
+        ReplayLaunched = true;
     }
 }

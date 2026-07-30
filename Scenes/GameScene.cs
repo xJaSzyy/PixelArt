@@ -76,7 +76,7 @@ public class GameScene : IScene
         {
             _colorButtonsService.UpdateSelectedButton();
             
-            if (_homeButton.IsHovered)
+            if (_homeButton.IsHovered && !_processorService.ReplayLaunched)
             {
                 _colorButtonsService.ClearHighlight(true);
                 _sceneService.SetScene(_menuScene);
@@ -113,11 +113,6 @@ public class GameScene : IScene
                 }
             }
         }
-
-        if (keyboard.IsKeyDown(Keys.R))
-        {
-            _processorService.Replay();
-        }
         
         if (!ColoringIsCompleted)
         {
@@ -128,10 +123,12 @@ public class GameScene : IScene
             {
                 ColoringIsCompleted = true;
                 PlaceImageCenter();
+                _processorService.Replay();
             }
         }
 
         _processorService.Update(gameTime);
+
         _homeButton.Update(mouse);
         _processorService.ApplyPixelChanges();
         _mouseService.SetMouse(mouse);
@@ -152,7 +149,10 @@ public class GameScene : IScene
             _colorButtonsService.Draw(_drawService);
         }
 
-        _homeButton.Draw(_spriteBatch);
+        if (!_processorService.ReplayLaunched)
+        {
+            _homeButton.Draw(_spriteBatch);
+        }
 
         _spriteBatch.End();
     }
