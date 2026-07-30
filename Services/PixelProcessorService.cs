@@ -205,13 +205,17 @@ public class PixelProcessorService
             return;
         }
         
-        pixel.CurrentColor = color;
-        CurrentLevel.TexturePixels[index] = color;
-
-        if (pixel.CurrentColor == pixel.OriginalColor)
+        if (color == pixel.OriginalColor)
         {
             CurrentLevel.History.Add(index);
         }
+        else if (color != pixel.CurrentColor)
+        {
+            CurrentLevel.ErrorCount++;
+        }
+        
+        pixel.CurrentColor = color;
+        CurrentLevel.TexturePixels[index] = color;
     }
 
     public void ApplyPixelChanges()

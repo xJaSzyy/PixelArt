@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -84,7 +85,7 @@ public class GameScene : IScene
         }
 
         if ((_mouseService.IsLeftMouseButtonPressed(mouse) || keyboard.IsKeyDown(Keys.Space)) && !IsMouseOverUI() && 
-            Utils.Remap(_cameraService.Zoom, _cameraService.MinZoom, _cameraService.MinZoom * 2, 0f, 1f) > 0)
+            Utils.Remap(_cameraService.Zoom, _cameraService.MinZoom, _cameraService.MinZoom * 2, 0f, 1f) > 0.01f)
         {
             var selectedButton = _colorButtonsService.GetButtons().FirstOrDefault(x => x.IsSelected);
             if (selectedButton != null)
@@ -124,6 +125,19 @@ public class GameScene : IScene
                 ColoringIsCompleted = true;
                 PlaceImageCenter();
                 _processorService.Replay();
+                
+                switch (_level.ErrorCountPercent)
+                {
+                    case <= 1f:
+                        Console.WriteLine($"Мало ошибок, очки удваиваются! Вы получаете - {_level.History.Count * 2} очк.");
+                        break;
+                    case <= 25f:
+                        Console.WriteLine($"Вы получаете - {_level.History.Count} очк.");
+                        break;
+                    default:
+                        Console.WriteLine($"Много ошибок, очки урезаны вдвое. Вы получаете - {_level.History.Count / 2} очк.");
+                        break;
+                }
             }
         }
 

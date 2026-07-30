@@ -62,8 +62,6 @@ public class MenuScene : IScene
             .Select(i => $"img{i}")
             .ToList();
 
-        imageNames.Shuffle();
-        
         var buttonsPerRow = Math.Max(1, graphicsDevice.Viewport.Width / _buttonSize);
         for (var i = 0; i < _levels.Count; i++)
         {
@@ -80,6 +78,7 @@ public class MenuScene : IScene
                 _buttonSize,
                 _buttonSize);
 
+            level.Id = i;
             level.Texture = texture;
             level.Button = new Button(texture, rectangle);
             level.IsLoaded = true;
