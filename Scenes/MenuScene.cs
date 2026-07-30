@@ -23,9 +23,16 @@ public class MenuScene : IScene
     private DrawService _drawService;
     private PlayerService _playerService;
 
-    private const int _levelsCount = 25;
     private List<LevelData> _levels = [];
+    
+    private const int _levelsCount = 25;
     private const int _buttonSize = 128;
+    private const int _buttonSpacing = 24;
+    private const float _scrollSpeed = 0.2f;
+
+    private int _buttonsPerRow = 3;
+    private float _scroll;
+    private float _targetScroll;
     
     public void Initialize(SceneService sceneService, MouseService mouseService, DrawService drawService, PlayerService playerService)
     {
@@ -66,15 +73,15 @@ public class MenuScene : IScene
             .Select(i => $"img{i}")
             .ToList();
 
-        var buttonsPerRow = Math.Max(1, graphicsDevice.Viewport.Width / _buttonSize);
+        _buttonsPerRow = Math.Max(1, (graphicsDevice.Viewport.Width - _buttonSpacing) / (_buttonSize + _buttonSpacing));
         for (var i = 0; i < _levels.Count; i++)
         {
             var level = _levels[i];
             
             var texture = content.Load<Texture2D>($"Images/{imageNames[i]}");
 
-            var column = i % buttonsPerRow;
-            var row = i / buttonsPerRow;
+            var column = i % _buttonsPerRow;
+            var row = i / _buttonsPerRow;
 
             var rectangle = new Rectangle(
                 column * _buttonSize,
@@ -90,16 +97,12 @@ public class MenuScene : IScene
             _processorService.ChangeLevel(level);
             _processorService.Generate();
         }
-
-        _levels = _levels.OrderBy(_ => Guid.NewGuid()).ToList();
     }
 
     public void Update(GameTime gameTime)
     {
         var mouse = Mouse.GetState();
-
-        _levels.ForEach(l => l.Button.Update(mouse));
-
+        
         if (_mouseService.IsLeftMouseButtonClicked(mouse))
         {
             foreach (var level in _levels.Where(l => l.Button.IsHovered))
@@ -109,6 +112,25 @@ public class MenuScene : IScene
                 break;
             }
         }
+        
+        _scroll = MathHelper.Lerp(_scroll, _targetScroll, _scrollSpeed);
+        
+        if (_mouseService.IsScroll(mouse))
+        {
+            var scrollDelta = _mouseService.GetScrollDelta(mouse);
+
+            if (scrollDelta > 0)
+            {
+                ScrollUp();
+            }
+            else
+            {
+                ScrollDown();
+            }
+        }
+        
+        LayoutButtons();
+        _levels.ForEach(l => l.Button.Update(mouse));
 
         _mouseService.SetMouse(mouse);
     }
@@ -140,5 +162,39 @@ public class MenuScene : IScene
         );
 
         _spriteBatch.End();
+    }
+    
+    private void LayoutButtons()
+    {
+        for (var i = 0; i < _levels.Count; i++)
+        {
+            var column = i % _buttonsPerRow;
+            var row = i / _buttonsPerRow;
+
+            var x = _buttonSpacing + column * (_buttonSize + _buttonSpacing);
+            var y = _buttonSpacing + row * (_buttonSize + _buttonSpacing) - (int)_scroll;
+
+            _levels[i].Button.Bounds = new Rectangle(x, y, _buttonSize, _buttonSize);
+        }
+    }
+
+    private void ScrollDown()
+    {
+        _targetScroll += _buttonSize + _buttonSpacing;
+        _targetScroll = Math.Min(_targetScroll, GetMaxScroll());
+    }
+
+    private void ScrollUp()
+    {
+        _targetScroll -= _buttonSize + _buttonSpacing;
+        _targetScroll = Math.Max(_targetScroll, 0);
+    }
+    
+    private float GetMaxScroll()
+    {
+        var rows = (int)Math.Ceiling(_levels.Count / (float)_buttonsPerRow);
+        var contentHeight = rows * (_buttonSize + _buttonSpacing) + _buttonSpacing;
+
+        return Math.Max(0, contentHeight - _graphicsDevice.Viewport.Height);
     }
 }

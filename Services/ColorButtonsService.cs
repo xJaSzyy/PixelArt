@@ -18,7 +18,7 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
     private const float _scrollSpeed = 0.2f;
     private const int _buttonSize = 56;
     private const int _buttonSpacing = 12;
-    private Color _highlightColor = new(72, 72, 72);
+    private readonly Color _highlightColor = new(72, 72, 72);
     
 
     private Texture2D _pixelTexture;
@@ -33,7 +33,6 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
                 Rectangle.Empty));
         }
 
-        LayoutButtons();
         SelectButton(0);
     }
 
