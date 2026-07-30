@@ -24,6 +24,7 @@ public class GameScene : IScene
     private ColorButtonsService _colorButtonsService;
     private readonly CameraService _cameraService = new();
     private readonly PixelProcessorService _processorService;
+    private PlayerService _playerService;
     private readonly IScene _menuScene;
 
     private readonly LevelData _level;
@@ -40,11 +41,12 @@ public class GameScene : IScene
         _menuScene = menuScene;
     }
 
-    public void Initialize(SceneService sceneService, MouseService mouseService, DrawService drawService)
+    public void Initialize(SceneService sceneService, MouseService mouseService, DrawService drawService, PlayerService playerService)
     {
         _sceneService = sceneService;
         _mouseService = mouseService;
         _drawService = drawService;
+        _playerService = playerService;
     }
 
     public void LoadContent(GraphicsDevice graphicsDevice, ContentManager content)
@@ -125,19 +127,25 @@ public class GameScene : IScene
                 ColoringIsCompleted = true;
                 PlaceImageCenter();
                 _processorService.Replay();
+
+                var coinsToAdd = _level.History.Count / 10;
                 
                 switch (_level.ErrorCountPercent)
                 {
                     case <= 1f:
-                        Console.WriteLine($"Мало ошибок, очки удваиваются! Вы получаете - {_level.History.Count * 2} очк.");
+                        coinsToAdd *= 2;
+                        Console.WriteLine($"Мало ошибок, очки удваиваются! Вы получаете - {coinsToAdd} очк.");
                         break;
                     case <= 25f:
-                        Console.WriteLine($"Вы получаете - {_level.History.Count} очк.");
+                        Console.WriteLine($"Вы получаете - {coinsToAdd} очк.");
                         break;
                     default:
-                        Console.WriteLine($"Много ошибок, очки урезаны вдвое. Вы получаете - {_level.History.Count / 2} очк.");
+                        coinsToAdd /= 2;
+                        Console.WriteLine($"Много ошибок, очки урезаны вдвое. Вы получаете - {coinsToAdd} очк.");
                         break;
                 }
+                
+                _playerService.AddCoins(coinsToAdd);
             }
         }
 

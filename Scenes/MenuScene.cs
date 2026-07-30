@@ -20,15 +20,19 @@ public class MenuScene : IScene
     private SceneService _sceneService;
     private MouseService _mouseService;
     private PixelProcessorService _processorService;
+    private DrawService _drawService;
+    private PlayerService _playerService;
 
     private const int _levelsCount = 25;
     private List<LevelData> _levels = [];
     private const int _buttonSize = 128;
     
-    public void Initialize(SceneService sceneService, MouseService mouseService, DrawService drawService)
+    public void Initialize(SceneService sceneService, MouseService mouseService, DrawService drawService, PlayerService playerService)
     {
         _sceneService = sceneService;
         _mouseService = mouseService;
+        _drawService = drawService;
+        _playerService = playerService;
 
         if (_levels.Count == _levelsCount)
         {
@@ -118,6 +122,22 @@ public class MenuScene : IScene
         );
 
         _levels.ForEach(l => l.Button.Draw(_spriteBatch));
+
+        var scale = 2.5f;
+        var text = _playerService.Coins.ToString();
+
+        var position = new Vector2(
+            _graphicsDevice.Viewport.Width / 2f,
+            48
+        );
+
+        _drawService.DrawString(
+            _spriteBatch,
+            text,
+            position,
+            Color.Yellow,
+            scale
+        );
 
         _spriteBatch.End();
     }

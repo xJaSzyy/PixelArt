@@ -5,13 +5,15 @@ namespace PixelArt.Services;
 
 public class DrawService(SpriteFont font)
 {
+    public Vector2 MeasureString(string text) => font.MeasureString(text);
+    
     public void DrawString(SpriteBatch spriteBatch,
         string text,
         Vector2 position,
         Color color,
         float scale = 1f)
     {
-        var size = font.MeasureString(text);
+        var size = MeasureString(text);
 
         spriteBatch.DrawString(
             font,

@@ -11,6 +11,7 @@ public class Game1 : Game
     private SceneService _sceneService;
     private MouseService _mouseService;
     private DrawService _drawService;
+    private readonly PlayerService _playerService = new();
     
     public Game1()
     {
@@ -30,7 +31,7 @@ public class Game1 : Game
         _drawService = new DrawService(Content.Load<SpriteFont>("DefaultFont"));
         
         _mouseService = new MouseService();
-        _sceneService = new SceneService(GraphicsDevice, Content, _mouseService, _drawService);
+        _sceneService = new SceneService(GraphicsDevice, Content, _mouseService, _drawService, _playerService);
         _sceneService.SetScene(new MenuScene());
         
         base.Initialize();
