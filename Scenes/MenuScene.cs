@@ -25,7 +25,7 @@ public class MenuScene : IScene
 
     private List<LevelData> _levels = [];
     
-    private const int _levelsCount = 25;
+    private const int _levelsCount = 28;
     private const int _buttonSize = 128;
     private const int _buttonSpacing = 24;
     private const float _scrollSpeed = 0.2f;
