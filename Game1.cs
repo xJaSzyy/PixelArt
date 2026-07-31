@@ -32,7 +32,7 @@ public class Game1 : Game
     {
         _drawService = new DrawService(Content.Load<SpriteFont>("DefaultFont"));
         
-        _mouseService = new MouseService();
+        _mouseService = new MouseService(GraphicsDevice);
         _sceneService = new SceneService(GraphicsDevice, Content, _mouseService, _drawService, _playerService);
         _sceneService.SetScene(new MenuScene());
         
