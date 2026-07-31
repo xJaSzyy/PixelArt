@@ -34,34 +34,26 @@ public class MenuScene : IScene
     private float _scroll;
     private float _targetScroll;
 
-    public MenuScene(GraphicsDevice graphicsDevice, 
-        PopupService popupService, 
-        SceneFactory sceneFactory, 
-        SceneService sceneService, 
-        MouseService mouseService, 
-        DrawService drawService, 
-        PlayerService playerService, 
-        PixelProcessorService processorService,
-        LevelService levelService)
+    public MenuScene(GraphicsDevice graphicsDevice, SceneFactory sceneFactory, 
+        SceneService sceneService, MouseService mouseService, 
+        DrawService drawService, PlayerService playerService, 
+        PixelProcessorService processorService, LevelService levelService)
     {
         _graphicsDevice = graphicsDevice;
         _spriteBatch = new SpriteBatch(graphicsDevice);
         _sceneFactory = sceneFactory;
-        
         _sceneService = sceneService;
+        
         _mouseService = mouseService;
         _drawService = drawService;
         _playerService = playerService;
         _processorService = processorService;
         _levelService = levelService;
-        
-        //popupService.ShowPopup();
     }
 
     public void LoadContent(ContentManager content)
     {
         _buttonsPerRow = Math.Max(1, (_graphicsDevice.Viewport.Width - _buttonSpacing) / (_buttonSize + _buttonSpacing));
-        
         _levelService.LoadLevels(_buttonsPerRow, _buttonSize);
     }
 
@@ -98,10 +90,7 @@ public class MenuScene : IScene
         }
         
         LayoutButtons();
-        foreach (var level in _levelService.Levels)
-        {
-            level.Button.Update(mouse);
-        }
+        _levelService.Levels.ForEach(l => l.Button.Update(mouse));
 
         _mouseService.SetMouse(mouse);
     }
@@ -114,10 +103,7 @@ public class MenuScene : IScene
             samplerState: SamplerState.PointClamp
         );
 
-        foreach (var level in _levelService.Levels)
-        {
-            level.Button.Draw(_spriteBatch);
-        }
+        _levelService.Levels.ForEach(l => l.Button.Draw(_spriteBatch));
 
         var scale = 2.5f;
         var text = _playerService.Coins.ToString();

@@ -1,7 +1,6 @@
 ﻿using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using PixelArt.Scenes;
 using PixelArt.Services;
@@ -10,34 +9,33 @@ namespace PixelArt;
 
 public class Game1 : Game
 {
-    private readonly GraphicsDeviceManager _graphics;
     private SceneService _sceneService;
-    
     private ServiceProvider _services;
-    
+
     public Game1()
     {
-        _graphics = new GraphicsDeviceManager(this);
+        var graphics = new GraphicsDeviceManager(this);
 
         Content.RootDirectory = "Content";
         IsMouseVisible = true;
         Window.AllowUserResizing = true;
         Window.ClientSizeChanged += OnClientSizeChanged;
         
-        _graphics.PreferredBackBufferWidth = 640;
-        _graphics.PreferredBackBufferHeight = 640;
-        _graphics.ApplyChanges();
+        graphics.PreferredBackBufferWidth = 640;
+        graphics.PreferredBackBufferHeight = 640;
+        graphics.ApplyChanges();
     }
 
     protected override void Initialize()
     {
+        #region Dependency Injection
+
         var collection = new ServiceCollection();
         
         collection.AddSingleton(GraphicsDevice);
         collection.AddSingleton(new DrawService(Content.Load<SpriteFont>("DefaultFont")));
         collection.AddSingleton<MouseService>();
         collection.AddSingleton<PlayerService>();
-        collection.AddSingleton<PopupService>();
         collection.AddSingleton<SceneFactory>();
         collection.AddSingleton<SceneService>();
         collection.AddSingleton<PixelProcessorService>();
@@ -48,6 +46,8 @@ public class Game1 : Game
         collection.AddTransient<GameScene>();
         
         _services = collection.BuildServiceProvider();
+
+        #endregion
         
         _sceneService = _services.GetRequiredService<SceneService>();
         _sceneService.SetScene<MenuScene>();
@@ -64,7 +64,6 @@ public class Game1 : Game
         }
         
         _sceneService.CurrentScene.Update(gameTime);
-        //_popupService.Update(gameTime);
         
         base.Update(gameTime);
     }
@@ -72,7 +71,6 @@ public class Game1 : Game
     protected override void Draw(GameTime gameTime)
     {
         _sceneService.CurrentScene.Draw(gameTime);
-        //_popupService.Draw(gameTime);
         
         base.Draw(gameTime);
     }

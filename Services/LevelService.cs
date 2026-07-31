@@ -32,7 +32,7 @@ public class LevelService
         Levels.Clear();
         for (var i = 0; i < _levelsCount; i++)
         {
-            var texture = _contentManager.Load<Texture2D>($"Images/img{i}");
+            var texture = _contentManager.Load<Texture2D>($"Images/img{i + 1}");
 
             var column = i % buttonsPerRow;
             var row = i / buttonsPerRow;
