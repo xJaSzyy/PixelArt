@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -22,10 +23,9 @@ public class MenuScene : IScene
     private PixelProcessorService _processorService;
     private DrawService _drawService;
     private PlayerService _playerService;
+    private SceneFactory _sceneFactory;
+    private LevelService _levelService;
 
-    private List<LevelData> _levels = [];
-    
-    private const int _levelsCount = 28;
     private const int _buttonSize = 128;
     private const int _buttonSpacing = 24;
     private const float _scrollSpeed = 0.2f;
@@ -33,70 +33,36 @@ public class MenuScene : IScene
     private int _buttonsPerRow = 3;
     private float _scroll;
     private float _targetScroll;
-    
-    public void Initialize(SceneService sceneService, MouseService mouseService, DrawService drawService, PlayerService playerService)
+
+    public MenuScene(GraphicsDevice graphicsDevice, 
+        PopupService popupService, 
+        SceneFactory sceneFactory, 
+        SceneService sceneService, 
+        MouseService mouseService, 
+        DrawService drawService, 
+        PlayerService playerService, 
+        PixelProcessorService processorService,
+        LevelService levelService)
     {
+        _graphicsDevice = graphicsDevice;
+        _spriteBatch = new SpriteBatch(graphicsDevice);
+        _sceneFactory = sceneFactory;
+        
         _sceneService = sceneService;
         _mouseService = mouseService;
         _drawService = drawService;
         _playerService = playerService;
-
-        if (_levels.Count == _levelsCount)
-        {
-            return;
-        }
+        _processorService = processorService;
+        _levelService = levelService;
         
-        _levels.Clear();
-        for (var i = 0; i < _levelsCount; i++)
-        {
-            _levels.Add(new LevelData
-            {
-                IsLoaded = false,
-            });
-        }
+        //popupService.ShowPopup();
     }
 
-    public void LoadContent(GraphicsDevice graphicsDevice, ContentManager content)
+    public void LoadContent(ContentManager content)
     {
-        _graphicsDevice = graphicsDevice;
-
-        _spriteBatch = new SpriteBatch(graphicsDevice);
-
-        if (_levels.All(l => l.IsLoaded))
-        {
-            return;
-        }
+        _buttonsPerRow = Math.Max(1, (_graphicsDevice.Viewport.Width - _buttonSpacing) / (_buttonSize + _buttonSpacing));
         
-        _processorService = new PixelProcessorService();
-        
-        var imageNames = Enumerable.Range(1, _levelsCount)
-            .Select(i => $"img{i}")
-            .ToList();
-
-        _buttonsPerRow = Math.Max(1, (graphicsDevice.Viewport.Width - _buttonSpacing) / (_buttonSize + _buttonSpacing));
-        for (var i = 0; i < _levels.Count; i++)
-        {
-            var level = _levels[i];
-            
-            var texture = content.Load<Texture2D>($"Images/{imageNames[i]}");
-
-            var column = i % _buttonsPerRow;
-            var row = i / _buttonsPerRow;
-
-            var rectangle = new Rectangle(
-                column * _buttonSize,
-                row * _buttonSize,
-                _buttonSize,
-                _buttonSize);
-
-            level.Id = i;
-            level.Texture = texture;
-            level.Button = new Button(texture, rectangle);
-            level.IsLoaded = true;
-
-            _processorService.ChangeLevel(level);
-            _processorService.Generate();
-        }
+        _levelService.LoadLevels(_buttonsPerRow, _buttonSize);
     }
 
     public void Update(GameTime gameTime)
@@ -105,10 +71,12 @@ public class MenuScene : IScene
         
         if (_mouseService.IsLeftMouseButtonClicked(mouse))
         {
-            foreach (var level in _levels.Where(l => l.Button.IsHovered))
+            foreach (var level in _levelService.Levels.Where(l => l.Button.IsHovered))
             {
                 _processorService.ChangeLevel(level);
-                _sceneService.SetScene(new GameScene(level, _processorService, this));
+                
+                var scene = _sceneFactory.CreateGameScene(level);
+                _sceneService.SetScene(scene);
                 break;
             }
         }
@@ -130,7 +98,10 @@ public class MenuScene : IScene
         }
         
         LayoutButtons();
-        _levels.ForEach(l => l.Button.Update(mouse));
+        foreach (var level in _levelService.Levels)
+        {
+            level.Button.Update(mouse);
+        }
 
         _mouseService.SetMouse(mouse);
     }
@@ -143,7 +114,10 @@ public class MenuScene : IScene
             samplerState: SamplerState.PointClamp
         );
 
-        _levels.ForEach(l => l.Button.Draw(_spriteBatch));
+        foreach (var level in _levelService.Levels)
+        {
+            level.Button.Draw(_spriteBatch);
+        }
 
         var scale = 2.5f;
         var text = _playerService.Coins.ToString();
@@ -171,7 +145,7 @@ public class MenuScene : IScene
 
     private void LayoutButtons()
     {
-        for (var i = 0; i < _levels.Count; i++)
+        for (var i = 0; i < _levelService.Levels.Count; i++)
         {
             var column = i % _buttonsPerRow;
             var row = i / _buttonsPerRow;
@@ -179,7 +153,7 @@ public class MenuScene : IScene
             var x = _buttonSpacing + column * (_buttonSize + _buttonSpacing);
             var y = _buttonSpacing + row * (_buttonSize + _buttonSpacing) - (int)_scroll;
 
-            _levels[i].Button.Bounds = new Rectangle(x, y, _buttonSize, _buttonSize);
+            _levelService.Levels[i].Button.Bounds = new Rectangle(x, y, _buttonSize, _buttonSize);
         }
     }
 
@@ -197,7 +171,7 @@ public class MenuScene : IScene
     
     private float GetMaxScroll()
     {
-        var rows = (int)Math.Ceiling(_levels.Count / (float)_buttonsPerRow);
+        var rows = (int)Math.Ceiling(_levelService.Levels.Count / (float)_buttonsPerRow);
         var contentHeight = rows * (_buttonSize + _buttonSpacing) + _buttonSpacing;
 
         return Math.Max(0, contentHeight - _graphicsDevice.Viewport.Height);

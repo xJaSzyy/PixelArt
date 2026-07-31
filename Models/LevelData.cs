@@ -14,7 +14,6 @@ public class LevelData
     public List<int> History { get; set; } = [];
     public Color[] TexturePixels { get; set; }
     
-    public bool IsLoaded { get; set; }
     public Button Button { get; set; }
     public int ErrorCount { get; set; }
     public float ErrorCountPercent => (float)ErrorCount / History.Count * 100f;

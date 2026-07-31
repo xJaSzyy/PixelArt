@@ -12,7 +12,6 @@ public class PixelProcessorService
     public LevelData CurrentLevel { get; private set; }
     public bool ReplayLaunched { get; private set; }
     
-    
     private float _pixelWidth;
     private float _pixelHeight;
     

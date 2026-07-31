@@ -15,17 +15,15 @@ public class GameScene : IScene
 {
     private bool ColoringIsCompleted { get; set; }
     
-    private GraphicsDevice _graphicsDevice;
-    private SpriteBatch _spriteBatch;
-    
-    private SceneService _sceneService;
-    private MouseService _mouseService;
-    private DrawService _drawService;
+    private readonly GraphicsDevice _graphicsDevice;
+    private readonly SpriteBatch _spriteBatch;
+    private readonly SceneService _sceneService;
+    private readonly MouseService _mouseService;
+    private readonly DrawService _drawService;
     private ColorButtonsService _colorButtonsService;
     private readonly CameraService _cameraService = new();
     private readonly PixelProcessorService _processorService;
-    private PlayerService _playerService;
-    private readonly IScene _menuScene;
+    private readonly PlayerService _playerService;
 
     private readonly LevelData _level;
 
@@ -34,26 +32,20 @@ public class GameScene : IScene
     
     private Button _homeButton;
 
-    public GameScene(LevelData level, PixelProcessorService processorService, IScene menuScene)
+    public GameScene(LevelData level, PixelProcessorService processorService, GraphicsDevice graphicsDevice, SceneService sceneService, MouseService mouseService, DrawService drawService, PlayerService playerService)
     {
         _level = level;
         _processorService = processorService;
-        _menuScene = menuScene;
-    }
-
-    public void Initialize(SceneService sceneService, MouseService mouseService, DrawService drawService, PlayerService playerService)
-    {
+        _graphicsDevice = graphicsDevice;
+        _spriteBatch = new SpriteBatch(graphicsDevice);
         _sceneService = sceneService;
         _mouseService = mouseService;
         _drawService = drawService;
         _playerService = playerService;
     }
 
-    public void LoadContent(GraphicsDevice graphicsDevice, ContentManager content)
+    public void LoadContent(ContentManager content)
     {
-        _graphicsDevice = graphicsDevice;
-        _spriteBatch = new SpriteBatch(graphicsDevice);
-        
         var homeTexture = content.Load<Texture2D>("Icons/home");
         _homeButton = new Button(homeTexture, 
             new Rectangle(_graphicsDevice.Viewport.Width - _buttonSize - _buttonSpacing, 
@@ -82,7 +74,7 @@ public class GameScene : IScene
             if (_homeButton.IsHovered && !_processorService.ReplayLaunched)
             {
                 _colorButtonsService.ClearHighlight(true);
-                _sceneService.SetScene(_menuScene);
+                _sceneService.SetScene<MenuScene>();
             }
         }
 

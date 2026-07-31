@@ -1,5 +1,6 @@
+using System;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Xna.Framework.Content;
-using Microsoft.Xna.Framework.Graphics;
 using PixelArt.Interfaces;
 
 namespace PixelArt.Services;
@@ -8,27 +9,26 @@ public class SceneService
 {
     public IScene CurrentScene { get; private set; }
     
-    private readonly GraphicsDevice _graphics;
-    private readonly ContentManager _content;
+    private readonly IServiceProvider _services;
+    private readonly ContentManager _contentManager;
     
-    private readonly MouseService _mouseService;
-    private readonly DrawService _drawService;
-    private readonly PlayerService _playerService;
-    
-    public SceneService(GraphicsDevice graphics, ContentManager content, MouseService mouseService,
-        DrawService drawService, PlayerService playerService)
+    public SceneService(IServiceProvider services, ContentManager contentManager)
     {
-        _graphics = graphics;
-        _content = content;
-        _mouseService = mouseService;
-        _drawService = drawService;
-        _playerService = playerService;
+        _services = services;
+        _contentManager = contentManager;
+    }
+
+    public void SetScene<T>() where T : IScene
+    {
+        var scene = ActivatorUtilities.CreateInstance<T>(_services);
+
+        CurrentScene = scene;
+        CurrentScene.LoadContent(_contentManager);
     }
     
     public void SetScene(IScene scene)
     {
         CurrentScene = scene;
-        CurrentScene.Initialize(this, _mouseService,  _drawService, _playerService);
-        CurrentScene.LoadContent(_graphics, _content);
+        CurrentScene.LoadContent(_contentManager);
     }
 }
