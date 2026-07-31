@@ -1,30 +1,26 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using PixelArt.Buttons;
 using PixelArt.Interfaces;
-using PixelArt.Models;
 using PixelArt.Services;
 
 namespace PixelArt.Scenes;
 
 public class MenuScene : IScene
 {
-    private GraphicsDevice _graphicsDevice;
-    private SpriteBatch _spriteBatch;
+    private readonly GraphicsDevice _graphicsDevice;
+    private readonly SpriteBatch _spriteBatch;
     
-    private SceneService _sceneService;
-    private MouseService _mouseService;
-    private PixelProcessorService _processorService;
-    private DrawService _drawService;
-    private PlayerService _playerService;
-    private SceneFactory _sceneFactory;
-    private LevelService _levelService;
+    private readonly SceneService _sceneService;
+    private readonly MouseService _mouseService;
+    private readonly PixelProcessorService _processorService;
+    private readonly DrawService _drawService;
+    private readonly PlayerService _playerService;
+    private readonly SceneFactory _sceneFactory;
+    private readonly LevelService _levelService;
 
     private const int _buttonSize = 128;
     private const int _buttonSpacing = 24;
@@ -65,7 +61,7 @@ public class MenuScene : IScene
         {
             foreach (var level in _levelService.Levels.Where(l => l.Button.IsHovered))
             {
-                _processorService.ChangeLevel(level);
+                 _processorService.ChangeLevel(level);
                 
                 var scene = _sceneFactory.CreateGameScene(level);
                 _sceneService.SetScene(scene);
