@@ -122,7 +122,9 @@ public class MenuScene : IScene
     
     public void OnClientSizeChanged(object sender, EventArgs e)
     {
-        
+        _buttonsPerRow = Math.Max(1, (_graphicsDevice.Viewport.Width - _buttonSpacing) / (_buttonSize + _buttonSpacing));
+        _scroll = 0f;
+        _targetScroll = 0f;
     }
 
     private void LayoutButtons()

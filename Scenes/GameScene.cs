@@ -20,19 +20,23 @@ public class GameScene : IScene
     private readonly SceneService _sceneService;
     private readonly MouseService _mouseService;
     private readonly DrawService _drawService;
-    private ColorButtonsService _colorButtonsService;
     private readonly CameraService _cameraService = new();
     private readonly PixelProcessorService _processorService;
     private readonly PlayerService _playerService;
+    private ColorButtonsService _colorButtonsService;
 
     private readonly LevelData _level;
+    private Button _homeButton;
 
     private const int _buttonSize = 56;
     private const int _buttonSpacing = 12;
-    
-    private Button _homeButton;
 
-    public GameScene(LevelData level, PixelProcessorService processorService, GraphicsDevice graphicsDevice, SceneService sceneService, MouseService mouseService, DrawService drawService, PlayerService playerService)
+    private string[] _resultText = new string[2];
+
+    public GameScene(LevelData level, PixelProcessorService processorService, 
+        GraphicsDevice graphicsDevice, SceneService sceneService, 
+        MouseService mouseService, DrawService drawService,
+        PlayerService playerService)
     {
         _level = level;
         _processorService = processorService;
@@ -47,18 +51,18 @@ public class GameScene : IScene
     public void LoadContent(ContentManager content)
     {
         var homeTexture = content.Load<Texture2D>("Icons/home");
-        _homeButton = new Button(homeTexture, 
-            new Rectangle(_graphicsDevice.Viewport.Width - _buttonSize - _buttonSpacing, 
-                _buttonSpacing, 
-                _buttonSize, 
+        _homeButton = new Button(homeTexture,
+            new Rectangle(_graphicsDevice.Viewport.Width - _buttonSize - _buttonSpacing,
+                _buttonSpacing,
+                _buttonSize,
                 _buttonSize));
 
         var pixelTexture = new Texture2D(_graphicsDevice, 1, 1);
         pixelTexture.SetData([Color.White]);
-        
+
         _colorButtonsService = new ColorButtonsService(_graphicsDevice, _spriteBatch, _processorService);
         _colorButtonsService.LoadContent(pixelTexture);
-        
+
         PlaceImageCenter();
     }
 
@@ -126,16 +130,21 @@ public class GameScene : IScene
                 {
                     case <= 1f:
                         coinsToAdd *= 2;
-                        Console.WriteLine($"Мало ошибок, очки удваиваются! Вы получаете - {coinsToAdd} очк.");
+                        _resultText[0] = "Perfect!";
+
                         break;
+
                     case <= 25f:
-                        Console.WriteLine($"Вы получаете - {coinsToAdd} очк.");
+                        _resultText[0] = string.Empty;
                         break;
+
                     default:
                         coinsToAdd /= 2;
-                        Console.WriteLine($"Много ошибок, очки урезаны вдвое. Вы получаете - {coinsToAdd} очк.");
+                        _resultText[0] = "Too many mistakes.";
                         break;
                 }
+
+                _resultText[1] = $"+{coinsToAdd} Pixoins";
                 
                 _playerService.AddCoins(coinsToAdd);
             }
@@ -161,6 +170,38 @@ public class GameScene : IScene
         if (!ColoringIsCompleted)
         {
             _colorButtonsService.Draw(_drawService);
+        }
+        else if (!_processorService.ReplayLaunched)
+        {
+            if (_resultText[0] == string.Empty)
+            {
+                _drawService.DrawString(_spriteBatch,
+                    _resultText[1],
+                    new Vector2(_graphicsDevice.Viewport.Width * .5f,
+                        _drawService.MeasureString(_resultText[1]).Y + _buttonSpacing),
+                    Color.Yellow,
+                    2f
+                );
+            }
+            else 
+            {
+                _drawService.DrawString(_spriteBatch,
+                    _resultText[0],
+                    new Vector2(_graphicsDevice.Viewport.Width * .5f,
+                        _drawService.MeasureString(_resultText[0]).Y + _buttonSpacing),
+                    Color.Yellow,
+                    2f
+                );
+
+                _drawService.DrawString(_spriteBatch,
+                    _resultText[1],
+                    new Vector2(_graphicsDevice.Viewport.Width * .5f,
+                        _drawService.MeasureString(_resultText[0]).Y + _buttonSpacing +
+                        _drawService.MeasureString(_resultText[1]).Y * 2 + _buttonSpacing),
+                    Color.Yellow,
+                    2f
+                );
+            }
         }
 
         if (!_processorService.ReplayLaunched)
