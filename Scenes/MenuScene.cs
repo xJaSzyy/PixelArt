@@ -164,6 +164,11 @@ public class MenuScene : IScene
         _spriteBatch.End();
     }
     
+    public void OnClientSizeChanged(object sender, EventArgs e)
+    {
+        
+    }
+
     private void LayoutButtons()
     {
         for (var i = 0; i < _levels.Count; i++)

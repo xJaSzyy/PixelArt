@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using PixelArt.Scenes;
 using PixelArt.Services;
@@ -20,6 +21,7 @@ public class Game1 : Game
         Content.RootDirectory = "Content";
         IsMouseVisible = true;
         Window.AllowUserResizing = true;
+        Window.ClientSizeChanged += OnClientSizeChanged;
         
         _graphics.PreferredBackBufferWidth = 640;
         _graphics.PreferredBackBufferHeight = 640;
@@ -55,5 +57,10 @@ public class Game1 : Game
         _sceneService.CurrentScene.Draw(gameTime);
         
         base.Draw(gameTime);
+    }
+    
+    private void OnClientSizeChanged(object sender, EventArgs e)
+    {
+        _sceneService.CurrentScene.OnClientSizeChanged(sender, e);
     }
 }

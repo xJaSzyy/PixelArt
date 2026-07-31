@@ -178,6 +178,16 @@ public class GameScene : IScene
 
         _spriteBatch.End();
     }
+    
+    public void OnClientSizeChanged(object sender, EventArgs e)
+    {
+        _homeButton.Bounds = new Rectangle(_graphicsDevice.Viewport.Width - _buttonSize - _buttonSpacing,
+            _buttonSpacing,
+            _buttonSize,
+            _buttonSize);
+        
+        PlaceImageCenter();
+    }
 
     private bool IsMouseOverUI()
     {
