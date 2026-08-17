@@ -41,8 +41,8 @@ public class PixelProcessorService
         while (_pixelsAccumulator >= 1f && _historyIndex < CurrentLevel.History.Count)
         {
             var pixelIndex = CurrentLevel.History[_historyIndex++];
-
-            if (CurrentLevel.Pixels.TryGetValue(pixelIndex, out var pixel))
+            var pixel = CurrentLevel.Pixels.FirstOrDefault(x => x.Index == pixelIndex);
+            if (pixel != null)
             {
                 pixel.CurrentColor = pixel.OriginalColor;
                 CurrentLevel.TexturePixels[pixelIndex] = pixel.OriginalColor;
@@ -108,7 +108,7 @@ public class PixelProcessorService
                 CurrentColor = Color.White
             };
 
-            CurrentLevel.Pixels[i] = pixel;
+            CurrentLevel.Pixels.Add(pixel);
             CurrentLevel.ColorGroups[original].Pixels.Add(pixel);
         }
         
@@ -194,7 +194,9 @@ public class PixelProcessorService
 
     private void SetPixel(int index, Color color)
     {
-        if (!CurrentLevel.Pixels.TryGetValue(index, out var pixel))
+        var pixel = CurrentLevel.Pixels.FirstOrDefault(x => x.Index == index);
+        
+        if (pixel == null)
         {
             return;
         }
@@ -226,15 +228,17 @@ public class PixelProcessorService
     {
         foreach (var (index, color) in pixels)
         {
-            if (!CurrentLevel.Pixels.TryGetValue(index, out var pixel))
+            var pixel = CurrentLevel.Pixels.FirstOrDefault(x => x.Index == index && !x.IsFinished);
+            
+            if (pixel == null)
             {
                 continue;
             }
 
-            if (pixel.IsFinished)
+            /*if (pixel.IsFinished)
             {
                 continue;
-            }
+            }*/
 
             pixel.CurrentColor = color;
             CurrentLevel.TexturePixels[index] = color;
@@ -300,8 +304,8 @@ public class PixelProcessorService
     {
         foreach (var pixel in CurrentLevel.Pixels)
         {
-            pixel.Value.CurrentColor = pixel.Value.GrayColor;
-            CurrentLevel.TexturePixels[pixel.Key] = pixel.Value.GrayColor;
+            pixel.CurrentColor = pixel.GrayColor;
+            CurrentLevel.TexturePixels[pixel.Index] = pixel.GrayColor;
         }
 
         CurrentLevel.Texture.SetData(CurrentLevel.TexturePixels);

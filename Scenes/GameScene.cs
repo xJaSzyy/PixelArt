@@ -128,13 +128,13 @@ public class GameScene : IScene
                 
                 switch (_level.ErrorCountPercent)
                 {
-                    case <= 1f:
+                    case <= 5f:
                         coinsToAdd *= 2;
                         _resultText[0] = "Perfect!";
 
                         break;
 
-                    case <= 25f:
+                    case <= 30f:
                         _resultText[0] = string.Empty;
                         break;
 
