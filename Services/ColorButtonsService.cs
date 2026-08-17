@@ -25,7 +25,7 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
 
     private void CreateColorButtons()
     {
-        foreach (var group in processorService.CurrentLevel.ColorGroups.Values.OrderBy(x => x.Number))
+        foreach (var group in processorService.CurrentLevel.ColorGroups.OrderBy(x => x.Number))
         {
             _colorButtons.Add(new ColorButton(
                 group.OriginalColor,
@@ -75,7 +75,7 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
         {
             colorButton.Draw(spriteBatch, _pixelTexture);
 
-            var colorGroup = colorGroups[colorButton.Color];
+            var colorGroup = colorGroups.First(x => x.OriginalColor == colorButton.Color);
             var groupIsFinished = colorGroup.IsFinished;
 
             var text = groupIsFinished ? "x" : colorButton.Number.ToString();
@@ -132,7 +132,7 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
             return;
         }
         
-        var colorGroup = processorService.CurrentLevel.ColorGroups[_colorButtons[clickedButtonIndex].Color];
+        var colorGroup = processorService.CurrentLevel.ColorGroups.First(x => x.OriginalColor == _colorButtons[clickedButtonIndex].Color);
         if (!colorGroup.IsFinished)
         {
             SelectButton(clickedButtonIndex);
@@ -154,7 +154,9 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
     {
         var changes = ClearHighlight(false);
 
-        if (!processorService.CurrentLevel.ColorGroups.TryGetValue(_colorButtons[colorButtonIndex].Color, out var selectedGroup))
+        var selectedGroup = processorService.CurrentLevel.ColorGroups
+            .FirstOrDefault(x => x.OriginalColor == _colorButtons[colorButtonIndex].Color);
+        if (selectedGroup == null)
         {
             return;
         }
@@ -174,7 +176,7 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
     {
         var changes = new List<(int Index, Color Color)>();
         
-        foreach (var group in processorService.CurrentLevel.ColorGroups.Values)
+        foreach (var group in processorService.CurrentLevel.ColorGroups)
         {
             foreach (var pixel in group.Pixels.Where(p => p.CurrentColor == _highlightColor))
             {

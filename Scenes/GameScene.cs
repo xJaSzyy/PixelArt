@@ -118,7 +118,7 @@ public class GameScene : IScene
             _colorButtonsService.Update(mouse);
             _cameraService.Update(mouse);
             
-            if (_processorService.CurrentLevel.ColorGroups.All(x => x.Value.IsFinished))
+            if (_processorService.CurrentLevel.ColorGroups.All(x => x.IsFinished))
             {
                 ColoringIsCompleted = true;
                 PlaceImageCenter();
@@ -153,7 +153,6 @@ public class GameScene : IScene
         _processorService.Update(gameTime);
 
         _homeButton.Update(mouse);
-        _processorService.ApplyPixelChanges();
         _mouseService.SetMouse(mouse);
     }
 

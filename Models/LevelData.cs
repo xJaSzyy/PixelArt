@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using PixelArt.Buttons;
 
@@ -9,10 +8,9 @@ public class LevelData
 {
     public int Id { get; set; }
     public Texture2D Texture { get; set; }
-    public Dictionary<Color, PixelColorGroup> ColorGroups { get; set; } = new();
+    public List<PixelColorGroup> ColorGroups { get; set; } = [];
     public List<PixelData> Pixels { get; set; } = [];
     public List<int> History { get; set; } = [];
-    public Color[] TexturePixels { get; set; }
     
     public Button Button { get; set; }
     public int ErrorCount { get; set; }

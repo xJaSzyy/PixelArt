@@ -38,6 +38,9 @@ public class PixelProcessorService
 
         var changed = false;
 
+        var texturePixels = new Color[CurrentLevel.Texture.Width * CurrentLevel.Texture.Height];
+        CurrentLevel.Texture.GetData(texturePixels);
+        
         while (_pixelsAccumulator >= 1f && _historyIndex < CurrentLevel.History.Count)
         {
             var pixelIndex = CurrentLevel.History[_historyIndex++];
@@ -45,7 +48,7 @@ public class PixelProcessorService
             if (pixel != null)
             {
                 pixel.CurrentColor = pixel.OriginalColor;
-                CurrentLevel.TexturePixels[pixelIndex] = pixel.OriginalColor;
+                texturePixels[pixelIndex] = pixel.OriginalColor;
                 changed = true;
             }
 
@@ -54,7 +57,7 @@ public class PixelProcessorService
 
         if (changed)
         {
-            CurrentLevel.Texture.SetData(CurrentLevel.TexturePixels);
+            CurrentLevel.Texture.SetData(texturePixels);
         }
 
         if (_historyIndex >= CurrentLevel.History.Count)
@@ -70,29 +73,29 @@ public class PixelProcessorService
 
     public void Generate()
     {
-        CurrentLevel.TexturePixels = new Color[CurrentLevel.Texture.Width * CurrentLevel.Texture.Height];
-        CurrentLevel.Texture.GetData(CurrentLevel.TexturePixels);
+        var texturePixels = new Color[CurrentLevel.Texture.Width * CurrentLevel.Texture.Height];
+        CurrentLevel.Texture.GetData(texturePixels);
 
         CurrentLevel.ColorGroups.Clear();
         CurrentLevel.Pixels.Clear();
         
-        for (var i = 0; i < CurrentLevel.TexturePixels.Length; i++)
+        for (var i = 0; i < texturePixels.Length; i++)
         {
-            var original = CurrentLevel.TexturePixels[i];
+            var original = texturePixels[i];
 
             if (original.A == 0)
             {
                 continue;
             }
             
-            if (!CurrentLevel.ColorGroups.ContainsKey(original))
+            if (CurrentLevel.ColorGroups.All(x => x.OriginalColor != original))
             {
-                CurrentLevel.ColorGroups[original] = new PixelColorGroup
+                CurrentLevel.ColorGroups.Add(new PixelColorGroup
                 {
                     Number = 0,
                     OriginalColor = original,
                     Pixels = []
-                };
+                });
             }
             
             var point = new Point(
@@ -109,10 +112,10 @@ public class PixelProcessorService
             };
 
             CurrentLevel.Pixels.Add(pixel);
-            CurrentLevel.ColorGroups[original].Pixels.Add(pixel);
+            CurrentLevel.ColorGroups.First(x => x.OriginalColor == original).Pixels.Add(pixel);
         }
         
-        var sortedGroups = CurrentLevel.ColorGroups.Values
+        var sortedGroups = CurrentLevel.ColorGroups
             .OrderByDescending(x => x.Pixels.Count)
             .ToList();
         
@@ -139,11 +142,11 @@ public class PixelProcessorService
                     pixel.TexturePosition.Y * CurrentLevel.Texture.Width +
                     pixel.TexturePosition.X;
 
-                CurrentLevel.TexturePixels[index] = previewColor;
+                texturePixels[index] = previewColor;
             }
         }
 
-        CurrentLevel.Texture.SetData(CurrentLevel.TexturePixels);
+        CurrentLevel.Texture.SetData(texturePixels);
     }
 
     private byte GenerateGrayValue(int index, int total)
@@ -215,17 +218,20 @@ public class PixelProcessorService
             CurrentLevel.ErrorCount++;
         }
         
+        var texturePixels = new Color[CurrentLevel.Texture.Width * CurrentLevel.Texture.Height];
+        CurrentLevel.Texture.GetData(texturePixels);
+        
         pixel.CurrentColor = color;
-        CurrentLevel.TexturePixels[index] = color;
-    }
-
-    public void ApplyPixelChanges()
-    {
-        CurrentLevel.Texture.SetData(CurrentLevel.TexturePixels);
+        texturePixels[index] = color;
+        
+        CurrentLevel.Texture.SetData(texturePixels);
     }
     
     public void SetPixels(IEnumerable<(int Index, Color Color)> pixels)
     {
+        var texturePixels = new Color[CurrentLevel.Texture.Width * CurrentLevel.Texture.Height];
+        CurrentLevel.Texture.GetData(texturePixels);
+        
         foreach (var (index, color) in pixels)
         {
             var pixel = CurrentLevel.Pixels.FirstOrDefault(x => x.Index == index && !x.IsFinished);
@@ -235,16 +241,11 @@ public class PixelProcessorService
                 continue;
             }
 
-            /*if (pixel.IsFinished)
-            {
-                continue;
-            }*/
-
             pixel.CurrentColor = color;
-            CurrentLevel.TexturePixels[index] = color;
+            texturePixels[index] = color;
         }
 
-        CurrentLevel.Texture.SetData(CurrentLevel.TexturePixels);
+        CurrentLevel.Texture.SetData(texturePixels);
     }
 
     public int GetPixelIndex(PixelData pixelData)
@@ -272,7 +273,7 @@ public class PixelProcessorService
     
     private void DrawPixelNumbers(Rectangle bounds, SpriteBatch spriteBatch, DrawService drawService, CameraService cameraService)
     {
-        foreach (var colorGroup in CurrentLevel.ColorGroups.Values)
+        foreach (var colorGroup in CurrentLevel.ColorGroups)
         {
             foreach (var pixel in colorGroup.Pixels.Where(pixel => !pixel.IsFinished))
             {
@@ -302,13 +303,16 @@ public class PixelProcessorService
 
     public void Replay()
     {
+        var texturePixels = new Color[CurrentLevel.Texture.Width * CurrentLevel.Texture.Height];
+        CurrentLevel.Texture.GetData(texturePixels);
+        
         foreach (var pixel in CurrentLevel.Pixels)
         {
             pixel.CurrentColor = pixel.GrayColor;
-            CurrentLevel.TexturePixels[pixel.Index] = pixel.GrayColor;
+            texturePixels[pixel.Index] = pixel.GrayColor;
         }
 
-        CurrentLevel.Texture.SetData(CurrentLevel.TexturePixels);
+        CurrentLevel.Texture.SetData(texturePixels);
 
         _historyIndex = 0;
         _pixelsAccumulator = 0;
