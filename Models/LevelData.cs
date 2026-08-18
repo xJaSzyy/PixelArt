@@ -12,6 +12,7 @@ public class LevelData
     public List<PixelColorGroup> ColorGroups { get; set; } = [];
     public List<PixelData> Pixels { get; set; } = [];
     public List<int> History { get; set; } = [];
+    public bool IsFinished { get; set; } = false;
     
     [JsonIgnore] public Button Button { get; set; }
     public int ErrorCount { get; set; }

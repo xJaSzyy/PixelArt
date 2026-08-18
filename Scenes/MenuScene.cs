@@ -6,6 +6,7 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using PixelArt.Interfaces;
+using PixelArt.Models;
 using PixelArt.Services;
 
 namespace PixelArt.Scenes;
@@ -54,13 +55,21 @@ public class MenuScene : IScene
         _buttonsPerRow = Math.Max(1, (_graphicsDevice.Viewport.Width - _buttonSpacing) / (_buttonSize + _buttonSpacing));
 
         var saveService = _services.GetRequiredService<SaveService>();
-        
-        _levelService.TryLoadLevels(_buttonsPerRow, _buttonSize, saveService);
 
-        saveService.Save(new SaveData
+        if (_levelService.Levels.Count == 0)
         {
-            Levels = _levelService.Levels
-        });
+            var saveData = saveService.Load();
+            _levelService.TryLoadLevels(_buttonsPerRow, _buttonSize, saveData.Levels);
+            _playerService.AddCoins(saveData.Coins);
+        }
+        else
+        {
+            saveService.Save(new SaveData
+            {
+                Coins = _playerService.Coins,
+                Levels = _levelService.Levels
+            });
+        }
     }
 
     public void Update(GameTime gameTime)

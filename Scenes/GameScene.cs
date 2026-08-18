@@ -122,34 +122,42 @@ public class GameScene : IScene
                 PlaceImageCenter();
                 _processorService.Replay();
 
-                var coinsToAdd = _level.History.Count / 10;
-                
-                switch (_level.ErrorCountPercent)
+                if (!_processorService.CurrentLevel.IsFinished)
                 {
-                    case <= 5f:
-                        coinsToAdd *= 2;
-                        _resultText[0] = "Perfect!";
+                    var coinsToAdd = _level.History.Count / 10;
 
-                        break;
+                    switch (_level.ErrorCountPercent)
+                    {
+                        case <= 5f:
+                            coinsToAdd *= 2;
+                            _resultText[0] = "Perfect!";
 
-                    case <= 30f:
-                        _resultText[0] = string.Empty;
-                        break;
+                            break;
 
-                    default:
-                        coinsToAdd /= 2;
-                        _resultText[0] = "Too many mistakes.";
-                        break;
+                        case <= 30f:
+                            _resultText[0] = string.Empty;
+                            break;
+
+                        default:
+                            coinsToAdd /= 2;
+                            _resultText[0] = "Too many mistakes.";
+                            break;
+                    }
+
+                    _resultText[1] = $"+{coinsToAdd} Pixoins";
+                    _services.GetRequiredService<PlayerService>().AddCoins(coinsToAdd);
+
+                    _processorService.CurrentLevel.IsFinished = true;
                 }
-
-                _resultText[1] = $"+{coinsToAdd} Pixoins";
-                
-                _services.GetRequiredService<PlayerService>().AddCoins(coinsToAdd);
+                else
+                {
+                    _resultText[0] = string.Empty;
+                    _resultText[1] = string.Empty;
+                }
             }
         }
 
         _processorService.Update(gameTime);
-
         _homeButton.Update(mouse);
         _mouseService.SetMouse(mouse);
     }
@@ -223,9 +231,11 @@ public class GameScene : IScene
     {
         var saveService = _services.GetRequiredService<SaveService>();
         var levelService = _services.GetRequiredService<LevelService>();
+        var playerService = _services.GetRequiredService<PlayerService>();
 
         saveService.Save(new SaveData
         {
+            Coins = playerService.Coins,
             Levels = levelService.Levels
         });
     }

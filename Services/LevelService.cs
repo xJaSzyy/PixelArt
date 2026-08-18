@@ -23,16 +23,9 @@ public class LevelService
         _processorService = processorService;
     }
 
-    public void TryLoadLevels(int buttonsPerRow, int buttonSize, SaveService saveService)
+    public void TryLoadLevels(int buttonsPerRow, int buttonSize, List<LevelData> savedLevels)
     {
-        if (Levels.Count > 0)
-        {
-            return;
-        }
-
-        var saveData = saveService.Load();
-
-        bool useSaveData = saveData.Levels.Count == _levelsCount;
+        var useSaveData = savedLevels.Count == _levelsCount;
         
         Levels.Clear();
         for (var i = 0; i < _levelsCount; i++)
@@ -52,7 +45,7 @@ public class LevelService
 
             if (useSaveData)
             {
-                level = saveData.Levels.First(x => x.Id == i);
+                level = savedLevels.First(x => x.Id == i);
             }
 
             level.Id = i;
