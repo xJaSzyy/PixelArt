@@ -1,8 +1,11 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using PixelArt.Buttons;
 using PixelArt.Models;
 
@@ -10,36 +13,75 @@ namespace PixelArt.Services;
 
 public class LevelService
 {
-    private readonly ContentManager _contentManager;
+    private readonly IServiceProvider _services;
+    private readonly GraphicsDevice _graphicsDevice;
     private readonly PixelProcessorService _processorService;
 
     public List<LevelData> Levels { get; set; } = [];
     
     private const int _levelsCount = 28;
+    
+    private const int _buttonSize = 128;
+    private const int _buttonSpacing = 24;
+    private const float _scrollSpeed = 0.2f;
 
-    public LevelService(ContentManager contentManager, PixelProcessorService processorService)
+    private int _buttonsPerRow = 3;
+    private float _scroll;
+    private float _targetScroll;
+
+    public LevelService(IServiceProvider services)
     {
-        _contentManager = contentManager;
-        _processorService = processorService;
+        _services = services;
+        _graphicsDevice = _services.GetRequiredService<GraphicsDevice>();
+        _processorService = _services.GetRequiredService<PixelProcessorService>();
+        
+        Resize();
+    }
+    
+    public void Update(MouseService mouseService, MouseState mouse)
+    {
+        _scroll = MathHelper.Lerp(_scroll, _targetScroll, _scrollSpeed);
+        
+        if (mouseService.IsScroll(mouse))
+        {
+            var scrollDelta = mouseService.GetScrollDelta(mouse);
+
+            if (scrollDelta > 0)
+            {
+                ScrollUp();
+            }
+            else
+            {
+                ScrollDown();
+            }
+        }
+        
+        LayoutButtons();
+        Levels.ForEach(l => l.Button.Update(mouse));
     }
 
-    public void TryLoadLevels(int buttonsPerRow, int buttonSize, List<LevelData> savedLevels)
+    public void Draw(SpriteBatch spriteBatch)
+    {
+        Levels.ForEach(l => l.Button.Draw(spriteBatch));
+    }
+    
+    public void LoadLevels(List<LevelData> savedLevels)
     {
         var useSaveData = savedLevels.Count == _levelsCount;
         
         Levels.Clear();
         for (var i = 0; i < _levelsCount; i++)
         {
-            var texture = _contentManager.Load<Texture2D>($"Images/img{i + 1}");
+            var texture = _services.GetRequiredService<ContentManager>().Load<Texture2D>($"Images/img{i + 1}");
 
-            var column = i % buttonsPerRow;
-            var row = i / buttonsPerRow;
+            var column = i % _buttonsPerRow;
+            var row = i / _buttonsPerRow;
 
             var rectangle = new Rectangle(
-                column * buttonSize,
-                row * buttonSize,
-                buttonSize,
-                buttonSize);
+                column * _buttonSize,
+                row * _buttonSize,
+                _buttonSize,
+                _buttonSize);
 
             var level = new LevelData();
 
@@ -57,5 +99,46 @@ public class LevelService
             _processorService.ChangeLevel(level);
             _processorService.Generate();
         }
+    }
+
+    private void LayoutButtons()
+    {
+        for (var i = 0; i < Levels.Count; i++)
+        {
+            var column = i % _buttonsPerRow;
+            var row = i / _buttonsPerRow;
+
+            var x = _buttonSpacing + column * (_buttonSize + _buttonSpacing);
+            var y = _buttonSpacing + row * (_buttonSize + _buttonSpacing) - (int)_scroll;
+
+            Levels[i].Button.Bounds = new Rectangle(x, y, _buttonSize, _buttonSize);
+        }
+    }
+    
+    public void Resize()
+    {
+        _buttonsPerRow = Math.Max(1, (_graphicsDevice.Viewport.Width - _buttonSpacing) / (_buttonSize + _buttonSpacing));
+        _scroll = 0f;
+        _targetScroll = 0f;
+    }
+    
+    private void ScrollDown()
+    {
+        _targetScroll += _buttonSize + _buttonSpacing;
+        _targetScroll = Math.Min(_targetScroll, GetMaxScroll());
+    }
+
+    private void ScrollUp()
+    {
+        _targetScroll -= _buttonSize + _buttonSpacing;
+        _targetScroll = Math.Max(_targetScroll, 0);
+    }
+    
+    private float GetMaxScroll()
+    {
+        var rows = (int)Math.Ceiling(Levels.Count / (float)_buttonsPerRow);
+        var contentHeight = rows * (_buttonSize + _buttonSpacing) + _buttonSpacing;
+
+        return Math.Max(0, contentHeight - _graphicsDevice.Viewport.Height);
     }
 }

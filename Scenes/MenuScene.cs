@@ -26,14 +26,6 @@ public class MenuScene : IScene
     private readonly SceneFactory _sceneFactory;
     private readonly LevelService _levelService;
 
-    private const int _buttonSize = 128;
-    private const int _buttonSpacing = 24;
-    private const float _scrollSpeed = 0.2f;
-
-    private int _buttonsPerRow = 3;
-    private float _scroll;
-    private float _targetScroll;
-
     public MenuScene(IServiceProvider services)
     {
         _services = services;
@@ -52,14 +44,12 @@ public class MenuScene : IScene
 
     public void LoadContent(ContentManager content)
     {
-        _buttonsPerRow = Math.Max(1, (_graphicsDevice.Viewport.Width - _buttonSpacing) / (_buttonSize + _buttonSpacing));
-
         var saveService = _services.GetRequiredService<SaveService>();
 
         if (_levelService.Levels.Count == 0)
         {
             var saveData = saveService.Load();
-            _levelService.TryLoadLevels(_buttonsPerRow, _buttonSize, saveData.Levels);
+            _levelService.LoadLevels(saveData.Levels);
             _playerService.AddCoins(saveData.Coins);
         }
         else
@@ -88,24 +78,7 @@ public class MenuScene : IScene
             }
         }
         
-        _scroll = MathHelper.Lerp(_scroll, _targetScroll, _scrollSpeed);
-        
-        if (_mouseService.IsScroll(mouse))
-        {
-            var scrollDelta = _mouseService.GetScrollDelta(mouse);
-
-            if (scrollDelta > 0)
-            {
-                ScrollUp();
-            }
-            else
-            {
-                ScrollDown();
-            }
-        }
-        
-        LayoutButtons();
-        _levelService.Levels.ForEach(l => l.Button.Update(mouse));
+        _levelService.Update(_mouseService, mouse);
 
         _mouseService.SetMouse(mouse);
     }
@@ -118,7 +91,7 @@ public class MenuScene : IScene
             samplerState: SamplerState.PointClamp
         );
 
-        _levelService.Levels.ForEach(l => l.Button.Draw(_spriteBatch));
+        _levelService.Draw(_spriteBatch);
 
         var scale = 2.5f;
         var text = _playerService.Coins.ToString();
@@ -141,47 +114,11 @@ public class MenuScene : IScene
     
     public void OnClientSizeChanged(object sender, EventArgs e)
     {
-        _buttonsPerRow = Math.Max(1, (_graphicsDevice.Viewport.Width - _buttonSpacing) / (_buttonSize + _buttonSpacing));
-        _scroll = 0f;
-        _targetScroll = 0f;
+        _levelService.Resize();
     }
 
     public void OnGameExiting(object sender, EventArgs eventArgs)
     {
         
-    }
-
-    private void LayoutButtons()
-    {
-        for (var i = 0; i < _levelService.Levels.Count; i++)
-        {
-            var column = i % _buttonsPerRow;
-            var row = i / _buttonsPerRow;
-
-            var x = _buttonSpacing + column * (_buttonSize + _buttonSpacing);
-            var y = _buttonSpacing + row * (_buttonSize + _buttonSpacing) - (int)_scroll;
-
-            _levelService.Levels[i].Button.Bounds = new Rectangle(x, y, _buttonSize, _buttonSize);
-        }
-    }
-
-    private void ScrollDown()
-    {
-        _targetScroll += _buttonSize + _buttonSpacing;
-        _targetScroll = Math.Min(_targetScroll, GetMaxScroll());
-    }
-
-    private void ScrollUp()
-    {
-        _targetScroll -= _buttonSize + _buttonSpacing;
-        _targetScroll = Math.Max(_targetScroll, 0);
-    }
-    
-    private float GetMaxScroll()
-    {
-        var rows = (int)Math.Ceiling(_levelService.Levels.Count / (float)_buttonsPerRow);
-        var contentHeight = rows * (_buttonSize + _buttonSpacing) + _buttonSpacing;
-
-        return Math.Max(0, contentHeight - _graphicsDevice.Viewport.Height);
     }
 }
