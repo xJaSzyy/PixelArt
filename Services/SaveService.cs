@@ -24,8 +24,6 @@ public class SaveService
 
         var json = JsonSerializer.Serialize(data);
         File.WriteAllText(_path, json);
-        
-        Console.WriteLine("Level saved!");
     }
     
     public SaveData Load()
@@ -36,8 +34,6 @@ public class SaveService
         }
 
         var json = File.ReadAllText(_path);
-
-        Console.WriteLine("Level loaded!");
         
         return JsonSerializer.Deserialize<SaveData>(json) ?? new SaveData();
     }
