@@ -327,4 +327,22 @@ public class PixelProcessorService
         _pixelsAccumulator = 0;
         ReplayLaunched = true;
     }
+    
+    public void Restart()
+    {
+        var texturePixels = new Color[CurrentLevel.Texture.Width * CurrentLevel.Texture.Height];
+        CurrentLevel.Texture.GetData(texturePixels);
+
+        foreach (var pixel in CurrentLevel.Pixels)
+        {
+            var index = pixel.TexturePositionY * CurrentLevel.Texture.Width + pixel.TexturePositionX;
+            pixel.CurrentColor = pixel.GrayColor;
+            texturePixels[index] = pixel.GrayColor;
+        }
+        
+        CurrentLevel.IsFinished = false;
+        CurrentLevel.History.Clear();
+
+        CurrentLevel.Texture.SetData(texturePixels);
+    }
 }

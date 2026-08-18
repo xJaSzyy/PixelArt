@@ -137,8 +137,8 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
             SelectButton(clickedButtonIndex);
         }
     }
-    
-    private void SelectButton(int index)
+
+    public void SelectButton(int index)
     {
         foreach (var button in _colorButtons)
         {

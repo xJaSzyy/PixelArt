@@ -28,6 +28,7 @@ public class GameScene : IScene
 
     private readonly LevelData _level;
     private Button _homeButton;
+    private Button _restartButton;
 
     private const int _buttonSize = 56;
     private const int _buttonSpacing = 12;
@@ -48,9 +49,14 @@ public class GameScene : IScene
 
     public void LoadContent(ContentManager content)
     {
-        var homeTexture = content.Load<Texture2D>("Icons/home");
-        _homeButton = new Button(homeTexture,
+        _homeButton = new Button(content.Load<Texture2D>("Icons/home"),
             new Rectangle(_graphicsDevice.Viewport.Width - _buttonSize - _buttonSpacing,
+                _buttonSpacing,
+                _buttonSize,
+                _buttonSize));
+        
+        _restartButton = new Button(content.Load<Texture2D>("Icons/restart"),
+            new Rectangle(_buttonSpacing,
                 _buttonSpacing,
                 _buttonSize,
                 _buttonSize));
@@ -61,7 +67,7 @@ public class GameScene : IScene
         _colorButtonsService = new ColorButtonsService(_graphicsDevice, _spriteBatch, _processorService);
         _colorButtonsService.LoadContent(pixelTexture);
 
-        PlaceImageCenter();
+        ImageToCenter();
     }
 
     public void Update(GameTime gameTime)
@@ -72,11 +78,18 @@ public class GameScene : IScene
         if (_mouseService.IsLeftMouseButtonClicked(mouse) || keyboard.IsKeyDown(Keys.Space))
         {
             _colorButtonsService.UpdateSelectedButton();
-            
-            if (_homeButton.IsHovered && !_processorService.ReplayLaunched)
+
+            if (!_processorService.ReplayLaunched)
             {
-                _colorButtonsService.ClearHighlight(true);
-                _services.GetRequiredService<SceneService>().SetScene<MenuScene>();
+                if (_homeButton.IsHovered)
+                {
+                    _colorButtonsService.ClearHighlight(true);
+                    _services.GetRequiredService<SceneService>().SetScene<MenuScene>();
+                }
+                else if (_restartButton.IsHovered)
+                {
+                    Restart();
+                }
             }
         }
 
@@ -119,7 +132,7 @@ public class GameScene : IScene
             if (_processorService.CurrentLevel.ColorGroups.All(x => x.IsFinished))
             {
                 ColoringIsCompleted = true;
-                PlaceImageCenter();
+                ImageToCenter();
                 _processorService.Replay();
 
                 if (!_processorService.CurrentLevel.IsFinished)
@@ -159,6 +172,7 @@ public class GameScene : IScene
 
         _processorService.Update(gameTime);
         _homeButton.Update(mouse);
+        _restartButton.Update(mouse);
         _mouseService.SetMouse(mouse);
     }
 
@@ -212,6 +226,7 @@ public class GameScene : IScene
         if (!_processorService.ReplayLaunched)
         {
             _homeButton.Draw(_spriteBatch);
+            _restartButton.Draw(_spriteBatch);
         }
 
         _spriteBatch.End();
@@ -224,7 +239,7 @@ public class GameScene : IScene
             _buttonSize,
             _buttonSize);
         
-        PlaceImageCenter();
+        ImageToCenter();
     }
 
     public void OnGameExiting(object sender, EventArgs eventArgs)
@@ -233,11 +248,21 @@ public class GameScene : IScene
         var levelService = _services.GetRequiredService<LevelService>();
         var playerService = _services.GetRequiredService<PlayerService>();
 
+        _colorButtonsService.ClearHighlight(true);
+        
         saveService.Save(new SaveData
         {
             Coins = playerService.Coins,
             Levels = levelService.Levels
         });
+    }
+    
+    private void Restart()
+    {
+        _processorService.Restart();
+        
+        ColoringIsCompleted = false;
+        _colorButtonsService.SelectButton(0);
     }
 
     private bool IsMouseOverUI()
@@ -255,7 +280,7 @@ public class GameScene : IScene
         return false;
     }
 
-    private void PlaceImageCenter()
+    private void ImageToCenter()
     {
         _cameraService.Zoom = _cameraService.MinZoom;
         
