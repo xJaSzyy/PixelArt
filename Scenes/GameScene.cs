@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -14,15 +15,15 @@ namespace PixelArt.Scenes;
 public class GameScene : IScene
 {
     private bool ColoringIsCompleted { get; set; }
+
+    private readonly IServiceProvider _services;
     
     private readonly GraphicsDevice _graphicsDevice;
     private readonly SpriteBatch _spriteBatch;
-    private readonly SceneService _sceneService;
     private readonly MouseService _mouseService;
     private readonly DrawService _drawService;
     private readonly CameraService _cameraService = new();
     private readonly PixelProcessorService _processorService;
-    private readonly PlayerService _playerService;
     private ColorButtonsService _colorButtonsService;
 
     private readonly LevelData _level;
@@ -31,21 +32,18 @@ public class GameScene : IScene
     private const int _buttonSize = 56;
     private const int _buttonSpacing = 12;
 
-    private string[] _resultText = new string[2];
+    private readonly string[] _resultText = new string[2];
 
-    public GameScene(LevelData level, PixelProcessorService processorService, 
-        GraphicsDevice graphicsDevice, SceneService sceneService, 
-        MouseService mouseService, DrawService drawService,
-        PlayerService playerService)
+    public GameScene(LevelData level, IServiceProvider services)
     {
+        _services = services;
+        
         _level = level;
-        _processorService = processorService;
-        _graphicsDevice = graphicsDevice;
-        _spriteBatch = new SpriteBatch(graphicsDevice);
-        _sceneService = sceneService;
-        _mouseService = mouseService;
-        _drawService = drawService;
-        _playerService = playerService;
+        _processorService = _services.GetRequiredService<PixelProcessorService>();
+        _graphicsDevice = _services.GetRequiredService<GraphicsDevice>();
+        _spriteBatch = new SpriteBatch(_graphicsDevice);
+        _mouseService = _services.GetRequiredService<MouseService>();
+        _drawService = _services.GetRequiredService<DrawService>();
     }
 
     public void LoadContent(ContentManager content)
@@ -78,7 +76,7 @@ public class GameScene : IScene
             if (_homeButton.IsHovered && !_processorService.ReplayLaunched)
             {
                 _colorButtonsService.ClearHighlight(true);
-                _sceneService.SetScene<MenuScene>();
+                _services.GetRequiredService<SceneService>().SetScene<MenuScene>();
             }
         }
 
@@ -146,7 +144,7 @@ public class GameScene : IScene
 
                 _resultText[1] = $"+{coinsToAdd} Pixoins";
                 
-                _playerService.AddCoins(coinsToAdd);
+                _services.GetRequiredService<PlayerService>().AddCoins(coinsToAdd);
             }
         }
 
@@ -219,6 +217,17 @@ public class GameScene : IScene
             _buttonSize);
         
         PlaceImageCenter();
+    }
+
+    public void OnGameExiting(object sender, EventArgs eventArgs)
+    {
+        var saveService = _services.GetRequiredService<SaveService>();
+        var levelService = _services.GetRequiredService<LevelService>();
+
+        saveService.Save(new SaveData
+        {
+            Levels = levelService.Levels
+        });
     }
 
     private bool IsMouseOverUI()

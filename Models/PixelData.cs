@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Microsoft.Xna.Framework;
 
 namespace PixelArt.Models;
@@ -5,11 +6,13 @@ namespace PixelArt.Models;
 public class PixelData
 {
     public int Index { get; set; }
-    public Point TexturePosition { get; set; }
+    public int TexturePositionX { get; set; }
+    public int TexturePositionY { get; set; }
     public Color OriginalColor { get; set; }
     public Color GrayColor { get; set; }
     public Color CurrentColor { get; set; }
-    public bool IsFinished => OriginalColor == CurrentColor;
+    
+    [JsonIgnore] public bool IsFinished => OriginalColor == CurrentColor;
 
     public Vector2 GetScreenPosition(
         Rectangle bounds,
@@ -20,8 +23,8 @@ public class PixelData
         var pixelHeight = (float)bounds.Height / textureHeight;
 
         return new Vector2(
-            bounds.X + TexturePosition.X * pixelWidth + pixelWidth / 2f,
-            bounds.Y + TexturePosition.Y * pixelHeight + pixelHeight / 2f
+            bounds.X + TexturePositionX * pixelWidth + pixelWidth / 2f,
+            bounds.Y + TexturePositionY * pixelHeight + pixelHeight / 2f
         );
     }
     

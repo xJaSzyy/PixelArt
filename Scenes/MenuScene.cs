@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -11,6 +12,8 @@ namespace PixelArt.Scenes;
 
 public class MenuScene : IScene
 {
+    private readonly IServiceProvider _services;
+    
     private readonly GraphicsDevice _graphicsDevice;
     private readonly SpriteBatch _spriteBatch;
     
@@ -30,27 +33,34 @@ public class MenuScene : IScene
     private float _scroll;
     private float _targetScroll;
 
-    public MenuScene(GraphicsDevice graphicsDevice, SceneFactory sceneFactory, 
-        SceneService sceneService, MouseService mouseService, 
-        DrawService drawService, PlayerService playerService, 
-        PixelProcessorService processorService, LevelService levelService)
+    public MenuScene(IServiceProvider services)
     {
-        _graphicsDevice = graphicsDevice;
-        _spriteBatch = new SpriteBatch(graphicsDevice);
-        _sceneFactory = sceneFactory;
-        _sceneService = sceneService;
+        _services = services;
         
-        _mouseService = mouseService;
-        _drawService = drawService;
-        _playerService = playerService;
-        _processorService = processorService;
-        _levelService = levelService;
+        _graphicsDevice = services.GetRequiredService<GraphicsDevice>();
+        _spriteBatch = new SpriteBatch(_graphicsDevice);
+        _sceneFactory = services.GetRequiredService<SceneFactory>();
+        _sceneService = services.GetRequiredService<SceneService>();
+        
+        _mouseService = services.GetRequiredService<MouseService>();
+        _drawService = services.GetRequiredService<DrawService>();
+        _playerService = services.GetRequiredService<PlayerService>();
+        _processorService = services.GetRequiredService<PixelProcessorService>();
+        _levelService = services.GetRequiredService<LevelService>();
     }
 
     public void LoadContent(ContentManager content)
     {
         _buttonsPerRow = Math.Max(1, (_graphicsDevice.Viewport.Width - _buttonSpacing) / (_buttonSize + _buttonSpacing));
-        _levelService.LoadLevels(_buttonsPerRow, _buttonSize);
+
+        var saveService = _services.GetRequiredService<SaveService>();
+        
+        _levelService.TryLoadLevels(_buttonsPerRow, _buttonSize, saveService);
+
+        saveService.Save(new SaveData
+        {
+            Levels = _levelService.Levels
+        });
     }
 
     public void Update(GameTime gameTime)
@@ -125,6 +135,11 @@ public class MenuScene : IScene
         _buttonsPerRow = Math.Max(1, (_graphicsDevice.Viewport.Width - _buttonSpacing) / (_buttonSize + _buttonSpacing));
         _scroll = 0f;
         _targetScroll = 0f;
+    }
+
+    public void OnGameExiting(object sender, EventArgs eventArgs)
+    {
+        
     }
 
     private void LayoutButtons()

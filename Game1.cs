@@ -20,6 +20,7 @@ public class Game1 : Game
         IsMouseVisible = true;
         Window.AllowUserResizing = true;
         Window.ClientSizeChanged += OnClientSizeChanged;
+        Exiting += OnGameExiting;
         
         graphics.PreferredBackBufferWidth = 640;
         graphics.PreferredBackBufferHeight = 640;
@@ -41,6 +42,7 @@ public class Game1 : Game
         collection.AddSingleton<PixelProcessorService>();
         collection.AddSingleton(Content);
         collection.AddSingleton<LevelService>();
+        collection.AddSingleton<SaveService>();
         
         collection.AddTransient<MenuScene>();
         collection.AddTransient<GameScene>();
@@ -78,5 +80,10 @@ public class Game1 : Game
     private void OnClientSizeChanged(object sender, EventArgs e)
     {
         _sceneService.CurrentScene.OnClientSizeChanged(sender, e);
+    }
+    
+    private void OnGameExiting(object sender, EventArgs e)
+    {
+        _sceneService.CurrentScene.OnGameExiting(sender, e);
     }
 }

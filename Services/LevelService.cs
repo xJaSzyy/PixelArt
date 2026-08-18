@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -22,12 +23,16 @@ public class LevelService
         _processorService = processorService;
     }
 
-    public void LoadLevels(int buttonsPerRow, int buttonSize)
+    public void TryLoadLevels(int buttonsPerRow, int buttonSize, SaveService saveService)
     {
         if (Levels.Count > 0)
         {
             return;
         }
+
+        var saveData = saveService.Load();
+
+        bool useSaveData = saveData.Levels.Count == _levelsCount;
         
         Levels.Clear();
         for (var i = 0; i < _levelsCount; i++)
@@ -43,12 +48,16 @@ public class LevelService
                 buttonSize,
                 buttonSize);
 
-            var level = new LevelData
+            var level = new LevelData();
+
+            if (useSaveData)
             {
-                Id = i,
-                Texture = texture,
-                Button = new Button(texture, rectangle)
-            };
+                level = saveData.Levels.First(x => x.Id == i);
+            }
+
+            level.Id = i;
+            level.Texture = texture;
+            level.Button = new Button(texture, rectangle);
             
             Levels.Add(level);
             

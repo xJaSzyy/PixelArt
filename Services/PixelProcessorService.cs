@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework;
@@ -75,74 +76,82 @@ public class PixelProcessorService
     {
         var texturePixels = new Color[CurrentLevel.Texture.Width * CurrentLevel.Texture.Height];
         CurrentLevel.Texture.GetData(texturePixels);
-
-        CurrentLevel.ColorGroups.Clear();
-        CurrentLevel.Pixels.Clear();
         
-        for (var i = 0; i < texturePixels.Length; i++)
+        if (CurrentLevel.ColorGroups.Count == 0 && CurrentLevel.Pixels.Count == 0)
         {
-            var original = texturePixels[i];
+            for (var i = 0; i < texturePixels.Length; i++)
+            {
+                var original = texturePixels[i];
 
-            if (original.A == 0)
-            {
-                continue;
-            }
-            
-            if (CurrentLevel.ColorGroups.All(x => x.OriginalColor != original))
-            {
-                CurrentLevel.ColorGroups.Add(new PixelColorGroup
+                if (original.A == 0)
                 {
-                    Number = 0,
+                    continue;
+                }
+
+                if (CurrentLevel.ColorGroups.All(x => x.OriginalColor != original))
+                {
+                    CurrentLevel.ColorGroups.Add(new PixelColorGroup
+                    {
+                        Number = 0,
+                        OriginalColor = original,
+                        Pixels = []
+                    });
+                }
+
+                var point = new Point(
+                    i % CurrentLevel.Texture.Width,
+                    i / CurrentLevel.Texture.Width
+                );
+
+                var pixel = new PixelData
+                {
+                    Index = i,
+                    TexturePositionX = point.X,
+                    TexturePositionY = point.Y,
                     OriginalColor = original,
-                    Pixels = []
-                });
+                    CurrentColor = Color.White
+                };
+
+                CurrentLevel.Pixels.Add(pixel);
+                CurrentLevel.ColorGroups.First(x => x.OriginalColor == original).Pixels.Add(pixel);
             }
             
-            var point = new Point(
-                i % CurrentLevel.Texture.Width,
-                i / CurrentLevel.Texture.Width
-            );
+            var sortedGroups = CurrentLevel.ColorGroups
+                .OrderByDescending(x => x.Number)
+                .ToList();
+        
+            var total = sortedGroups.Count;
 
-            var pixel = new PixelData
+            for (var i = 0; i < total; i++)
             {
-                Index = i,
-                TexturePosition = point,
-                OriginalColor = original,
-                CurrentColor = Color.White
-            };
+                var gray = GenerateGrayValue(i, total);
 
-            CurrentLevel.Pixels.Add(pixel);
-            CurrentLevel.ColorGroups.First(x => x.OriginalColor == original).Pixels.Add(pixel);
+                var previewColor = new Color(gray,
+                    gray,
+                    gray);
+
+                var group = sortedGroups[i];
+
+                group.Number = i + 1;
+
+                foreach (var pixel in group.Pixels)
+                {
+                    pixel.CurrentColor = previewColor;
+                    pixel.GrayColor = previewColor;
+
+                    var index = pixel.TexturePositionY * CurrentLevel.Texture.Width + pixel.TexturePositionX;
+                    texturePixels[index] = previewColor;
+                }
+            }
         }
-        
-        var sortedGroups = CurrentLevel.ColorGroups
-            .OrderByDescending(x => x.Pixels.Count)
-            .ToList();
-        
-        var total = sortedGroups.Count;
-
-        for (var i = 0; i < total; i++)
+        else
         {
-            var gray = GenerateGrayValue(i, total);
-
-            var previewColor = new Color(gray,
-                gray,
-                gray);
-
-            var group = sortedGroups[i];
-
-            group.Number = i + 1;
-
-            foreach (var pixel in group.Pixels)
+            CurrentLevel.ColorGroups.ForEach(x => x.Pixels.Clear());
+            foreach (var pixel in CurrentLevel.Pixels)
             {
-                pixel.CurrentColor = previewColor;
-                pixel.GrayColor = previewColor;
-
-                var index =
-                    pixel.TexturePosition.Y * CurrentLevel.Texture.Width +
-                    pixel.TexturePosition.X;
-
-                texturePixels[index] = previewColor;
+                var index = pixel.TexturePositionY * CurrentLevel.Texture.Width + pixel.TexturePositionX;
+                texturePixels[index] = pixel.CurrentColor;
+                CurrentLevel.ColorGroups.First(x => x.OriginalColor == pixel.OriginalColor).Pixels.Add(pixel);
             }
         }
 
@@ -255,7 +264,7 @@ public class PixelProcessorService
             return -1;
         }
 
-        return pixelData.TexturePosition.Y * CurrentLevel.Texture.Width + pixelData.TexturePosition.X;
+        return pixelData.TexturePositionY * CurrentLevel.Texture.Width + pixelData.TexturePositionX;
     }
 
     public void Draw(SpriteBatch spriteBatch, DrawService drawService, CameraService cameraService)
@@ -283,7 +292,7 @@ public class PixelProcessorService
                     Utils.Remap(cameraService.Zoom, cameraService.MinZoom, cameraService.MinZoom * 2f, 0f, 1f)
                 );
                 var scale = cameraService.Zoom + _pixelWidth * (colorGroup.Number.ToString().Length == 1 ? 0.0045f : 0.003f);
-
+                
                 drawService.DrawString(
                     spriteBatch,
                     colorGroup.Number.ToString(),

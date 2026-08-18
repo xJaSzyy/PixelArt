@@ -12,4 +12,5 @@ public interface IScene
     void Update(GameTime gameTime);
     void Draw(GameTime gameTime);
     void OnClientSizeChanged(object sender, EventArgs e);
+    void OnGameExiting(object sender, EventArgs eventArgs);
 }
