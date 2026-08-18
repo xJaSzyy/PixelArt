@@ -25,6 +25,7 @@ public class MenuScene : IScene
     private readonly PlayerService _playerService;
     private readonly SceneFactory _sceneFactory;
     private readonly LevelService _levelService;
+    private readonly DialogService _dialogService;
 
     public MenuScene(IServiceProvider services)
     {
@@ -40,6 +41,7 @@ public class MenuScene : IScene
         _playerService = services.GetRequiredService<PlayerService>();
         _processorService = services.GetRequiredService<PixelProcessorService>();
         _levelService = services.GetRequiredService<LevelService>();
+        _dialogService = services.GetRequiredService<DialogService>();
     }
 
     public void LoadContent(ContentManager content)
@@ -65,16 +67,30 @@ public class MenuScene : IScene
     public void Update(GameTime gameTime)
     {
         var mouse = Mouse.GetState();
-        
+
+        if (_dialogService.ShowDialog)
+        {
+            _dialogService.Update(mouse);
+            return;
+        }
+
         if (_mouseService.IsLeftMouseButtonClicked(mouse))
         {
             foreach (var level in _levelService.Levels.Where(l => l.Button.IsHovered))
             {
-                 _processorService.ChangeLevel(level);
+                if (level.IsLocked)
+                {
+                    _dialogService.ShowDialog = true;
+                }
+                else
+                {
+                    _processorService.ChangeLevel(level);
                 
-                var scene = _sceneFactory.CreateGameScene(level);
-                _sceneService.SetScene(scene);
-                break;
+                    var scene = _sceneFactory.CreateGameScene(level);
+                    _sceneService.SetScene(scene);
+                    break;
+                }
+                
             }
         }
         
@@ -92,9 +108,7 @@ public class MenuScene : IScene
         );
 
         _levelService.Draw(_spriteBatch);
-
-        var scale = 2.5f;
-        var text = _playerService.Coins.ToString();
+        _dialogService.Draw(_spriteBatch);
 
         var position = new Vector2(
             _graphicsDevice.Viewport.Width / 2f,
@@ -103,10 +117,10 @@ public class MenuScene : IScene
 
         _drawService.DrawString(
             _spriteBatch,
-            text,
+            _playerService.Coins.ToString(),
             position,
             Color.Yellow,
-            scale
+            2.5f
         );
 
         _spriteBatch.End();

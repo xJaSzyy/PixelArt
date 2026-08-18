@@ -19,7 +19,6 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
     private const int _buttonSpacing = 12;
     private readonly Color _highlightColor = new(72, 72, 72);
     
-
     private Texture2D _pixelTexture;
 
     private void CreateColorButtons()

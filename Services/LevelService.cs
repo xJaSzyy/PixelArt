@@ -16,24 +16,31 @@ public class LevelService
     private readonly IServiceProvider _services;
     private readonly GraphicsDevice _graphicsDevice;
     private readonly PixelProcessorService _processorService;
+    private readonly DrawService _drawService;
 
     public List<LevelData> Levels { get; set; } = [];
     
     private const int _levelsCount = 28;
     
     private const int _buttonSize = 128;
+    private const int _lockSize = 48;
     private const int _buttonSpacing = 24;
     private const float _scrollSpeed = 0.2f;
 
     private int _buttonsPerRow = 3;
     private float _scroll;
     private float _targetScroll;
+    
+    private Texture2D _lockTexture;
 
     public LevelService(IServiceProvider services)
     {
         _services = services;
         _graphicsDevice = _services.GetRequiredService<GraphicsDevice>();
         _processorService = _services.GetRequiredService<PixelProcessorService>();
+        _drawService = _services.GetRequiredService<DrawService>();
+
+        _lockTexture = _services.GetRequiredService<ContentManager>().Load<Texture2D>("Icons/lock");
         
         Resize();
     }
@@ -57,12 +64,28 @@ public class LevelService
         }
         
         LayoutButtons();
-        Levels.ForEach(l => l.Button.Update(mouse));
+        
+        foreach (var level in Levels)
+        {
+            level.Button.Update(mouse);
+        }
     }
 
     public void Draw(SpriteBatch spriteBatch)
     {
-        Levels.ForEach(l => l.Button.Draw(spriteBatch));
+        foreach (var level in Levels)
+        {
+            level.Button.Draw(spriteBatch);
+
+            if (level.IsLocked)
+            {
+                var bounds = level.Button.Bounds;
+                bounds.Location += new Point(_buttonSize - _lockSize, level.Button.IsHovered ? -4 : 0);
+                bounds.Size = new Point(_lockSize, _lockSize);
+                
+                spriteBatch.Draw(_lockTexture, bounds, Color.IndianRed);
+            }
+        }
     }
     
     public void LoadLevels(List<LevelData> savedLevels)
@@ -72,7 +95,8 @@ public class LevelService
         Levels.Clear();
         for (var i = 0; i < _levelsCount; i++)
         {
-            var texture = _services.GetRequiredService<ContentManager>().Load<Texture2D>($"Images/img{i + 1}");
+            var texture = _services.GetRequiredService<ContentManager>()
+                .Load<Texture2D>($"Images/img{i + 1}");
 
             var column = i % _buttonsPerRow;
             var row = i / _buttonsPerRow;
@@ -88,6 +112,10 @@ public class LevelService
             if (useSaveData)
             {
                 level = savedLevels.First(x => x.Id == i);
+            }
+            else if (i > 6)
+            {
+                level.IsLocked = true;
             }
 
             level.Id = i;

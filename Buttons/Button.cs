@@ -1,3 +1,4 @@
+using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -16,18 +17,17 @@ public class Button(Texture2D texture, Rectangle bounds)
         IsHovered = Bounds.Contains(mouse.Position);
     }
 
-    public void Draw(SpriteBatch spriteBatch)
+    public void Draw(SpriteBatch spriteBatch, Color? color = null)
     {
         var rect = Bounds;
 
-        var color = Color.White;
-
+        color ??= Color.White;
+        
         if (IsHovered)
         {
             rect.Y -= 4;
-            color = new Color(255, 255, 255, 20);
         }
 
-        spriteBatch.Draw(Texture, rect, color);
+        spriteBatch.Draw(Texture, rect, (Color)color);
     }
 }
