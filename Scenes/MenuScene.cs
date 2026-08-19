@@ -27,9 +27,12 @@ public class MenuScene : IScene
     private readonly LevelService _levelService;
     private readonly DialogService _dialogService;
     private readonly SaveService _saveService;
+    private readonly PopupTextService _popupService;
 
     private const int _unlockLevelCost = 49;
     private const int _headerHeight = 64;
+    
+    private string _completedLevelsText;
 
     public MenuScene(IServiceProvider services)
     {
@@ -47,6 +50,7 @@ public class MenuScene : IScene
         _levelService = services.GetRequiredService<LevelService>();
         _dialogService = services.GetRequiredService<DialogService>();
         _saveService = services.GetRequiredService<SaveService>();
+        _popupService = services.GetRequiredService<PopupTextService>();
     }
 
     public void LoadContent(ContentManager content)
@@ -65,6 +69,8 @@ public class MenuScene : IScene
                 Levels = _levelService.Levels
             });
         }
+        
+        _completedLevelsText = $"{_levelService.Levels.Count(l => l.IsFinished)}/{_levelService.Levels.Count}";
     }
 
     public void Update(GameTime gameTime)
@@ -97,8 +103,9 @@ public class MenuScene : IScene
             
             _mouseService.SetMouse(mouse);
         }
-        
+
         _dialogService.Update(mouse);
+        _popupService.Update(gameTime);
     }
 
     public void Draw(GameTime gameTime)
@@ -108,7 +115,7 @@ public class MenuScene : IScene
         _spriteBatch.Begin(
             samplerState: SamplerState.PointClamp
         );
-
+        
         _levelService.Draw(_spriteBatch);
         _dialogService.Draw(_spriteBatch);
         
@@ -125,15 +132,16 @@ public class MenuScene : IScene
             Color.Yellow,
             2f);
         
-        var text = $"{_levelService.Levels.Count(l => l.IsFinished)}/{_levelService.Levels.Count}";
         _drawService.DrawString(_spriteBatch,
-            text,
+            _completedLevelsText,
             new Vector2(
-                _drawService.MeasureString(text).X + 48,
+                _drawService.MeasureString(_completedLevelsText).X + 48,
                 32
             ),
             Color.Yellow,
             2f);
+        
+        _popupService.Draw(_spriteBatch, _drawService.GetFont());
 
         _spriteBatch.End();
     }
@@ -157,6 +165,16 @@ public class MenuScene : IScene
         if (_playerService.RemoveCoins(_unlockLevelCost))
         {
             level.IsLocked = false;
+            
+            _popupService.Show(
+                $"-${_unlockLevelCost}",
+                new Vector2(
+                    _graphicsDevice.Viewport.Width / 2f + _drawService.MeasureString("$" + _playerService.Coins).X * 1.8f,
+                    32
+                ),
+                0.5f,
+                Color.Red);
+            
             return true;
         }
 

@@ -44,6 +44,7 @@ public class Game1 : Game
         collection.AddSingleton<LevelService>();
         collection.AddSingleton<SaveService>();
         collection.AddSingleton<DialogService>();
+        collection.AddSingleton<PopupTextService>();
         
         collection.AddTransient<MenuScene>();
         collection.AddTransient<GameScene>();

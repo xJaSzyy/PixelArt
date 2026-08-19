@@ -200,4 +200,6 @@ public class DrawService
                 color);
         }
     }
+
+    public SpriteFont GetFont() => _font;
 }
