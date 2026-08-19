@@ -26,6 +26,9 @@ public class MenuScene : IScene
     private readonly SceneFactory _sceneFactory;
     private readonly LevelService _levelService;
     private readonly DialogService _dialogService;
+    private readonly SaveService _saveService;
+
+    private int _unlockLevelCost = 49;
 
     public MenuScene(IServiceProvider services)
     {
@@ -42,21 +45,20 @@ public class MenuScene : IScene
         _processorService = services.GetRequiredService<PixelProcessorService>();
         _levelService = services.GetRequiredService<LevelService>();
         _dialogService = services.GetRequiredService<DialogService>();
+        _saveService = services.GetRequiredService<SaveService>();
     }
 
     public void LoadContent(ContentManager content)
     {
-        var saveService = _services.GetRequiredService<SaveService>();
-
         if (_levelService.Levels.Count == 0)
         {
-            var saveData = saveService.Load();
+            var saveData = _saveService.Load();
             _levelService.LoadLevels(saveData.Levels);
             _playerService.AddCoins(saveData.Coins);
         }
         else
         {
-            saveService.Save(new SaveData
+            _saveService.Save(new SaveData
             {
                 Coins = _playerService.Coins,
                 Levels = _levelService.Levels
@@ -67,36 +69,35 @@ public class MenuScene : IScene
     public void Update(GameTime gameTime)
     {
         var mouse = Mouse.GetState();
-
-        if (_dialogService.ShowDialog)
+        
+        if (!_dialogService.IsDialogOpen)
         {
-            _dialogService.Update(mouse);
-            return;
-        }
-
-        if (_mouseService.IsLeftMouseButtonClicked(mouse))
-        {
-            foreach (var level in _levelService.Levels.Where(l => l.Button.IsHovered))
+            if (_mouseService.IsLeftMouseButtonClicked(mouse))
             {
-                if (level.IsLocked)
+                foreach (var level in _levelService.Levels.Where(l => l.Button.IsHovered))
                 {
-                    _dialogService.ShowDialog = true;
+                    if (level.IsLocked)
+                    {
+                        _dialogService.ShowDialog($"Pay {_unlockLevelCost} Pixoins?", () => UnlockLevel(level));
+                    }
+                    else
+                    {
+                        _processorService.ChangeLevel(level);
+
+                        var scene = _sceneFactory.CreateGameScene(level);
+                        _sceneService.SetScene(scene);
+                        break;
+                    }
+
                 }
-                else
-                {
-                    _processorService.ChangeLevel(level);
-                
-                    var scene = _sceneFactory.CreateGameScene(level);
-                    _sceneService.SetScene(scene);
-                    break;
-                }
-                
             }
+
+            _levelService.Update(_mouseService, mouse);
+            
+            _mouseService.SetMouse(mouse);
         }
         
-        _levelService.Update(_mouseService, mouse);
-
-        _mouseService.SetMouse(mouse);
+        _dialogService.Update(mouse);
     }
 
     public void Draw(GameTime gameTime)
@@ -133,6 +134,23 @@ public class MenuScene : IScene
 
     public void OnGameExiting(object sender, EventArgs eventArgs)
     {
-        
+        _saveService.Save(new SaveData
+        {
+            Coins = _playerService.Coins,
+            Levels = _levelService.Levels
+        });
+    }
+
+    private bool UnlockLevel(LevelData level)
+    {
+        if (_playerService.RemoveCoins(_unlockLevelCost))
+        {
+            level.IsLocked = false;
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 }

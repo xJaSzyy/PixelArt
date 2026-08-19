@@ -16,11 +16,11 @@ public class LevelService
     private readonly IServiceProvider _services;
     private readonly GraphicsDevice _graphicsDevice;
     private readonly PixelProcessorService _processorService;
-    private readonly DrawService _drawService;
 
     public List<LevelData> Levels { get; set; } = [];
     
     private const int _levelsCount = 28;
+    private const int _unlockedLevelsCount = 4;
     
     private const int _buttonSize = 128;
     private const int _lockSize = 48;
@@ -31,14 +31,13 @@ public class LevelService
     private float _scroll;
     private float _targetScroll;
     
-    private Texture2D _lockTexture;
+    private readonly Texture2D _lockTexture;
 
     public LevelService(IServiceProvider services)
     {
         _services = services;
         _graphicsDevice = _services.GetRequiredService<GraphicsDevice>();
         _processorService = _services.GetRequiredService<PixelProcessorService>();
-        _drawService = _services.GetRequiredService<DrawService>();
 
         _lockTexture = _services.GetRequiredService<ContentManager>().Load<Texture2D>("Icons/lock");
         
@@ -113,7 +112,7 @@ public class LevelService
             {
                 level = savedLevels.First(x => x.Id == i);
             }
-            else if (i > 6)
+            else if (i > _unlockedLevelsCount - 1)
             {
                 level.IsLocked = true;
             }

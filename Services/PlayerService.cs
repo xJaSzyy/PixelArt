@@ -8,4 +8,15 @@ public class PlayerService
     {
         Coins += coins;
     }
+    
+    public bool RemoveCoins(int coins)
+    {
+        if (coins > Coins)
+        {
+            return false;
+        }
+        
+        Coins -= coins;
+        return true;
+    }
 }

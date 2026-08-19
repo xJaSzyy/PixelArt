@@ -1,3 +1,4 @@
+using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -10,10 +11,14 @@ public class DialogService
 {
     private readonly GraphicsDevice _graphicsDevice;
     private readonly DrawService _drawService;
+    private readonly MouseService _mouseService;
 
     private readonly Texture2D _pixelTexture;
 
-    public bool ShowDialog { get; set; } = false;
+    public bool IsDialogOpen { get; private set; } = false;
+    private string _text = string.Empty;
+    private Func<bool> _onYes;
+    
     private readonly Point _dialogSize = new(512, 196);
     private const int _buttonSize = 64;
     private const int _spacing = 32;
@@ -21,11 +26,12 @@ public class DialogService
     private readonly Button _confirmButton;
     private readonly Button _cancelButton;
 
-    public DialogService(GraphicsDevice graphicsDevice, DrawService drawService, ContentManager content)
+    public DialogService(GraphicsDevice graphicsDevice, DrawService drawService, MouseService mouseService, ContentManager content)
     {
         _graphicsDevice = graphicsDevice;
         _drawService = drawService;
-        
+        _mouseService = mouseService;
+
         _pixelTexture = new Texture2D(_graphicsDevice, 1, 1);
         _pixelTexture.SetData([Color.White]);
         
@@ -38,13 +44,32 @@ public class DialogService
 
     public void Update(MouseState mouse)
     {
+        if (!IsDialogOpen)
+        {
+            return;
+        }
+        
         _confirmButton.Update(mouse);
         _cancelButton.Update(mouse);
+        
+        if (_mouseService.IsLeftMouseButtonClicked(mouse))
+        {
+            if (_confirmButton.IsHovered)
+            {
+                OnYesClicked();
+            }
+            else if (_cancelButton.IsHovered)
+            {
+                HideDialog();
+            }
+        }
+        
+        _mouseService.SetMouse(mouse);
     }
     
     public void Draw(SpriteBatch spriteBatch)
     {
-        if (!ShowDialog)
+        if (!IsDialogOpen)
         {
             return;
         }
@@ -58,8 +83,7 @@ public class DialogService
             new Rectangle(dialogPosition.X, dialogPosition.Y, _dialogSize.X, _dialogSize.Y), 
             new Color(45, 45, 45));
 
-        const string text = "Pay 49 Pixoins?";
-        _drawService.DrawString(spriteBatch, text, new Vector2(screenWidth * .5f, dialogPosition.Y + _drawService.MeasureString(text).Y + _spacing), Color.OrangeRed, 2f);
+        _drawService.DrawString(spriteBatch, _text, new Vector2(screenWidth * .5f, dialogPosition.Y + _drawService.MeasureString(_text).Y + _spacing), Color.Yellow, 2f);
 
         _confirmButton.Bounds = new Rectangle(screenWidth / 2 - _buttonSize / 2 - _buttonSize / 2, screenHeight / 2, 
             _buttonSize, _buttonSize);
@@ -69,5 +93,26 @@ public class DialogService
         
         _confirmButton.Draw(spriteBatch, Color.Green);
         _cancelButton.Draw(spriteBatch, Color.IndianRed);
+    }
+
+    public void ShowDialog(string text, Func<bool> onYes)
+    {
+        IsDialogOpen = true;
+        _text = text;
+        _onYes = onYes;
+    }
+
+    private void HideDialog()
+    {
+        IsDialogOpen = false;
+    }
+    
+    private void OnYesClicked()
+    {
+        if (_onYes?.Invoke() == true)
+        {
+            HideDialog();
+            _onYes = null;
+        }
     }
 }
