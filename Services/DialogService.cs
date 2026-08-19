@@ -17,7 +17,7 @@ public class DialogService
 
     public bool IsDialogOpen { get; private set; } = false;
     private string _text = string.Empty;
-    private Func<bool> _onYes;
+    private Func<bool> _onConfirm;
     
     private readonly Point _dialogSize = new(512, 196);
     private const int _buttonSize = 64;
@@ -56,7 +56,7 @@ public class DialogService
         {
             if (_confirmButton.IsHovered)
             {
-                OnYesClicked();
+                OnConfirmButtonClicked();
             }
             else if (_cancelButton.IsHovered)
             {
@@ -74,45 +74,43 @@ public class DialogService
             return;
         }
 
-        var screenWidth = _graphicsDevice.Viewport.Width;
-        var screenHeight = _graphicsDevice.Viewport.Height;
+        var halfScreenWidth = _graphicsDevice.Viewport.Width / 2;
+        var halfScreenHeight = _graphicsDevice.Viewport.Height / 2;
+        var halfButtonSize = _buttonSize / 2;
 
-        var dialogPosition = new Point(screenWidth / 2 - _dialogSize.X / 2, screenHeight / 2 - _dialogSize.Y / 2);
+        var dialogPosition = new Point(halfScreenWidth - _dialogSize.X / 2, halfScreenHeight - _dialogSize.Y / 2);
         
         spriteBatch.Draw(_pixelTexture,
             new Rectangle(dialogPosition.X, dialogPosition.Y, _dialogSize.X, _dialogSize.Y), 
             new Color(45, 45, 45));
 
-        _drawService.DrawString(spriteBatch, _text, new Vector2(screenWidth * .5f, dialogPosition.Y + _drawService.MeasureString(_text).Y + _spacing), Color.Yellow, 2f);
+        _drawService.DrawString(spriteBatch, _text, new Vector2(halfScreenWidth, dialogPosition.Y + _drawService.MeasureString(_text).Y + _spacing), Color.Yellow, 2f);
 
-        _confirmButton.Bounds = new Rectangle(screenWidth / 2 - _buttonSize / 2 - _buttonSize / 2, screenHeight / 2, 
-            _buttonSize, _buttonSize);
-        
-        _cancelButton.Bounds = new Rectangle(screenWidth / 2 - _buttonSize / 2 + _buttonSize / 2, screenHeight / 2, 
-            _buttonSize, _buttonSize);
+        _confirmButton.Bounds = new Rectangle(halfScreenWidth - halfButtonSize - halfButtonSize, halfScreenHeight, _buttonSize, _buttonSize);
+        _cancelButton.Bounds = new Rectangle(halfScreenWidth, halfScreenHeight, _buttonSize, _buttonSize);
         
         _confirmButton.Draw(spriteBatch, Color.Green);
         _cancelButton.Draw(spriteBatch, Color.IndianRed);
     }
 
-    public void ShowDialog(string text, Func<bool> onYes)
+    public void ShowDialog(string text, Func<bool> onConfirm)
     {
         IsDialogOpen = true;
         _text = text;
-        _onYes = onYes;
+        _onConfirm = onConfirm;
+    }
+    
+    private void OnConfirmButtonClicked()
+    {
+        if (_onConfirm?.Invoke() == true)
+        {
+            HideDialog();
+            _onConfirm = null;
+        }
     }
 
     private void HideDialog()
     {
         IsDialogOpen = false;
-    }
-    
-    private void OnYesClicked()
-    {
-        if (_onYes?.Invoke() == true)
-        {
-            HideDialog();
-            _onYes = null;
-        }
     }
 }

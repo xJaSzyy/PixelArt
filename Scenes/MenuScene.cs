@@ -115,14 +115,14 @@ public class MenuScene : IScene
             _graphicsDevice.Viewport.Width / 2f,
             48
         );
-
-        _drawService.DrawString(
-            _spriteBatch,
-            _playerService.Coins.ToString(),
-            position,
-            Color.Yellow,
-            2.5f
-        );
+        
+        _drawService.DrawStringWithBackground(_spriteBatch, 
+            _playerService.Coins.ToString(), 
+            position, 
+            Color.Yellow, 
+            new Color(0, 0, 0, 0.75f), 
+            2f,
+            16);
 
         _spriteBatch.End();
     }
@@ -148,9 +148,7 @@ public class MenuScene : IScene
             level.IsLocked = false;
             return true;
         }
-        else
-        {
-            return false;
-        }
+
+        return false;
     }
 }
