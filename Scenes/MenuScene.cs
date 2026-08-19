@@ -131,14 +131,14 @@ public class MenuScene : IScene
             ),
             Color.Yellow,
             2f);
-        
+
         _drawService.DrawString(_spriteBatch,
             _completedLevelsText,
             new Vector2(
                 _drawService.MeasureString(_completedLevelsText).X + 48,
                 32
             ),
-            Color.Yellow,
+            new Color(45, 45, 45),
             2f);
         
         _popupService.Draw(_spriteBatch, _drawService.GetFont());
@@ -177,6 +177,15 @@ public class MenuScene : IScene
             
             return true;
         }
+        
+        _popupService.Show(
+            "Not enough coins",
+            new Vector2(
+                _graphicsDevice.Viewport.Width / 2f,
+                _graphicsDevice.Viewport.Height / 2f
+            ),
+            0.5f,
+            Color.Red);
 
         return false;
     }
