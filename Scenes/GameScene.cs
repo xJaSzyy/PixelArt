@@ -22,6 +22,7 @@ public class GameScene : IScene
     private readonly SpriteBatch _spriteBatch;
     private readonly MouseService _mouseService;
     private readonly DrawService _drawService;
+    private readonly PopupTextService _popupService;
     private readonly CameraService _cameraService = new();
     private readonly PixelProcessorService _processorService;
     private ColorButtonsService _colorButtonsService;
@@ -33,8 +34,6 @@ public class GameScene : IScene
     private const int _buttonSize = 56;
     private const int _buttonSpacing = 12;
 
-    private readonly string[] _resultText = new string[2];
-
     public GameScene(LevelData level, IServiceProvider services)
     {
         _services = services;
@@ -45,6 +44,7 @@ public class GameScene : IScene
         _spriteBatch = new SpriteBatch(_graphicsDevice);
         _mouseService = _services.GetRequiredService<MouseService>();
         _drawService = _services.GetRequiredService<DrawService>();
+        _popupService = _services.GetRequiredService<PopupTextService>();
     }
 
     public void LoadContent(ContentManager content)
@@ -143,29 +143,30 @@ public class GameScene : IScene
                     {
                         case <= 5f:
                             coinsToAdd *= 2;
-                            _resultText[0] = "Perfect!";
-
                             break;
 
                         case <= 30f:
-                            _resultText[0] = string.Empty;
                             break;
 
                         default:
                             coinsToAdd /= 2;
-                            _resultText[0] = "Too many mistakes.";
                             break;
                     }
 
-                    _resultText[1] = $"+{coinsToAdd} Pixoins";
                     _services.GetRequiredService<PlayerService>().AddCoins(coinsToAdd);
 
+                    var popupText = $"+${coinsToAdd}";
+                    _popupService.Show(
+                        popupText,
+                        new Vector2(
+                            _graphicsDevice.Viewport.Width / 2f,
+                            _drawService.MeasureString(popupText).Y * 2.5f
+                        ),
+                        .75f,
+                        Color.Green,
+                        2f);
+
                     _processorService.CurrentLevel.IsFinished = true;
-                }
-                else
-                {
-                    _resultText[0] = string.Empty;
-                    _resultText[1] = string.Empty;
                 }
             }
         }
@@ -173,6 +174,8 @@ public class GameScene : IScene
         _processorService.Update(gameTime);
         _homeButton.Update(mouse);
         _restartButton.Update(mouse);
+        _popupService.Update(gameTime);
+        
         _mouseService.SetMouse(mouse);
     }
 
@@ -190,44 +193,14 @@ public class GameScene : IScene
         {
             _colorButtonsService.Draw(_drawService);
         }
-        else if (!_processorService.ReplayLaunched)
-        {
-            if (_resultText[0] == string.Empty)
-            {
-                _drawService.DrawString(_spriteBatch,
-                    _resultText[1],
-                    new Vector2(_graphicsDevice.Viewport.Width * .5f,
-                        _drawService.MeasureString(_resultText[1]).Y + _buttonSpacing),
-                    Color.Yellow,
-                    2f
-                );
-            }
-            else 
-            {
-                _drawService.DrawString(_spriteBatch,
-                    _resultText[0],
-                    new Vector2(_graphicsDevice.Viewport.Width * .5f,
-                        _drawService.MeasureString(_resultText[0]).Y + _buttonSpacing),
-                    Color.Yellow,
-                    2f
-                );
-
-                _drawService.DrawString(_spriteBatch,
-                    _resultText[1],
-                    new Vector2(_graphicsDevice.Viewport.Width * .5f,
-                        _drawService.MeasureString(_resultText[0]).Y + _buttonSpacing +
-                        _drawService.MeasureString(_resultText[1]).Y * 2 + _buttonSpacing),
-                    Color.Yellow,
-                    2f
-                );
-            }
-        }
 
         if (!_processorService.ReplayLaunched)
         {
             _homeButton.Draw(_spriteBatch);
             _restartButton.Draw(_spriteBatch);
         }
+        
+        _popupService.Draw(_spriteBatch, _drawService.GetFont());
 
         _spriteBatch.End();
     }

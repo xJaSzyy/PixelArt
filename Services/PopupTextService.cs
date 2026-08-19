@@ -6,9 +6,10 @@ namespace PixelArt.Services;
 
 public class PopupTextService
 {
-    private string? _text;
+    private string _text;
     private Vector2 _position;
     private Color _color;
+    private float _scale;
 
     private float _timer;
     private float _duration;
@@ -19,7 +20,8 @@ public class PopupTextService
         string text,
         Vector2 position,
         float duration = 0.5f,
-        Color? color = null)
+        Color? color = null,
+        float scale = 1f)
     {
         _text = text;
         _position = position;
@@ -27,6 +29,8 @@ public class PopupTextService
 
         _duration = duration;
         _timer = duration;
+
+        _scale = scale;
     }
 
     public void Update(GameTime gameTime)
@@ -48,21 +52,27 @@ public class PopupTextService
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
         if (!IsVisible)
+        {
             return;
+        }
 
         var progress = _timer / _duration;
-
         var alpha = MathHelper.Clamp(progress / 0.3f, 0f, 1f);
 
         var color = _color * alpha;
 
-        var size = font.MeasureString(_text!);
+        var size = font.MeasureString(_text!) * _scale;
         var position = _position - size / 2f;
 
         spriteBatch.DrawString(
             font,
             _text!,
             position,
-            color);
+            color,
+            0f,
+            Vector2.Zero,
+            _scale,
+            SpriteEffects.None,
+            0f);
     }
 }
