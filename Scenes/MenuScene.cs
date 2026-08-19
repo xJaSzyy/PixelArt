@@ -115,13 +115,25 @@ public class MenuScene : IScene
         _drawService.DrawRectangle(_spriteBatch, 
             new Rectangle(0, 0, _graphicsDevice.Viewport.Width, _headerHeight), 
             new Color(23, 23, 23));
+
+        _drawService.DrawString(_spriteBatch,
+            "$" + _playerService.Coins,
+            new Vector2(
+                _graphicsDevice.Viewport.Width / 2f,
+                32
+            ),
+            Color.Yellow,
+            2f);
         
-        var position = new Vector2(
-            _graphicsDevice.Viewport.Width / 2f,
-            32
-        );
-        
-        _drawService.DrawString(_spriteBatch, "$" + _playerService.Coins, position, Color.Yellow, 2f);
+        var text = $"{_levelService.Levels.Count(l => l.IsFinished)}/{_levelService.Levels.Count}";
+        _drawService.DrawString(_spriteBatch,
+            text,
+            new Vector2(
+                _drawService.MeasureString(text).X + 48,
+                32
+            ),
+            Color.Yellow,
+            2f);
 
         _spriteBatch.End();
     }
