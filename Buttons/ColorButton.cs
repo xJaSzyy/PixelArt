@@ -22,18 +22,6 @@ public class ColorButton(Color color, int number, Rectangle bounds)
     {
         var rect = GetDrawBounds();
 
-        if (IsSelected)
-        {
-            var border = new Rectangle(
-                rect.X - 2,
-                rect.Y - 2,
-                rect.Width + 4,
-                rect.Height + 4
-            );
-
-            spriteBatch.Draw(pixelTexture, border, Color.Yellow);
-        }
-
         var color = Color;
 
         if (IsHovered)
@@ -42,10 +30,40 @@ public class ColorButton(Color color, int number, Rectangle bounds)
                 Math.Min(color.R + 40, 255),
                 Math.Min(color.G + 40, 255),
                 Math.Min(color.B + 40, 255)
-            );;
+            );
         }
 
         spriteBatch.Draw(pixelTexture, rect, color);
+
+        if (IsSelected)
+        {
+            const int borderSize = 3;
+            var selectedColor = ColorIsDark() ? Color.Yellow : Color.CornflowerBlue;
+
+            spriteBatch.Draw(
+                pixelTexture,
+                new Rectangle(rect.X - borderSize, rect.Y - borderSize,
+                    rect.Width + borderSize * 2, borderSize),
+                selectedColor);
+
+            spriteBatch.Draw(
+                pixelTexture,
+                new Rectangle(rect.X - borderSize, rect.Bottom,
+                    rect.Width + borderSize * 2, borderSize),
+                selectedColor);
+
+            spriteBatch.Draw(
+                pixelTexture,
+                new Rectangle(rect.X - borderSize, rect.Y,
+                    borderSize, rect.Height),
+                selectedColor);
+
+            spriteBatch.Draw(
+                pixelTexture,
+                new Rectangle(rect.Right, rect.Y,
+                    borderSize, rect.Height),
+                selectedColor);
+        }
     }
     
     public Rectangle GetDrawBounds()

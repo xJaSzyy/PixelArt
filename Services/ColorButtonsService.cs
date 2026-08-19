@@ -78,11 +78,13 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
 
             var text = groupIsFinished ? "x" : colorButton.Number.ToString();
 
+            var color = colorButton.ColorIsDark() ? Color.White : Color.Black;
+            
             drawService.DrawString(
                 spriteBatch,
                 text,
                 colorButton.GetDrawBounds().Center.ToVector2(),
-                colorButton.ColorIsDark() ? Color.White : Color.Black);
+                color);
 
             if (!groupIsFinished)
             {
@@ -91,8 +93,8 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
                     _pixelTexture,
                     colorButton.GetProgressBounds(),
                     colorGroup.Progress,
-                    Color.White,
-                    Color.White,
+                    color,
+                    color,
                     colorButton.Color);
             }
         }
