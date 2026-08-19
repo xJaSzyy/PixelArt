@@ -80,9 +80,15 @@ public class DialogService
 
         var dialogPosition = new Point(halfScreenWidth - _dialogSize.X / 2, halfScreenHeight - _dialogSize.Y / 2);
         
-        spriteBatch.Draw(_pixelTexture,
-            new Rectangle(dialogPosition.X, dialogPosition.Y, _dialogSize.X, _dialogSize.Y), 
-            new Color(45, 45, 45));
+        _drawService.DrawRoundedRectangle(
+            spriteBatch,
+            new Rectangle(
+                dialogPosition.X,
+                dialogPosition.Y,
+                _dialogSize.X,
+                _dialogSize.Y),
+            new Color(45, 45, 45),
+            6);
 
         _drawService.DrawString(spriteBatch, _text, new Vector2(halfScreenWidth, dialogPosition.Y + _drawService.MeasureString(_text).Y + _spacing), Color.Yellow, 2f);
 

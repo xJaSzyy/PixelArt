@@ -1,3 +1,4 @@
+using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -7,7 +8,7 @@ public class DrawService
 {
     private readonly Texture2D _pixelTexture;
     private readonly SpriteFont _font;
-    
+
     public DrawService(GraphicsDevice graphicsDevice, SpriteFont font)
     {
         _pixelTexture = new Texture2D(graphicsDevice, 1, 1);
@@ -15,9 +16,9 @@ public class DrawService
 
         _font = font;
     }
-    
+
     public Vector2 MeasureString(string text) => _font.MeasureString(text);
-    
+
     public void DrawString(SpriteBatch spriteBatch,
         string text,
         Vector2 position,
@@ -38,7 +39,7 @@ public class DrawService
             0f
         );
     }
-    
+
     public void DrawStringWithBackground(
         SpriteBatch spriteBatch,
         string text,
@@ -75,7 +76,7 @@ public class DrawService
             0f
         );
     }
-    
+
     public void DrawProgressBar(
         SpriteBatch spriteBatch,
         Texture2D pixelTexture,
@@ -111,5 +112,92 @@ public class DrawService
             pixelTexture,
             fillBounds,
             fillColor);
+    }
+
+    public void DrawRectangle(SpriteBatch spriteBatch, Rectangle bounds, Color color)
+    {
+        spriteBatch.Draw(_pixelTexture, bounds, color);
+    }
+
+    public void DrawRoundedRectangle(
+        SpriteBatch spriteBatch,
+        Rectangle bounds,
+        Color color,
+        int radius)
+    {
+        radius = Math.Min(
+            radius,
+            Math.Min(bounds.Width, bounds.Height) / 2);
+
+        spriteBatch.Draw(
+            _pixelTexture,
+            new Rectangle(
+                bounds.X + radius,
+                bounds.Y + radius,
+                bounds.Width - radius * 2,
+                bounds.Height - radius * 2),
+            color);
+
+        spriteBatch.Draw(
+            _pixelTexture,
+            new Rectangle(
+                bounds.X + radius,
+                bounds.Y,
+                bounds.Width - radius * 2,
+                radius),
+            color);
+
+        spriteBatch.Draw(
+            _pixelTexture,
+            new Rectangle(
+                bounds.X + radius,
+                bounds.Bottom - radius,
+                bounds.Width - radius * 2,
+                radius),
+            color);
+
+        spriteBatch.Draw(
+            _pixelTexture,
+            new Rectangle(
+                bounds.X,
+                bounds.Y + radius,
+                radius,
+                bounds.Height - radius * 2),
+            color);
+
+        spriteBatch.Draw(
+            _pixelTexture,
+            new Rectangle(
+                bounds.Right - radius,
+                bounds.Y + radius,
+                radius,
+                bounds.Height - radius * 2),
+            color);
+
+        DrawCircle(spriteBatch, new Vector2(bounds.X + radius, bounds.Y + radius), radius, color);
+        DrawCircle(spriteBatch, new Vector2(bounds.Right - radius - 1, bounds.Y + radius), radius, color);
+        DrawCircle(spriteBatch, new Vector2(bounds.X + radius, bounds.Bottom - radius - 1), radius, color);
+        DrawCircle(spriteBatch, new Vector2(bounds.Right - radius - 1, bounds.Bottom - radius - 1), radius, color);
+    }
+
+    private void DrawCircle(
+        SpriteBatch spriteBatch,
+        Vector2 center,
+        int radius,
+        Color color)
+    {
+        for (var y = -radius; y <= radius; y++)
+        {
+            var width = (int)Math.Sqrt(radius * radius - y * y);
+
+            spriteBatch.Draw(
+                _pixelTexture,
+                new Rectangle(
+                    (int)center.X - width,
+                    (int)center.Y + y,
+                    width * 2 + 1,
+                    1),
+                color);
+        }
     }
 }
