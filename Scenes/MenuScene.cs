@@ -28,7 +28,8 @@ public class MenuScene : IScene
     private readonly DialogService _dialogService;
     private readonly SaveService _saveService;
 
-    private int _unlockLevelCost = 49;
+    private const int _unlockLevelCost = 49;
+    private const int _headerHeight = 64;
 
     public MenuScene(IServiceProvider services)
     {
@@ -53,7 +54,7 @@ public class MenuScene : IScene
         if (_levelService.Levels.Count == 0)
         {
             var saveData = _saveService.Load();
-            _levelService.LoadLevels(saveData.Levels);
+            _levelService.LoadLevels(saveData.Levels, _headerHeight);
             _playerService.AddCoins(saveData.Coins);
         }
         else
@@ -78,7 +79,7 @@ public class MenuScene : IScene
                 {
                     if (level.IsLocked)
                     {
-                        _dialogService.ShowDialog($"Pay {_unlockLevelCost} Pixoins?", () => UnlockLevel(level));
+                        _dialogService.ShowDialog($"Pay ${_unlockLevelCost}?", () => UnlockLevel(level));
                     }
                     else
                     {
@@ -102,7 +103,7 @@ public class MenuScene : IScene
 
     public void Draw(GameTime gameTime)
     {
-        _graphicsDevice.Clear(new Color(25, 25, 25));
+        _graphicsDevice.Clear(new Color(30, 30, 30));
         
         _spriteBatch.Begin(
             samplerState: SamplerState.PointClamp
@@ -110,19 +111,17 @@ public class MenuScene : IScene
 
         _levelService.Draw(_spriteBatch);
         _dialogService.Draw(_spriteBatch);
-
+        
+        _drawService.DrawRectangle(_spriteBatch, 
+            new Rectangle(0, 0, _graphicsDevice.Viewport.Width, _headerHeight), 
+            new Color(23, 23, 23));
+        
         var position = new Vector2(
             _graphicsDevice.Viewport.Width / 2f,
-            48
+            32
         );
         
-        _drawService.DrawStringWithBackground(_spriteBatch, 
-            _playerService.Coins.ToString(), 
-            position, 
-            Color.Yellow, 
-            new Color(0, 0, 0, 0.75f), 
-            2f,
-            16);
+        _drawService.DrawString(_spriteBatch, "$" + _playerService.Coins, position, Color.Yellow, 2f);
 
         _spriteBatch.End();
     }

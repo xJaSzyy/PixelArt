@@ -30,6 +30,8 @@ public class LevelService
     private int _buttonsPerRow = 3;
     private float _scroll;
     private float _targetScroll;
+    private readonly Point _gridOffset = new(32, 32);
+    private int _headerHeight;
     
     private readonly Texture2D _lockTexture;
 
@@ -87,8 +89,10 @@ public class LevelService
         }
     }
     
-    public void LoadLevels(List<LevelData> savedLevels)
+    public void LoadLevels(List<LevelData> savedLevels, int headerHeight)
     {
+        _headerHeight = headerHeight;
+        
         var useSaveData = savedLevels.Count == _levelsCount;
         
         Levels.Clear();
@@ -96,15 +100,6 @@ public class LevelService
         {
             var texture = _services.GetRequiredService<ContentManager>()
                 .Load<Texture2D>($"Images/img{i + 1}");
-
-            var column = i % _buttonsPerRow;
-            var row = i / _buttonsPerRow;
-
-            var rectangle = new Rectangle(
-                column * _buttonSize,
-                row * _buttonSize,
-                _buttonSize,
-                _buttonSize);
 
             var level = new LevelData();
 
@@ -119,7 +114,7 @@ public class LevelService
 
             level.Id = i;
             level.Texture = texture;
-            level.Button = new Button(texture, rectangle);
+            level.Button = new Button(texture, Rectangle.Empty);
             
             Levels.Add(level);
             
@@ -130,15 +125,24 @@ public class LevelService
 
     private void LayoutButtons()
     {
+        var gridOffsetX = GetGridOffsetX();
+
         for (var i = 0; i < Levels.Count; i++)
         {
             var column = i % _buttonsPerRow;
             var row = i / _buttonsPerRow;
 
-            var x = _buttonSpacing + column * (_buttonSize + _buttonSpacing);
-            var y = _buttonSpacing + row * (_buttonSize + _buttonSpacing) - (int)_scroll;
+            var x = gridOffsetX + column * (_buttonSize + _buttonSpacing);
+            var y = _gridOffset.Y
+                    + _headerHeight
+                    + row * (_buttonSize + _buttonSpacing)
+                    - (int)_scroll;
 
-            Levels[i].Button.Bounds = new Rectangle(x, y, _buttonSize, _buttonSize);
+            Levels[i].Button.Bounds = new Rectangle(
+                x,
+                y,
+                _buttonSize,
+                _buttonSize);
         }
     }
     
@@ -164,8 +168,17 @@ public class LevelService
     private float GetMaxScroll()
     {
         var rows = (int)Math.Ceiling(Levels.Count / (float)_buttonsPerRow);
-        var contentHeight = rows * (_buttonSize + _buttonSpacing) + _buttonSpacing;
+        var contentBottom = _gridOffset.Y + _headerHeight + rows * (_buttonSize + _buttonSpacing);
+        
+        return Math.Max(0, contentBottom - _graphicsDevice.Viewport.Height);
+    }
+    
+    private int GetGridOffsetX()
+    {
+        var gridWidth =
+            _buttonsPerRow * _buttonSize +
+            (_buttonsPerRow - 1) * _buttonSpacing;
 
-        return Math.Max(0, contentHeight - _graphicsDevice.Viewport.Height);
+        return (_graphicsDevice.Viewport.Width - gridWidth) / 2;
     }
 }

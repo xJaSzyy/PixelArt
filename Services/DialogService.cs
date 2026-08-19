@@ -19,7 +19,7 @@ public class DialogService
     private string _text = string.Empty;
     private Func<bool> _onConfirm;
     
-    private readonly Point _dialogSize = new(512, 196);
+    private readonly Point _dialogSize = new(320, 196);
     private const int _buttonSize = 64;
     private const int _spacing = 32;
 
