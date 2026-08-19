@@ -1,3 +1,4 @@
+using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -37,7 +38,11 @@ public class ColorButton(Color color, int number, Rectangle bounds)
 
         if (IsHovered)
         {
-            color.A = 200;
+            color = new Color(
+                Math.Min(color.R + 40, 255),
+                Math.Min(color.G + 40, 255),
+                Math.Min(color.B + 40, 255)
+            );;
         }
 
         spriteBatch.Draw(pixelTexture, rect, color);

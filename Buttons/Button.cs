@@ -22,10 +22,23 @@ public class Button(Texture2D texture, Rectangle bounds)
         var rect = Bounds;
 
         color ??= Color.White;
-        
+
         if (IsHovered)
         {
             rect.Y -= 4;
+
+            if (color == Color.White)
+            {
+                color = Color.Lerp(color.Value, Color.Yellow, 0.5f);
+            }
+            else
+            {
+                color = new Color(
+                    Math.Min(color.Value.R + 40, 255),
+                    Math.Min(color.Value.G + 40, 255),
+                    Math.Min(color.Value.B + 40, 255)
+                );
+            }
         }
 
         spriteBatch.Draw(Texture, rect, (Color)color);
