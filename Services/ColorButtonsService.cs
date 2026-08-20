@@ -15,8 +15,8 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
     private float _targetScroll;
 
     private const float _scrollSpeed = 0.2f;
-    private const int _buttonSize = 56;
-    private const int _buttonSpacing = 12;
+    private const int _buttonSize = 72;
+    private const int _buttonSpacing = 4;
     private readonly Color _highlightColor = new(72, 72, 72);
     
     private Texture2D _pixelTexture;
@@ -83,10 +83,11 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
             drawService.DrawString(
                 spriteBatch,
                 text,
-                colorButton.GetDrawBounds().Center.ToVector2(),
-                color);
+                colorButton.Bounds.Center.ToVector2(),
+                color,
+                colorButton.GetNumberScale());
 
-            if (!groupIsFinished)
+            if (!groupIsFinished && colorButton.IsSelected)
             {
                 drawService.DrawProgressBar(
                     spriteBatch,

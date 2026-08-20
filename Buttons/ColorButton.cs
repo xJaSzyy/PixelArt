@@ -13,6 +13,8 @@ public class ColorButton(Color color, int number, Rectangle bounds)
     public bool IsHovered { get; set; }
     public bool IsSelected { get; set; }
     
+    private float NumberScale { get; } = 1.25f;
+    
     public void Update(MouseState mouse)
     {
         IsHovered = Bounds.Contains(mouse.Position);
@@ -20,75 +22,31 @@ public class ColorButton(Color color, int number, Rectangle bounds)
     
     public void Draw(SpriteBatch spriteBatch, Texture2D pixelTexture)
     {
-        var rect = GetDrawBounds();
-
         var color = Color;
 
         if (IsHovered)
         {
+            var l = ColorIsDark() ? 40 : -40;
+            
             color = new Color(
-                Math.Min(color.R + 40, 255),
-                Math.Min(color.G + 40, 255),
-                Math.Min(color.B + 40, 255)
+                Math.Min(color.R + l, 255),
+                Math.Min(color.G + l, 255),
+                Math.Min(color.B + l, 255)
             );
         }
 
-        spriteBatch.Draw(pixelTexture, rect, color);
-
-        if (IsSelected)
-        {
-            const int borderSize = 3;
-            var selectedColor = ColorIsDark() ? Color.Yellow : Color.CornflowerBlue;
-
-            spriteBatch.Draw(
-                pixelTexture,
-                new Rectangle(rect.X - borderSize, rect.Y - borderSize,
-                    rect.Width + borderSize * 2, borderSize),
-                selectedColor);
-
-            spriteBatch.Draw(
-                pixelTexture,
-                new Rectangle(rect.X - borderSize, rect.Bottom,
-                    rect.Width + borderSize * 2, borderSize),
-                selectedColor);
-
-            spriteBatch.Draw(
-                pixelTexture,
-                new Rectangle(rect.X - borderSize, rect.Y,
-                    borderSize, rect.Height),
-                selectedColor);
-
-            spriteBatch.Draw(
-                pixelTexture,
-                new Rectangle(rect.Right, rect.Y,
-                    borderSize, rect.Height),
-                selectedColor);
-        }
-    }
-    
-    public Rectangle GetDrawBounds()
-    {
-        var rect = Bounds;
-
-        if (IsHovered)
-        {
-            rect.Y -= 4;
-        }
-
-        return rect;
+        spriteBatch.Draw(pixelTexture, Bounds, color);
     }
     
     public Rectangle GetProgressBounds()
     {
-        var rect = GetDrawBounds();
-        
-        const int height = 8;
+        const int spacing = 8;
 
         return new Rectangle(
-            rect.X,
-            rect.Bottom - height,
-            rect.Width,
-            height);
+            Bounds.X + spacing,
+            Bounds.Bottom - spacing * 2,
+            Bounds.Width - spacing * 2,
+            spacing);
     }
     
     public bool ColorIsDark()
@@ -104,5 +62,10 @@ public class ColorButton(Color color, int number, Rectangle bounds)
     public void SetSelected(bool isSelected)
     {
         IsSelected = isSelected;
+    }
+
+    public float GetNumberScale()
+    {
+        return IsSelected ? NumberScale * 1.3f : IsHovered ? NumberScale * 1.2f : NumberScale;
     }
 }
