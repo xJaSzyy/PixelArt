@@ -83,7 +83,7 @@ public class PixelProcessorService
             {
                 var original = texturePixels[i];
 
-                if (original.A == 0)
+                if (original.A != 255)
                 {
                     continue;
                 }

@@ -33,7 +33,7 @@ public class GameScene : IScene
 
     private const int _buttonSize = 56;
     private const int _buttonSpacing = 12;
-
+    
     public GameScene(LevelData level, IServiceProvider services)
     {
         _services = services;

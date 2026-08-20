@@ -15,7 +15,7 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
     private float _targetScroll;
 
     private const float _scrollSpeed = 0.2f;
-    private const int _buttonSize = 72;
+    private const int _buttonSize = 68;
     private const int _buttonSpacing = 4;
     private readonly Color _highlightColor = new(72, 72, 72);
     
@@ -54,20 +54,6 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
     
     public void Draw(DrawService drawService)
     {
-        var old = graphicsDevice.ScissorRectangle;
-
-        graphicsDevice.ScissorRectangle = new Rectangle(0, graphicsDevice.Viewport.Height - _buttonSize - _buttonSpacing * 2,
-            graphicsDevice.Viewport.Width, _buttonSize + _buttonSpacing * 2);
-
-        spriteBatch.End();
-
-        spriteBatch.Begin(
-            samplerState: SamplerState.PointClamp,
-            rasterizerState: new RasterizerState
-            {
-                ScissorTestEnable = true
-            });
-        
         var colorGroups = processorService.CurrentLevel.ColorGroups;
         foreach (var colorButton in _colorButtons)
         {
@@ -99,12 +85,6 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
                     colorButton.Color);
             }
         }
-        
-        spriteBatch.End();
-
-        graphicsDevice.ScissorRectangle = old;
-
-        spriteBatch.Begin(samplerState: SamplerState.PointClamp);
     }
     
     private void LayoutButtons()
