@@ -198,6 +198,11 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
         }
     }
 
+    public void ResetScroll()
+    {
+        _targetScroll = 0;
+    }
+
     public List<ColorButton> GetButtons()
     {
         return _colorButtons;

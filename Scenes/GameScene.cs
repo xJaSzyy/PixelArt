@@ -202,6 +202,8 @@ public class GameScene : IScene
             _buttonSize,
             _buttonSize);
         
+        _colorButtonsService.ResetScroll();
+        
         ImageToCenter();
     }
 
