@@ -139,20 +139,6 @@ public class GameScene : IScene
                 {
                     var coinsToAdd = _level.History.Count / 10;
 
-                    switch (_level.ErrorCountPercent)
-                    {
-                        case <= 5f:
-                            coinsToAdd *= 2;
-                            break;
-
-                        case <= 30f:
-                            break;
-
-                        default:
-                            coinsToAdd /= 2;
-                            break;
-                    }
-
                     _services.GetRequiredService<PlayerService>().AddCoins(coinsToAdd);
 
                     var popupText = $"+${coinsToAdd}";

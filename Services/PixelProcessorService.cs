@@ -222,10 +222,6 @@ public class PixelProcessorService
         {
             CurrentLevel.History.Add(index);
         }
-        else if (color != pixel.CurrentColor)
-        {
-            CurrentLevel.ErrorCount++;
-        }
         
         var texturePixels = new Color[CurrentLevel.Texture.Width * CurrentLevel.Texture.Height];
         CurrentLevel.Texture.GetData(texturePixels);

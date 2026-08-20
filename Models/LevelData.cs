@@ -16,6 +16,4 @@ public class LevelData
     public bool IsLocked { get; set; } = false;
     
     [JsonIgnore] public Button Button { get; set; }
-    public int ErrorCount { get; set; }
-    [JsonIgnore] public float ErrorCountPercent => (float)ErrorCount / History.Count * 100f;
 }
