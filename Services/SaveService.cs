@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.IO.Compression;
 using System.Text.Json;
 using PixelArt.Models;
 
@@ -8,24 +9,26 @@ namespace PixelArt.Services;
 public class SaveService
 {
     private readonly string _path;
-    
+
     public SaveService()
     {
         _path = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "PixelArt",
-            "save.json"
+            "save.json.gz"
         );
     }
-    
+
     public void Save(SaveData data)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
 
-        var json = JsonSerializer.Serialize(data);
-        File.WriteAllText(_path, json);
+        using var file = File.Create(_path);
+        using var gzip = new GZipStream(file, CompressionLevel.Optimal);
+
+        JsonSerializer.Serialize(gzip, data);
     }
-    
+
     public SaveData Load()
     {
         if (!File.Exists(_path))
@@ -33,8 +36,9 @@ public class SaveService
             return new SaveData();
         }
 
-        var json = File.ReadAllText(_path);
-        
-        return JsonSerializer.Deserialize<SaveData>(json) ?? new SaveData();
+        using var file = File.OpenRead(_path);
+        using var gzip = new GZipStream(file, CompressionMode.Decompress);
+
+        return JsonSerializer.Deserialize<SaveData>(gzip) ?? new SaveData();
     }
 }
