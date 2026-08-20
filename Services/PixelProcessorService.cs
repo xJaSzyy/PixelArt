@@ -17,7 +17,7 @@ public class PixelProcessorService
     private float _pixelHeight;
     
     private int _historyIndex;
-    private const float _replayDuration = 1f;
+    private const float _replayDuration = 1.25f;
     private float _pixelsAccumulator;
 
     public void Update(GameTime gameTime)

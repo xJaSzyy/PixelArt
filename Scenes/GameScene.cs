@@ -74,12 +74,14 @@ public class GameScene : IScene
     {
         var mouse = Mouse.GetState();
         var keyboard = Keyboard.GetState();
+
+        var spacePressed = keyboard.IsKeyDown(Keys.Space);
         
-        if (_mouseService.IsLeftMouseButtonClicked(mouse) || keyboard.IsKeyDown(Keys.Space))
+        if (_mouseService.IsLeftMouseButtonClicked(mouse) || spacePressed)
         {
             _colorButtonsService.UpdateSelectedButton();
 
-            if (!_processorService.ReplayLaunched)
+            if (!_processorService.ReplayLaunched && !spacePressed)
             {
                 if (_homeButton.IsHovered)
                 {
@@ -142,12 +144,14 @@ public class GameScene : IScene
                     _services.GetRequiredService<PlayerService>().AddCoins(coinsToAdd);
 
                     var popupText = $"+${coinsToAdd}";
-                    _popupService.Show(
+                    
+                    _popupService.ShowDelayed(
                         popupText,
                         new Vector2(
                             _graphicsDevice.Viewport.Width / 2f,
                             _drawService.MeasureString(popupText).Y * 2.5f
                         ),
+                        1.25f,
                         .75f,
                         Color.Green,
                         2f);

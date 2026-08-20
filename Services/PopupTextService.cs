@@ -1,4 +1,3 @@
-using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -14,7 +13,9 @@ public class PopupTextService
     private float _timer;
     private float _duration;
 
-    public bool IsVisible => _text != null;
+    private float _delayTimer;
+
+    public bool IsVisible => _text != null && _delayTimer <= 0f;
 
     public void Show(
         string text,
@@ -26,27 +27,59 @@ public class PopupTextService
         _text = text;
         _position = position;
         _color = color ?? Color.White;
-
         _duration = duration;
         _timer = duration;
-
         _scale = scale;
+        _delayTimer = 0f;
+    }
+
+    public void ShowDelayed(
+        string text,
+        Vector2 position,
+        float delay,
+        float duration = 0.5f,
+        Color? color = null,
+        float scale = 1f)
+    {
+        _text = text;
+        _position = position;
+        _color = color ?? Color.White;
+        _duration = duration;
+        _timer = duration;
+        _scale = scale;
+        _delayTimer = delay;
     }
 
     public void Update(GameTime gameTime)
     {
-        if (!IsVisible)
+        if (_text == null)
+        {
             return;
+        }
 
-        _timer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+        var deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-        if (_timer <= 0)
+        if (_delayTimer > 0f)
+        {
+            _delayTimer -= deltaTime;
+
+            if (_delayTimer > 0f)
+            {
+                return;
+            }
+
+            _timer = _duration;
+        }
+
+        _timer -= deltaTime;
+
+        if (_timer <= 0f)
         {
             _text = null;
             return;
         }
 
-        _position.Y -= 20f * (float)gameTime.ElapsedGameTime.TotalSeconds;
+        _position.Y -= 20f * deltaTime;
     }
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
