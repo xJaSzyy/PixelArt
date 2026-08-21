@@ -13,7 +13,7 @@ public class ColorButton(Color color, int number, Rectangle bounds)
     public bool IsHovered { get; set; }
     public bool IsSelected { get; set; }
     
-    private float NumberScale { get; } = 1.2f;
+    private float NumberScale { get; } = 1.1f;
     
     public void Update(MouseState mouse)
     {
@@ -66,6 +66,6 @@ public class ColorButton(Color color, int number, Rectangle bounds)
 
     public float GetNumberScale()
     {
-        return IsSelected ? NumberScale * 1.25f : IsHovered ? NumberScale * 1.15f : NumberScale;
+        return IsSelected ? NumberScale * 1.2f : IsHovered ? NumberScale * 1.1f : NumberScale;
     }
 }

@@ -15,8 +15,8 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
     private float _targetScroll;
 
     private const float _scrollSpeed = 0.2f;
-    private const int _buttonSize = 68;
-    private const int _buttonSpacing = 4;
+    private const int _buttonSize = 60;
+    private const int _buttonSpacing = 16;
     private readonly Color _highlightColor = new(72, 72, 72);
     
     private Texture2D _pixelTexture;
@@ -188,7 +188,7 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
     
     public void ScrollButtonsRight()
     {
-        var max = Math.Max(0, _colorButtons.Count * (_buttonSize + _buttonSpacing) - graphicsDevice.Viewport.Width + _buttonSpacing * 2);
+        var max = Math.Max(0, _colorButtons.Count * (_buttonSize + _buttonSpacing) - graphicsDevice.Viewport.Width + _buttonSpacing * 2 - _buttonSpacing);
 
         _targetScroll += _buttonSize + _buttonSpacing;
 
