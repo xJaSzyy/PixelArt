@@ -22,9 +22,20 @@ public class PixelProcessorService
     
     private Point? _lastPaintPixel;
     private Color[] _texturePixels;
+    
+    private readonly ParticleService _particleService;
+    private readonly CameraService _cameraService;
+
+    public PixelProcessorService(ParticleService particleService, CameraService cameraService)
+    {
+        _particleService = particleService;
+        _cameraService = cameraService;
+    }
 
     public void Update(GameTime gameTime)
     {
+        _particleService.Update(gameTime);
+        
         if (!ReplayLaunched)
         {
             return;
@@ -67,11 +78,11 @@ public class PixelProcessorService
         }
     }
     
-    public void Draw(SpriteBatch spriteBatch, DrawService drawService, CameraService cameraService)
+    public void Draw(SpriteBatch spriteBatch, DrawService drawService)
     {
         CurrentLevel.Texture.SetData(_texturePixels);
         
-        var drawBounds = GetImageBounds(cameraService);
+        var drawBounds = GetImageBounds();
 
         spriteBatch.Draw(
             CurrentLevel.Texture,
@@ -79,7 +90,9 @@ public class PixelProcessorService
             Color.White
         );
         
-        DrawPixelNumbers(drawBounds, spriteBatch, drawService, cameraService);
+        DrawPixelNumbers(drawBounds, spriteBatch, drawService);
+        
+        _particleService.Draw(spriteBatch);
     }
     
     public void ChangeLevel(LevelData levelData)
@@ -190,9 +203,9 @@ public class PixelProcessorService
         return (byte)value;
     }
     
-    public void PaintAtMousePosition(MouseState mouse, Color color, CameraService cameraService)
+    public void PaintAtMousePosition(MouseState mouse, Color color)
     {
-        var bounds = GetImageBounds(cameraService);
+        var bounds = GetImageBounds();
 
         if (!bounds.Contains(mouse.Position))
         {
@@ -200,8 +213,8 @@ public class PixelProcessorService
             return;
         }
 
-        var x = (int)((mouse.X - bounds.X) / (_pixelWidth * cameraService.Zoom));
-        var y = (int)((mouse.Y - bounds.Y) / (_pixelHeight * cameraService.Zoom));
+        var x = (int)((mouse.X - bounds.X) / (_pixelWidth * _cameraService.Zoom));
+        var y = (int)((mouse.Y - bounds.Y) / (_pixelHeight * _cameraService.Zoom));
 
         var currentPixel = new Point(x, y);
 
@@ -262,12 +275,12 @@ public class PixelProcessorService
         }
     }
     
-    public Rectangle GetImageBounds(CameraService cameraService)
+    public Rectangle GetImageBounds()
     {
-        var width = (int)(CurrentLevel.Texture.Width * _pixelWidth * cameraService.Zoom);
-        var height = (int)(CurrentLevel.Texture.Height * _pixelHeight * cameraService.Zoom);
+        var width = (int)(CurrentLevel.Texture.Width * _pixelWidth * _cameraService.Zoom);
+        var height = (int)(CurrentLevel.Texture.Height * _pixelHeight * _cameraService.Zoom);
 
-        var cameraPosition = cameraService.GetPosition();
+        var cameraPosition = _cameraService.GetPosition();
 
         return new Rectangle(
             (int)cameraPosition.X,
@@ -291,13 +304,24 @@ public class PixelProcessorService
             return;
         }
         
+        pixel.CurrentColor = color;
+        _texturePixels[index] = color;
+        
         if (color == pixel.OriginalColor)
         {
             CurrentLevel.History.Add(index);
+            
+            var l = pixel.ColorIsDark() ? 40 : -40;
+            var particleColor = new Color(
+                Math.Min(color.R + l, 255),
+                Math.Min(color.G + l, 255),
+                Math.Min(color.B + l, 255)
+            );
+
+            _particleService.Spawn(
+                pixel.GetScreenPosition(GetImageBounds(), CurrentLevel.Texture.Width, CurrentLevel.Texture.Height),
+                particleColor, 2);
         }
-        
-        pixel.CurrentColor = color;
-        _texturePixels[index] = color;
     }
     
     public void SetPixels(IEnumerable<(int Index, Color Color)> pixels)
@@ -326,7 +350,7 @@ public class PixelProcessorService
         return pixelData.TexturePositionY * CurrentLevel.Texture.Width + pixelData.TexturePositionX;
     }
     
-    private void DrawPixelNumbers(Rectangle bounds, SpriteBatch spriteBatch, DrawService drawService, CameraService cameraService)
+    private void DrawPixelNumbers(Rectangle bounds, SpriteBatch spriteBatch, DrawService drawService)
     {
         foreach (var colorGroup in CurrentLevel.ColorGroups)
         {
@@ -335,9 +359,9 @@ public class PixelProcessorService
                 var color = Color.Lerp(
                     Color.Transparent,
                     pixel.ColorIsDark() ? Color.White : Color.Black,
-                    Utils.Remap(cameraService.Zoom, cameraService.MinZoom, cameraService.MinZoom * 2f, 0f, 1f)
+                    Utils.Remap(_cameraService.Zoom, _cameraService.MinZoom, _cameraService.MinZoom * 2f, 0f, 1f)
                 );
-                var scale = cameraService.Zoom + _pixelWidth * (colorGroup.Number.ToString().Length == 1 ? 0.0045f : 0.003f);
+                var scale = _cameraService.Zoom + _pixelWidth * (colorGroup.Number.ToString().Length == 1 ? 0.0045f : 0.003f);
                 
                 drawService.DrawString(
                     spriteBatch,

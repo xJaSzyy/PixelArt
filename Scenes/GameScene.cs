@@ -23,7 +23,7 @@ public class GameScene : IScene
     private readonly MouseService _mouseService;
     private readonly DrawService _drawService;
     private readonly PopupTextService _popupService;
-    private readonly CameraService _cameraService = new();
+    private readonly CameraService _cameraService;
     private readonly PixelProcessorService _processorService;
     private ColorButtonsService _colorButtonsService;
 
@@ -45,6 +45,7 @@ public class GameScene : IScene
         _mouseService = _services.GetRequiredService<MouseService>();
         _drawService = _services.GetRequiredService<DrawService>();
         _popupService = _services.GetRequiredService<PopupTextService>();
+        _cameraService = _services.GetRequiredService<CameraService>();
     }
 
     public void LoadContent(ContentManager content)
@@ -105,10 +106,7 @@ public class GameScene : IScene
 
             if (selectedButton != null)
             {
-                _processorService.PaintAtMousePosition(
-                    mouse,
-                    selectedButton.Color,
-                    _cameraService);
+                _processorService.PaintAtMousePosition(mouse, selectedButton.Color);
             }
         }
         else
@@ -188,7 +186,7 @@ public class GameScene : IScene
             samplerState: SamplerState.PointClamp
         );
 
-        _processorService.Draw(_spriteBatch, _drawService, _cameraService);
+        _processorService.Draw(_spriteBatch, _drawService);
 
         if (!ColoringIsCompleted)
         {
@@ -268,7 +266,7 @@ public class GameScene : IScene
         _processorService.SetPixelSize((float)bounds.Width / _level.Texture.Width,
             (float)bounds.Height / _level.Texture.Height);
 
-        var imageBounds = _processorService.GetImageBounds(_cameraService);
+        var imageBounds = _processorService.GetImageBounds();
         
         _cameraService.SetPosition(new Vector2(
             bounds.X + _graphicsDevice.Viewport.Width * 0.5f - imageBounds.Width * 0.5f,
