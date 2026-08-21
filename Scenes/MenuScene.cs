@@ -117,6 +117,7 @@ public class MenuScene : IScene
         );
         
         _levelService.Draw(_spriteBatch);
+        _dialogService.Draw(_spriteBatch);
         
         _drawService.DrawRectangle(_spriteBatch, 
             new Rectangle(0, 0, _graphicsDevice.Viewport.Width, _headerHeight), 
@@ -143,9 +144,6 @@ public class MenuScene : IScene
         _popupService.Draw(_spriteBatch, _drawService.GetFont());
 
         _spriteBatch.End();
-        
-        _dialogService.Draw(_spriteBatch);
-        
     }
     
     public void OnClientSizeChanged(object sender, EventArgs e)

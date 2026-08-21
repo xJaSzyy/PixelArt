@@ -150,6 +150,7 @@ public class DialogService
                 screenCenter.Y,
                 0f);
 
+        spriteBatch.End();
         spriteBatch.Begin(samplerState: SamplerState.PointClamp, transformMatrix: transformMatrix);
 
         _drawService.DrawRoundedRectangle(
@@ -186,10 +187,10 @@ public class DialogService
             _buttonSize);
 
         _confirmButton.Draw(spriteBatch, Color.Green);
-
         _cancelButton.Draw(spriteBatch, Color.IndianRed);
 
         spriteBatch.End();
+        spriteBatch.Begin(samplerState: SamplerState.PointClamp);
     }
 
     public void ShowDialog(string text, Func<bool> onConfirm)

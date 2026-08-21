@@ -24,6 +24,11 @@ public class PopupTextService
         Color? color = null,
         float scale = 1f)
     {
+        if (IsVisible)
+        {
+            return;
+        }
+        
         _text = text;
         _position = position;
         _color = color ?? Color.White;
