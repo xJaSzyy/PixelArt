@@ -95,14 +95,25 @@ public class GameScene : IScene
             }
         }
 
-        if ((_mouseService.IsLeftMouseButtonPressed(mouse) || keyboard.IsKeyDown(Keys.Space)) && !IsMouseOverUI() && 
+        if ((_mouseService.IsLeftMouseButtonPressed(mouse) || keyboard.IsKeyDown(Keys.Space)) && 
+            !IsMouseOverUI() && 
             Utils.Remap(_cameraService.Zoom, _cameraService.MinZoom, _cameraService.MinZoom * 2, 0f, 1f) > 0.01f)
         {
-            var selectedButton = _colorButtonsService.GetButtons().FirstOrDefault(x => x.IsSelected);
+            var selectedButton = _colorButtonsService
+                .GetButtons()
+                .FirstOrDefault(x => x.IsSelected);
+
             if (selectedButton != null)
             {
-                _processorService.PaintPixelAtMousePosition(mouse, selectedButton.Color, _cameraService);
+                _processorService.PaintAtMousePosition(
+                    mouse,
+                    selectedButton.Color,
+                    _cameraService);
             }
+        }
+        else
+        {
+            _processorService.ResetPainting();
         }
         
         if (_mouseService.IsScroll(mouse))
