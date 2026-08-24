@@ -47,6 +47,7 @@ public class Game1 : Game
         collection.AddSingleton<PopupTextService>();
         collection.AddSingleton<ParticleService>();
         collection.AddSingleton<CameraService>();
+        collection.AddSingleton<SoundService>();
         
         collection.AddTransient<MenuScene>();
         collection.AddTransient<GameScene>();

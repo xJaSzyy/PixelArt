@@ -25,11 +25,13 @@ public class PixelProcessorService
     
     private readonly ParticleService _particleService;
     private readonly CameraService _cameraService;
+    private readonly SoundService _soundService;
 
-    public PixelProcessorService(ParticleService particleService, CameraService cameraService)
+    public PixelProcessorService(ParticleService particleService, CameraService cameraService, SoundService soundService)
     {
         _particleService = particleService;
         _cameraService = cameraService;
+        _soundService = soundService;
     }
 
     public void Update(GameTime gameTime)
@@ -319,6 +321,7 @@ public class PixelProcessorService
             );
 
             _particleService.Spawn(pixel.GetWorldPosition(_pixelWidth, _pixelHeight), particleColor, 5);
+            _soundService.PlayPaintingSound();
         }
     }
     

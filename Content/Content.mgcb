@@ -428,3 +428,9 @@
 /processorParam:TextureFormat=Color
 /build:Images/img9.png
 
+#begin Sounds/painting.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/painting.wav
+
