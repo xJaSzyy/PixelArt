@@ -131,6 +131,21 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
         HighlightPixels(index);
     }
 
+    public void SelectNextButton()
+    {
+        var currentIndex = _colorButtons.FindIndex(x => x.IsSelected);
+
+        if (currentIndex == -1)
+        {
+            SelectButton(0);
+            return;
+        }
+
+        var nextIndex = (currentIndex + 1) % _colorButtons.Count;
+
+        SelectButton(nextIndex);
+    }
+
     private void HighlightPixels(int colorButtonIndex)
     {
         var changes = ClearHighlight(false);

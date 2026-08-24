@@ -27,7 +27,7 @@ public class Particle
         );
 
         _lifetime = Random.Shared.NextSingle() * 0.5f + 0.5f;
-        _size = Random.Shared.Next(5, 11);
+        _size = Random.Shared.Next(6, 13);
         _color = color;
     }
 
