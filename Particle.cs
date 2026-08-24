@@ -39,11 +39,22 @@ public class Particle
         _position += _velocity * deltaTime;
     }
 
-    public void Draw(SpriteBatch spriteBatch, Texture2D pixel)
+    public void Draw(SpriteBatch spriteBatch, Texture2D pixel, Vector2 cameraPosition, float zoom)
     {
         var lifeProgress = _age / _lifetime;
         var alpha = 1f - lifeProgress;
 
-        spriteBatch.Draw(pixel, _position, null, _color * alpha, 0f, Vector2.Zero, _size, SpriteEffects.None, 0f);
+        var screenPosition = cameraPosition + _position * zoom;
+
+        spriteBatch.Draw(
+            pixel,
+            screenPosition,
+            null,
+            _color * alpha,
+            0f,
+            Vector2.Zero,
+            _size * zoom,
+            SpriteEffects.None,
+            0f);
     }
 }

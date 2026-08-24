@@ -318,9 +318,7 @@ public class PixelProcessorService
                 Math.Min(color.B + l, 255)
             );
 
-            _particleService.Spawn(
-                pixel.GetScreenPosition(GetImageBounds(), CurrentLevel.Texture.Width, CurrentLevel.Texture.Height),
-                particleColor, 2);
+            _particleService.Spawn(pixel.GetWorldPosition(_pixelWidth, _pixelHeight), particleColor, 4);
         }
     }
     

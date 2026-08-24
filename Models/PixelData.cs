@@ -14,10 +14,7 @@ public class PixelData
     
     [JsonIgnore] public bool IsFinished => OriginalColor == CurrentColor;
 
-    public Vector2 GetScreenPosition(
-        Rectangle bounds,
-        int textureWidth,
-        int textureHeight)
+    public Vector2 GetScreenPosition(Rectangle bounds, int textureWidth, int textureHeight)
     {
         var pixelWidth = (float)bounds.Width / textureWidth;
         var pixelHeight = (float)bounds.Height / textureHeight;
@@ -25,6 +22,14 @@ public class PixelData
         return new Vector2(
             bounds.X + TexturePositionX * pixelWidth + pixelWidth / 2f,
             bounds.Y + TexturePositionY * pixelHeight + pixelHeight / 2f
+        );
+    }
+    
+    public Vector2 GetWorldPosition(float pixelWidth, float pixelHeight)
+    {
+        return new Vector2(
+            TexturePositionX * pixelWidth + pixelWidth / 2f,
+            TexturePositionY * pixelHeight + pixelHeight / 2f
         );
     }
     

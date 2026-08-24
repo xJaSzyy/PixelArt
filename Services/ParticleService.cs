@@ -8,9 +8,12 @@ public class ParticleService
 {
     private readonly List<Particle> _particles = new();
     private readonly Texture2D _pixel;
+    private readonly CameraService _cameraService;
 
-    public ParticleService(GraphicsDevice graphicsDevice)
+    public ParticleService(GraphicsDevice graphicsDevice, CameraService cameraService)
     {
+        _cameraService = cameraService;
+        
         _pixel = new Texture2D(graphicsDevice, 1, 1);
         _pixel.SetData([Color.White]);
     }
@@ -20,11 +23,6 @@ public class ParticleService
         for (var i = 0; i < count; i++)
         {
             _particles.Add(new Particle(position, color));
-
-            /*if (_particles.Count > 128)
-            {
-                _particles.RemoveAt(0);
-            }*/
         }
     }
 
@@ -45,7 +43,7 @@ public class ParticleService
     {
         foreach (var particle in _particles)
         {
-            particle.Draw(spriteBatch, _pixel);
+            particle.Draw(spriteBatch, _pixel, _cameraService.GetPosition(), _cameraService.Zoom);
         }
     }
 }
