@@ -144,6 +144,11 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
         var nextIndex = (currentIndex + 1) % _colorButtons.Count;
 
         SelectButton(nextIndex);
+        ResetScroll();
+        for (int i = 0; i < nextIndex; i++)
+        {
+            ScrollButtonsRight();
+        }
     }
 
     private void HighlightPixels(int colorButtonIndex)
