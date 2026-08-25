@@ -89,7 +89,7 @@ public class MenuScene : IScene
                     }
                     else
                     {
-                        _processorService.ChangeLevel(level);
+                        _processorService.SetLevel(level);
 
                         var scene = _sceneFactory.CreateGameScene(level);
                         _sceneService.SetScene(scene);

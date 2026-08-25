@@ -118,7 +118,7 @@ public class LevelService
             
             Levels.Add(level);
             
-            _processorService.ChangeLevel(level);
+            _processorService.SetLevel(level);
             _processorService.Generate();
         }
     }

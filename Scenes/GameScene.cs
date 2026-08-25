@@ -86,7 +86,7 @@ public class GameScene : IScene
             {
                 if (_homeButton.IsHovered)
                 {
-                    _colorButtonsService.ClearHighlight(true);
+                    _processorService.ClearHighlight();
                     _services.GetRequiredService<SceneService>().SetScene<MenuScene>();
                 }
                 else if (_restartButton.IsHovered)
@@ -228,7 +228,7 @@ public class GameScene : IScene
         var levelService = _services.GetRequiredService<LevelService>();
         var playerService = _services.GetRequiredService<PlayerService>();
 
-        _colorButtonsService.ClearHighlight(true);
+        _processorService.ClearHighlight();
         
         saveService.Save(new SaveData
         {
