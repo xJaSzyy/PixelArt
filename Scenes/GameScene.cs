@@ -94,6 +94,27 @@ public class GameScene : IScene
             }
         }
 
+        HandlePainting(mouse, keyboard);
+        HandleScroll(mouse, keyboard);
+        
+        if (!ColoringIsCompleted)
+        {
+            _colorButtonsService.Update(mouse);
+            _cameraService.Update(mouse);
+
+            HandleColoringCompleted();
+        }
+
+        _processorService.Update(gameTime);
+        _homeButton.Update(mouse);
+        _restartButton.Update(mouse);
+        _popupService.Update(gameTime);
+        
+        _mouseService.SetMouse(mouse);
+    }
+
+    private void HandlePainting(MouseState mouse, KeyboardState keyboard)
+    {
         if ((_mouseService.IsLeftMouseButtonPressed(mouse) || keyboard.IsKeyDown(Keys.Space)) && 
             !IsMouseOverUI() && 
             Utils.Remap(_cameraService.Zoom, _cameraService.MinZoom, _cameraService.MinZoom * 2, 0f, 1f) > 0.01f)
@@ -117,7 +138,10 @@ public class GameScene : IScene
         {
             _processorService.ResetPainting();
         }
-        
+    }
+    
+    private void HandleScroll(MouseState mouse, KeyboardState keyboard)
+    {
         if (_mouseService.IsScroll(mouse))
         {
             var scrollDelta = _mouseService.GetScrollDelta(mouse);
@@ -138,48 +162,38 @@ public class GameScene : IScene
                 }
             }
         }
-        
-        if (!ColoringIsCompleted)
+    }
+    
+    private void HandleColoringCompleted()
+    {
+        if (_processorService.CurrentLevel.ColorGroups.All(x => x.IsFinished))
         {
-            _colorButtonsService.Update(mouse);
-            _cameraService.Update(mouse);
-            
-            if (_processorService.CurrentLevel.ColorGroups.All(x => x.IsFinished))
+            ColoringIsCompleted = true;
+            ImageToCenter();
+            _processorService.Replay();
+
+            if (!_processorService.CurrentLevel.IsFinished)
             {
-                ColoringIsCompleted = true;
-                ImageToCenter();
-                _processorService.Replay();
+                var coinsToAdd = _processorService.CurrentLevel.History.Count / 10;
 
-                if (!_processorService.CurrentLevel.IsFinished)
-                {
-                    var coinsToAdd = _processorService.CurrentLevel.History.Count / 10;
+                _services.GetRequiredService<PlayerService>().AddCoins(coinsToAdd);
 
-                    _services.GetRequiredService<PlayerService>().AddCoins(coinsToAdd);
-
-                    var popupText = $"+${coinsToAdd}";
+                var popupText = $"+${coinsToAdd}";
                     
-                    _popupService.ShowDelayed(
-                        popupText,
-                        new Vector2(
-                            _graphicsDevice.Viewport.Width / 2f,
-                            _drawService.MeasureString(popupText).Y * 2.5f
-                        ),
-                        1.25f,
-                        .75f,
-                        Color.Green,
-                        2f);
+                _popupService.ShowDelayed(
+                    popupText,
+                    new Vector2(
+                        _graphicsDevice.Viewport.Width / 2f,
+                        _drawService.MeasureString(popupText).Y * 2.5f
+                    ),
+                    1.25f,
+                    .75f,
+                    Color.Green,
+                    2f);
 
-                    _processorService.CurrentLevel.IsFinished = true;
-                }
+                _processorService.CurrentLevel.IsFinished = true;
             }
         }
-
-        _processorService.Update(gameTime);
-        _homeButton.Update(mouse);
-        _restartButton.Update(mouse);
-        _popupService.Update(gameTime);
-        
-        _mouseService.SetMouse(mouse);
     }
 
     public void Draw(GameTime gameTime)
@@ -250,7 +264,7 @@ public class GameScene : IScene
             return true;
         }
 
-        if (_homeButton.IsHovered)
+        if (_homeButton.IsHovered || _restartButton.IsHovered)
         {
             return true;
         }

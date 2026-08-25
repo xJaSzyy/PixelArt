@@ -119,7 +119,7 @@ public class LevelService
             Levels.Add(level);
             
             _processorService.SetLevel(level);
-            _processorService.Generate();
+            _processorService.ProcessImage();
         }
     }
 
