@@ -32,7 +32,8 @@ public class MenuScene : IScene
     private const int _unlockLevelCost = 49;
     private const int _headerHeight = 64;
     
-    private string _completedLevelsText;
+    private int _completedLevelsCount;
+    private int _totalLevelsCount;
 
     public MenuScene(IServiceProvider services)
     {
@@ -70,7 +71,8 @@ public class MenuScene : IScene
             });
         }
         
-        _completedLevelsText = $"{_levelService.Levels.Count(l => l.IsFinished)}/{_levelService.Levels.Count}";
+        _completedLevelsCount = _levelService.Levels.Count(l => l.IsFinished);
+        _totalLevelsCount = _levelService.Levels.Count;
     }
 
     public void Update(GameTime gameTime)
@@ -133,14 +135,24 @@ public class MenuScene : IScene
             Color.Yellow,
             2f);
 
+        var completedLevelsText = $"{_completedLevelsCount}/{_totalLevelsCount}";
+        
         _drawService.DrawString(_spriteBatch,
-            _completedLevelsText,
+            completedLevelsText,
             new Vector2(
-                _drawService.MeasureString(_completedLevelsText).X + 48,
+                _drawService.MeasureString(completedLevelsText).X + 112,
                 32
             ),
             new Color(45, 45, 45),
-            2f);
+            1.5f);
+        
+        _drawService.DrawProgressBar(_spriteBatch, 
+            new Rectangle(new Point(16, 24), 
+                new Point((int)(_drawService.MeasureString(completedLevelsText).X + 40), 16)), 
+            _totalLevelsCount > 0 ? (float)_completedLevelsCount / _totalLevelsCount : 0f, 
+            new Color(45, 45, 45), 
+            new Color(45, 45, 45), 
+            Color.Green);
         
         _popupService.Draw(_spriteBatch, _drawService.GetFont());
 

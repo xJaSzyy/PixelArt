@@ -79,7 +79,6 @@ public class DrawService
 
     public void DrawProgressBar(
         SpriteBatch spriteBatch,
-        Texture2D pixelTexture,
         Rectangle bounds,
         float progress,
         Color borderColor,
@@ -87,7 +86,7 @@ public class DrawService
         Color fillColor)
     {
         spriteBatch.Draw(
-            pixelTexture,
+            _pixelTexture,
             bounds,
             borderColor);
 
@@ -98,7 +97,7 @@ public class DrawService
             bounds.Height - 2);
 
         spriteBatch.Draw(
-            pixelTexture,
+            _pixelTexture,
             innerBounds,
             emptyColor);
 
@@ -109,7 +108,7 @@ public class DrawService
             innerBounds.Height);
 
         spriteBatch.Draw(
-            pixelTexture,
+            _pixelTexture,
             fillBounds,
             fillColor);
     }

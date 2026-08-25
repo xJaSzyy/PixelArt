@@ -76,7 +76,6 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
             {
                 drawService.DrawProgressBar(
                     spriteBatch,
-                    _pixelTexture,
                     colorButton.GetProgressBounds(),
                     colorGroup.Progress,
                     color,
