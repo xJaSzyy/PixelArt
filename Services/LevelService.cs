@@ -16,6 +16,7 @@ public class LevelService
     private readonly IServiceProvider _services;
     private readonly GraphicsDevice _graphicsDevice;
     private readonly PixelProcessorService _processorService;
+    private readonly ContentManager _contentManager;
 
     public List<LevelData> Levels { get; set; } = [];
     
@@ -34,14 +35,17 @@ public class LevelService
     private int _headerHeight;
     
     private readonly Texture2D _lockTexture;
+    private readonly Texture2D _checkTexture;
 
     public LevelService(IServiceProvider services)
     {
         _services = services;
         _graphicsDevice = _services.GetRequiredService<GraphicsDevice>();
         _processorService = _services.GetRequiredService<PixelProcessorService>();
-
-        _lockTexture = _services.GetRequiredService<ContentManager>().Load<Texture2D>("Icons/lock");
+        _contentManager = _services.GetRequiredService<ContentManager>();
+        
+        _lockTexture = _contentManager.Load<Texture2D>("Icons/lock");
+        _checkTexture = _contentManager.Load<Texture2D>("Icons/check");
         
         Resize();
     }
@@ -84,7 +88,15 @@ public class LevelService
                 bounds.Location += new Point(_buttonSize - _lockSize, level.Button.IsHovered ? -4 : 0);
                 bounds.Size = new Point(_lockSize, _lockSize);
                 
-                spriteBatch.Draw(_lockTexture, bounds, Color.IndianRed);
+                spriteBatch.Draw(_lockTexture, bounds, Colors.Red);
+            }
+            else if (level.IsFinished)
+            {
+                var bounds = level.Button.Bounds;
+                bounds.Location += new Point(_buttonSize - _lockSize, level.Button.IsHovered ? -4 : 0);
+                bounds.Size = new Point(_lockSize, _lockSize);
+
+                spriteBatch.Draw(_checkTexture, bounds, Colors.Green);
             }
         }
     }
@@ -98,8 +110,7 @@ public class LevelService
         Levels.Clear();
         for (var i = 0; i < _levelsCount; i++)
         {
-            var texture = _services.GetRequiredService<ContentManager>()
-                .Load<Texture2D>($"Images/img{i + 1}");
+            var texture = _contentManager.Load<Texture2D>($"Images/img{i + 1}");
 
             var level = new LevelData();
 

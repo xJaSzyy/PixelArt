@@ -42,7 +42,7 @@ public class Button(Texture2D texture, Rectangle bounds)
 
             if (color == Color.White)
             {
-                color = Color.Lerp(color.Value, Color.Yellow, 0.5f);
+                color = Color.Lerp(color.Value, Color.Yellow, 0.45f);
             }
             else
             {

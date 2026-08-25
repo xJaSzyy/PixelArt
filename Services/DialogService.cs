@@ -171,7 +171,7 @@ public class DialogService
             new Vector2(
                 screenCenter.X,
                 dialogPosition.Y + textSize.Y + _spacing),
-            Color.Yellow,
+            Colors.Yellow,
             2f);
 
         _confirmButton.Bounds = new Rectangle(
@@ -186,8 +186,8 @@ public class DialogService
             _buttonSize,
             _buttonSize);
 
-        _confirmButton.Draw(spriteBatch, Color.Green);
-        _cancelButton.Draw(spriteBatch, Color.IndianRed);
+        _confirmButton.Draw(spriteBatch, Colors.Green);
+        _cancelButton.Draw(spriteBatch, Colors.Red);
 
         spriteBatch.End();
         spriteBatch.Begin(samplerState: SamplerState.PointClamp);

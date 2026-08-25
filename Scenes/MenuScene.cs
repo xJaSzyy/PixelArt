@@ -132,7 +132,7 @@ public class MenuScene : IScene
                 _graphicsDevice.Viewport.Width / 2f,
                 32
             ),
-            Color.Yellow,
+            Colors.Yellow,
             2f);
 
         var completedLevelsText = $"{_completedLevelsCount}/{_totalLevelsCount}";
@@ -152,7 +152,7 @@ public class MenuScene : IScene
             _totalLevelsCount > 0 ? (float)_completedLevelsCount / _totalLevelsCount : 0f, 
             new Color(45, 45, 45), 
             new Color(45, 45, 45), 
-            Color.Green);
+            Colors.Green);
         
         _popupService.Draw(_spriteBatch, _drawService.GetFont());
 

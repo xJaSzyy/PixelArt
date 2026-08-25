@@ -188,7 +188,7 @@ public class GameScene : IScene
                     ),
                     1.25f,
                     .75f,
-                    Color.Green,
+                    Colors.Green,
                     2f);
 
                 _processorService.CurrentLevel.IsFinished = true;
