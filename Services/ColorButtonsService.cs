@@ -63,7 +63,7 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
 
             var text = groupIsFinished ? "x" : colorButton.Number.ToString();
 
-            var color = colorButton.ColorIsDark() ? Color.White : Color.Black;
+            var color = Colors.IsDark(colorButton.Color) ? Color.White : Color.Black;
             
             drawService.DrawString(
                 spriteBatch,

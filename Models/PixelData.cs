@@ -32,14 +32,4 @@ public class PixelData
             TexturePositionY * pixelHeight + pixelHeight / 2f
         );
     }
-    
-    public bool ColorIsDark()
-    {
-        var brightness =
-            0.299f * CurrentColor.R +
-            0.587f * CurrentColor.G +
-            0.114f * CurrentColor.B;
-
-        return brightness < 128;
-    }
 }

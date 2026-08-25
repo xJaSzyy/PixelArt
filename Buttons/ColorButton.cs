@@ -26,7 +26,7 @@ public class ColorButton(Color color, int number, Rectangle bounds)
 
         if (IsHovered)
         {
-            var l = ColorIsDark() ? 40 : -40;
+            var l = Colors.IsDark(Color) ? 40 : -40;
             
             color = new Color(
                 Math.Min(color.R + l, 255),
@@ -47,16 +47,6 @@ public class ColorButton(Color color, int number, Rectangle bounds)
             Bounds.Bottom - spacing * 2,
             Bounds.Width - spacing * 2,
             spacing);
-    }
-    
-    public bool ColorIsDark()
-    {
-        var brightness =
-            0.299f * Color.R +
-            0.587f * Color.G +
-            0.114f * Color.B;
-
-        return brightness < 128;
     }
 
     public void SetSelected(bool isSelected)

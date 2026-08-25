@@ -186,7 +186,7 @@ public class MenuScene : IScene
                     32
                 ),
                 0.5f,
-                Color.Red);
+                Colors.Red);
             
             return true;
         }
@@ -198,7 +198,7 @@ public class MenuScene : IScene
                 _graphicsDevice.Viewport.Height / 2f
             ),
             0.5f,
-            Color.Red);
+            Colors.Red);
 
         return false;
     }

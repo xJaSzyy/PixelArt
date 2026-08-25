@@ -24,7 +24,7 @@ public class LevelService
     private const int _unlockedLevelsCount = 4;
     
     private const int _buttonSize = 128;
-    private const int _lockSize = 48;
+    private const int _iconSize = 40;
     private const int _buttonSpacing = 24;
     private const float _scrollSpeed = 0.2f;
 
@@ -85,16 +85,16 @@ public class LevelService
             if (level.IsLocked)
             {
                 var bounds = level.Button.Bounds;
-                bounds.Location += new Point(_buttonSize - _lockSize, level.Button.IsHovered ? -4 : 0);
-                bounds.Size = new Point(_lockSize, _lockSize);
+                bounds.Location += new Point(_buttonSize - _iconSize, level.Button.IsHovered ? -4 : 0);
+                bounds.Size = new Point(_iconSize, _iconSize);
                 
                 spriteBatch.Draw(_lockTexture, bounds, Colors.Red);
             }
             else if (level.IsFinished)
             {
                 var bounds = level.Button.Bounds;
-                bounds.Location += new Point(_buttonSize - _lockSize, level.Button.IsHovered ? -4 : 0);
-                bounds.Size = new Point(_lockSize, _lockSize);
+                bounds.Location += new Point(_buttonSize - _iconSize, level.Button.IsHovered ? -4 : 0);
+                bounds.Size = new Point(_iconSize, _iconSize);
 
                 spriteBatch.Draw(_checkTexture, bounds, Colors.Green);
             }

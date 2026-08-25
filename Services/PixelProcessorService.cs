@@ -201,7 +201,7 @@ public class PixelProcessorService
             {
                 var color = Color.Lerp(
                     Color.Transparent,
-                    pixel.ColorIsDark() ? Color.White : Color.Black,
+                    Colors.IsDark(pixel.CurrentColor) ? Color.White : Color.Black,
                     Utils.Remap(_cameraService.Zoom, _cameraService.MinZoom, _cameraService.MinZoom * 2f, 0f, 1f)
                 );
                 var scale = _cameraService.Zoom + _pixelSize.X * (colorGroup.Number.ToString().Length == 1 ? 0.0045f : 0.003f);
@@ -342,7 +342,7 @@ public class PixelProcessorService
         {
             CurrentLevel.History.Add(index);
             
-            var l = pixel.ColorIsDark() ? 40 : -40;
+            var l = Colors.IsDark(color) ? 40 : -40;
             var particleColor = new Color(
                 Math.Min(color.R + l, 255),
                 Math.Min(color.G + l, 255),
