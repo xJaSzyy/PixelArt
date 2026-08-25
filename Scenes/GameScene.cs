@@ -198,7 +198,7 @@ public class GameScene : IScene
 
     public void Draw(GameTime gameTime)
     {
-        _graphicsDevice.Clear(new Color(45, 45, 45));
+        _graphicsDevice.Clear(Colors.LightBackground);
         
         _spriteBatch.Begin(
             samplerState: SamplerState.PointClamp

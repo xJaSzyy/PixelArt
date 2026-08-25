@@ -111,7 +111,7 @@ public class MenuScene : IScene
 
     public void Draw(GameTime gameTime)
     {
-        _graphicsDevice.Clear(new Color(30, 30, 30));
+        _graphicsDevice.Clear(Colors.Background);
         
         _spriteBatch.Begin(
             samplerState: SamplerState.PointClamp
@@ -124,7 +124,7 @@ public class MenuScene : IScene
         
         _drawService.DrawRectangle(_spriteBatch, 
             new Rectangle(0, 0, _graphicsDevice.Viewport.Width, _headerHeight), 
-            new Color(23, 23, 23));
+            Colors.DarkBackground);
 
         _drawService.DrawString(_spriteBatch,
             "$" + _playerService.Coins,
@@ -143,15 +143,15 @@ public class MenuScene : IScene
                 _drawService.MeasureString(completedLevelsText).X + 112,
                 32
             ),
-            new Color(45, 45, 45),
+            Colors.LightBackground,
             1.5f);
         
         _drawService.DrawProgressBar(_spriteBatch, 
             new Rectangle(new Point(16, 24), 
                 new Point((int)(_drawService.MeasureString(completedLevelsText).X + 40), 16)), 
             _totalLevelsCount > 0 ? (float)_completedLevelsCount / _totalLevelsCount : 0f, 
-            new Color(45, 45, 45), 
-            new Color(45, 45, 45), 
+            Colors.LightBackground, 
+            Colors.LightBackground, 
             Colors.Green);
         
         _popupService.Draw(_spriteBatch, _drawService.GetFont());

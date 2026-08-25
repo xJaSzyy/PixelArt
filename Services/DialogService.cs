@@ -160,7 +160,7 @@ public class DialogService
                 dialogPosition.Y,
                 _dialogSize.X,
                 _dialogSize.Y),
-            new Color(45, 45, 45),
+            Colors.LightBackground,
             6);
 
         var textSize = _drawService.MeasureString(_text);
