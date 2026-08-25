@@ -27,6 +27,7 @@ public class MenuScene : IScene
     private readonly DialogService _dialogService;
     private readonly SaveService _saveService;
     private readonly PopupTextService _popupService;
+    private readonly BackgroundParticleService _backgroundService;
 
     private const int _unlockLevelCost = 49;
     private const int _headerHeight = 64;
@@ -49,6 +50,7 @@ public class MenuScene : IScene
         _dialogService = services.GetRequiredService<DialogService>();
         _saveService = services.GetRequiredService<SaveService>();
         _popupService = services.GetRequiredService<PopupTextService>();
+        _backgroundService = services.GetRequiredService<BackgroundParticleService>();
     }
 
     public void LoadContent(ContentManager content)
@@ -88,8 +90,6 @@ public class MenuScene : IScene
                     else
                     {
                         _processorService.SetLevel(level);
-
-                        //var scene = _sceneFactory.CreateGameScene(level);
                         _sceneService.SetScene<GameScene>();
                         break;
                     }
@@ -104,6 +104,7 @@ public class MenuScene : IScene
 
         _dialogService.Update(mouse,gameTime);
         _popupService.Update(gameTime);
+        _backgroundService.Update(gameTime);
     }
 
     public void Draw(GameTime gameTime)
@@ -113,6 +114,8 @@ public class MenuScene : IScene
         _spriteBatch.Begin(
             samplerState: SamplerState.PointClamp
         );
+        
+        _backgroundService.Draw(_spriteBatch);
         
         _levelService.Draw(_spriteBatch);
         _dialogService.Draw(_spriteBatch);
