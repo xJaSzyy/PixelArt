@@ -23,7 +23,6 @@ public class MenuScene : IScene
     private readonly PixelProcessorService _processorService;
     private readonly DrawService _drawService;
     private readonly PlayerService _playerService;
-    private readonly SceneFactory _sceneFactory;
     private readonly LevelService _levelService;
     private readonly DialogService _dialogService;
     private readonly SaveService _saveService;
@@ -40,7 +39,6 @@ public class MenuScene : IScene
         
         _graphicsDevice = services.GetRequiredService<GraphicsDevice>();
         _spriteBatch = new SpriteBatch(_graphicsDevice);
-        _sceneFactory = services.GetRequiredService<SceneFactory>();
         _sceneService = services.GetRequiredService<SceneService>();
         
         _mouseService = services.GetRequiredService<MouseService>();
@@ -91,8 +89,8 @@ public class MenuScene : IScene
                     {
                         _processorService.SetLevel(level);
 
-                        var scene = _sceneFactory.CreateGameScene(level);
-                        _sceneService.SetScene(scene);
+                        //var scene = _sceneFactory.CreateGameScene(level);
+                        _sceneService.SetScene<GameScene>();
                         break;
                     }
 

@@ -27,18 +27,16 @@ public class GameScene : IScene
     private readonly PixelProcessorService _processorService;
     private ColorButtonsService _colorButtonsService;
 
-    private readonly LevelData _level;
     private Button _homeButton;
     private Button _restartButton;
 
     private const int _buttonSize = 56;
     private const int _buttonSpacing = 12;
     
-    public GameScene(LevelData level, IServiceProvider services)
+    public GameScene(IServiceProvider services)
     {
         _services = services;
         
-        _level = level;
         _processorService = _services.GetRequiredService<PixelProcessorService>();
         _graphicsDevice = _services.GetRequiredService<GraphicsDevice>();
         _spriteBatch = new SpriteBatch(_graphicsDevice);
@@ -154,7 +152,7 @@ public class GameScene : IScene
 
                 if (!_processorService.CurrentLevel.IsFinished)
                 {
-                    var coinsToAdd = _level.History.Count / 10;
+                    var coinsToAdd = _processorService.CurrentLevel.History.Count / 10;
 
                     _services.GetRequiredService<PlayerService>().AddCoins(coinsToAdd);
 
@@ -263,14 +261,15 @@ public class GameScene : IScene
     private void ImageToCenter()
     {
         _cameraService.Zoom = _cameraService.MinZoom;
+
+        var level = _processorService.CurrentLevel;
+        var bounds = level.Button.Bounds;
         
-        var bounds = _level.Button.Bounds;
-        
-        bounds.Size *= _level.Texture.Width / 2;
+        bounds.Size *= level.Texture.Width / 2;
         bounds.Location = Point.Zero;
 
-        _processorService.SetPixelSize((float)bounds.Width / _level.Texture.Width,
-            (float)bounds.Height / _level.Texture.Height);
+        _processorService.SetPixelSize((float)bounds.Width / level.Texture.Width,
+            (float)bounds.Height / level.Texture.Height);
 
         var imageBounds = _processorService.GetImageBounds();
         

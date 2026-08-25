@@ -37,7 +37,6 @@ public class Game1 : Game
         collection.AddSingleton(new DrawService(GraphicsDevice, Content.Load<SpriteFont>("DefaultFont")));
         collection.AddSingleton<MouseService>();
         collection.AddSingleton<PlayerService>();
-        collection.AddSingleton<SceneFactory>();
         collection.AddSingleton<SceneService>();
         collection.AddSingleton<PixelProcessorService>();
         collection.AddSingleton(Content);
