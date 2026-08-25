@@ -21,7 +21,7 @@ public class DialogService
     private readonly Point _dialogSize = new(320, 196);
 
     private const int _buttonSize = 64;
-    private const int _spacing = 32;
+    private const int _spacing = 40;
 
     private readonly Button _confirmButton;
     private readonly Button _cancelButton;
@@ -152,7 +152,19 @@ public class DialogService
 
         spriteBatch.End();
         spriteBatch.Begin(samplerState: SamplerState.PointClamp, transformMatrix: transformMatrix);
-
+        
+        var textSize = _drawService.MeasureString(_text);
+        
+        _drawService.DrawRoundedRectangle(
+            spriteBatch,
+            new Rectangle(
+                dialogPosition.X + 6,
+                dialogPosition.Y + 6,
+                _dialogSize.X,
+                _dialogSize.Y),
+            new Color(Colors.Black, 32),
+            6);
+        
         _drawService.DrawRoundedRectangle(
             spriteBatch,
             new Rectangle(
@@ -162,9 +174,17 @@ public class DialogService
                 _dialogSize.Y),
             Colors.LightBackground,
             6);
-
-        var textSize = _drawService.MeasureString(_text);
-
+        
+        _drawService.DrawRoundedRectangle(
+            spriteBatch,
+            new Rectangle(
+                dialogPosition.X + 6,
+                dialogPosition.Y + 6,
+                _dialogSize.X - 12,
+                _dialogSize.Y - 12),
+            new Color(Colors.DarkBackground, 160),
+            6);
+        
         _drawService.DrawString(
             spriteBatch,
             _text,

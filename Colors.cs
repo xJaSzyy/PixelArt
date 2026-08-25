@@ -11,6 +11,8 @@ public static class Colors
     public static Color Yellow = new(230, 200, 94);
     public static Color Green = new(89, 194, 91);
     public static Color Red = new(201, 73, 73);
+
+    public static Color Black = new(0, 0, 0);
     
     public static bool IsDark(Color color)
     {
