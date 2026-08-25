@@ -11,23 +11,10 @@ public class Button(Texture2D texture, Rectangle bounds)
     public Rectangle Bounds { get; set; } = bounds;
 
     public bool IsHovered { get; set; }
-    public bool PrevIsHovered { get; set; }
-    public bool StartHovered { get; set; }
 
     public void Update(MouseState mouse)
     {
         IsHovered = Bounds.Contains(mouse.Position);
-
-        if (IsHovered && !PrevIsHovered)
-        {
-            StartHovered = true;
-        }
-        else
-        {
-            StartHovered = false;
-        }
-        
-        PrevIsHovered = IsHovered;
     }
 
     public void Draw(SpriteBatch spriteBatch, Color? color = null)
