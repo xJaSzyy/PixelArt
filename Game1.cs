@@ -48,6 +48,7 @@ public class Game1 : Game
         collection.AddSingleton<CameraService>();
         collection.AddSingleton<SoundService>();
         collection.AddSingleton<BackgroundParticleService>();
+        collection.AddSingleton<LanguageService>();
         
         collection.AddTransient<MenuScene>();
         collection.AddTransient<GameScene>();

@@ -51,9 +51,16 @@ with.
         See the documentation for more information.
         -->
         <CharacterRegions>
+            <!-- Пробел, латиница, цифры и символы -->
             <CharacterRegion>
                 <Start>&#32;</Start>
                 <End>&#126;</End>
+            </CharacterRegion>
+
+            <!-- Кириллица: А-Я, а-я и дополнительные символы -->
+            <CharacterRegion>
+                <Start>&#1024;</Start>
+                <End>&#1279;</End>
             </CharacterRegion>
         </CharacterRegions>
     </Asset>
