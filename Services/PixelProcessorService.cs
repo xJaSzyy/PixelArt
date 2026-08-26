@@ -127,7 +127,7 @@ public class PixelProcessorService
                 }
             }
     
-            CurrentLevel.Texture.SetData(_texturePixels);
+            UpdateTexture();
         }
     
     public void Update(GameTime gameTime)
@@ -167,7 +167,7 @@ public class PixelProcessorService
 
         if (changed)
         {
-            CurrentLevel.Texture.SetData(_texturePixels);
+            UpdateTexture();
         }
 
         if (_historyIndex >= CurrentLevel.History.Count)
@@ -178,7 +178,7 @@ public class PixelProcessorService
     
     public void Draw(SpriteBatch spriteBatch, DrawService drawService)
     {
-        CurrentLevel.Texture.SetData(_texturePixels);
+        UpdateTexture();
         
         var drawBounds = GetImageBounds();
 
@@ -367,7 +367,7 @@ public class PixelProcessorService
             _texturePixels[pixel.Index] = pixel.GrayColor;
         }
 
-        CurrentLevel.Texture.SetData(_texturePixels);
+        UpdateTexture();
 
         _historyIndex = 0;
         _pixelsAccumulator = 0;
@@ -386,7 +386,7 @@ public class PixelProcessorService
         CurrentLevel.IsFinished = false;
         CurrentLevel.History.Clear();
 
-        CurrentLevel.Texture.SetData(_texturePixels);
+        UpdateTexture();
     }
 
     public void ResetPainting()
@@ -427,7 +427,12 @@ public class PixelProcessorService
             pixel.CurrentColor = pixel.GrayColor;
             _texturePixels[index] = pixel.GrayColor;
         }
-
+        
         _highlightedPixels.Clear();
+    }
+
+    public void UpdateTexture()
+    {
+        CurrentLevel.Texture.SetData(_texturePixels);
     }
 }

@@ -5,7 +5,6 @@ namespace PixelArt.Models;
 public sealed class BackgroundParticle
 {
     public Vector2 Position;
-    public Vector2 Velocity { get; set; }
     public float StartX;
     public int Size;
     public float Speed;
