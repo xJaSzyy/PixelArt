@@ -50,13 +50,13 @@ public class GameScene : IScene
 
     public void LoadContent(ContentManager content)
     {
-        _homeButton = new Button(content.Load<Texture2D>("Icons/home"),
+        _homeButton = new Button(_drawService,content.Load<Texture2D>("Icons/home"),
             new Rectangle(_graphicsDevice.Viewport.Width - _buttonSize - _buttonSpacing,
                 _buttonSpacing,
                 _buttonSize,
                 _buttonSize));
         
-        _restartButton = new Button(content.Load<Texture2D>("Icons/restart"),
+        _restartButton = new Button(_drawService,content.Load<Texture2D>("Icons/restart"),
             new Rectangle(_buttonSpacing,
                 _buttonSpacing,
                 _buttonSize,

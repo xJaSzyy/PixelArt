@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using PixelArt.Buttons;
 using PixelArt.Interfaces;
 using PixelArt.Models;
 using PixelArt.Services;
@@ -28,6 +29,8 @@ public class MenuScene : IScene
     private readonly SaveService _saveService;
     private readonly PopupTextService _popupService;
     private readonly BackgroundParticleService _backgroundService;
+
+    private Button _languageButton;
 
     private const int _unlockLevelCost = 49;
     private const int _headerHeight = 64;
@@ -70,6 +73,30 @@ public class MenuScene : IScene
                 Levels = _levelService.Levels
             });
         }
+
+        const string languageText = "RU";
+        const float textScale = 1.5f;
+
+        var textSize = _drawService.MeasureString(languageText, textScale);
+
+        var textWidth = (int)MathF.Ceiling(textSize.X);
+        var textHeight = (int)MathF.Ceiling(textSize.Y);
+
+        _languageButton = new Button(
+            _drawService,
+            null,
+            new Rectangle(
+                _graphicsDevice.Viewport.Width - textWidth - 2 - 16,
+                20,
+                textWidth + 2,
+                textHeight + 2
+            ))
+        {
+            Text = languageText,
+            TextColor = Colors.LightBackground,
+            TextScale = textScale,
+            Font = _drawService.GetFont()
+        };
         
         _completedLevelsCount = _levelService.Levels.Count(l => l.IsFinished);
         _totalLevelsCount = _levelService.Levels.Count;
@@ -104,7 +131,8 @@ public class MenuScene : IScene
             _mouseService.SetMouse(mouse);
         }
 
-        _dialogService.Update(mouse,gameTime);
+        _languageButton.Update(mouse);
+        _dialogService.Update(mouse, gameTime);
         _popupService.Update(gameTime);
         _backgroundService.Update(gameTime);
     }
@@ -118,22 +146,22 @@ public class MenuScene : IScene
         );
         
         _backgroundService.Draw(_spriteBatch);
-        
+
         _levelService.Draw(_spriteBatch);
         _dialogService.Draw(_spriteBatch);
-        
+
+        DrawHeader();
+                
+        _popupService.Draw(_spriteBatch, _drawService.GetFont());
+
+        _spriteBatch.End();
+    }
+
+    private void DrawHeader()
+    {
         _drawService.DrawRectangle(_spriteBatch, 
             new Rectangle(0, 0, _graphicsDevice.Viewport.Width, _headerHeight), 
             Colors.DarkBackground);
-
-        _drawService.DrawString(_spriteBatch,
-            "$" + _playerService.Coins,
-            new Vector2(
-                _graphicsDevice.Viewport.Width / 2f,
-                32
-            ),
-            Colors.Yellow,
-            2f);
 
         var completedLevelsText = $"{_completedLevelsCount}/{_totalLevelsCount}";
         
@@ -154,13 +182,35 @@ public class MenuScene : IScene
             Colors.LightBackground, 
             Colors.Green);
         
-        _popupService.Draw(_spriteBatch, _drawService.GetFont());
-
-        _spriteBatch.End();
+        _drawService.DrawString(_spriteBatch,
+            "$" + _playerService.Coins,
+            new Vector2(
+                _graphicsDevice.Viewport.Width / 2f,
+                32
+            ),
+            Colors.Yellow,
+            2f);
+        
+        _languageButton.Draw(_spriteBatch);
     }
-    
+
     public void OnClientSizeChanged(object sender, EventArgs e)
     {
+        const string languageText = "RU";
+        const float textScale = 1.5f;
+
+        var textSize = _drawService.MeasureString(languageText, textScale);
+
+        var textWidth = (int)MathF.Ceiling(textSize.X);
+        var textHeight = (int)MathF.Ceiling(textSize.Y);
+
+        _languageButton.Bounds = new Rectangle(
+            _graphicsDevice.Viewport.Width - textWidth - 2 - 16,
+            20,
+            textWidth + 2,
+            textHeight + 2
+        );
+        
         _levelService.Resize();
     }
 

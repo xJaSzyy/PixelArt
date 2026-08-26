@@ -104,6 +104,8 @@ public class LevelService
     public void LoadLevels(List<LevelData> savedLevels, int headerHeight)
     {
         _headerHeight = headerHeight;
+
+        var drawService = _services.GetRequiredService<DrawService>();
         
         var useSaveData = savedLevels.Count == _levelsCount;
         
@@ -125,7 +127,7 @@ public class LevelService
 
             level.Id = i;
             level.Texture = texture;
-            level.Button = new Button(texture, Rectangle.Empty);
+            level.Button = new Button(drawService, texture, Rectangle.Empty);
             
             Levels.Add(level);
             

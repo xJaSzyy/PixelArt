@@ -1,16 +1,21 @@
+#nullable enable
 using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using PixelArt.Services;
 
 namespace PixelArt.Buttons;
 
-public class Button(Texture2D texture, Rectangle bounds)
+public class Button(DrawService drawService, Texture2D? texture, Rectangle bounds)
 {
-    private Texture2D Texture { get; set; } = texture;
+    private Texture2D? Texture { get; set; } = texture;
     public Rectangle Bounds { get; set; } = bounds;
-
-    public bool IsHovered { get; set; }
+    public bool IsHovered { get; private set; }
+    public string? Text { get; set; }
+    public float TextScale { get; set; } = 1f;
+    public SpriteFont? Font { get; set; }
+    public Color TextColor { get; set; } = Color.White;
 
     public void Update(MouseState mouse)
     {
@@ -19,28 +24,46 @@ public class Button(Texture2D texture, Rectangle bounds)
 
     public void Draw(SpriteBatch spriteBatch, Color? color = null)
     {
-        var rect = Bounds;
-
-        color ??= Color.White;
+        var buttonColor = color ?? Color.White;
 
         if (IsHovered)
         {
-            rect.Y -= 4;
-
-            if (color == Color.White)
-            {
-                color = Colors.Yellow;
-            }
-            else
-            {
-                color = new Color(
-                    Math.Min(color.Value.R + 40, 255),
-                    Math.Min(color.Value.G + 40, 255),
-                    Math.Min(color.Value.B + 40, 255)
-                );
-            }
+            buttonColor = Lighten(buttonColor);
         }
 
-        spriteBatch.Draw(Texture, rect, (Color)color);
+        if (Texture != null)
+        {
+            var rect = Bounds;
+
+            if (IsHovered)
+            {
+                rect.Y -= 4;
+            }
+
+            spriteBatch.Draw(Texture, rect, buttonColor);
+        }
+
+        if (Text != null && Font != null)
+        {
+            var rect = Bounds;
+            var textColor = TextColor;
+
+            if (IsHovered)
+            {
+                rect.Y -= 4;
+                textColor = Lighten(textColor);
+            }
+            
+            drawService.DrawString(spriteBatch, Text, rect.Center.ToVector2(), textColor, TextScale);
+        }
+    }
+
+    private static Color Lighten(Color color)
+    {
+        return new Color(
+            Math.Min(color.R + 40, 255),
+            Math.Min(color.G + 40, 255),
+            Math.Min(color.B + 40, 255)
+        );
     }
 }

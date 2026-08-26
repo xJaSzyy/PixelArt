@@ -17,15 +17,19 @@ public class DrawService
         _font = font;
     }
 
-    public Vector2 MeasureString(string text) => _font.MeasureString(text);
+    public Vector2 MeasureString(string text, float scale = 1f)
+    {
+        return _font.MeasureString(text) * scale;
+    }
 
-    public void DrawString(SpriteBatch spriteBatch,
+    public void DrawString(
+        SpriteBatch spriteBatch,
         string text,
         Vector2 position,
         Color color,
         float scale = 1f)
     {
-        var size = MeasureString(text);
+        var origin = MeasureString(text) / 2f;
 
         spriteBatch.DrawString(
             _font,
@@ -33,7 +37,7 @@ public class DrawService
             position,
             color,
             0f,
-            size / 2f,
+            origin - Vector2.One,
             scale,
             SpriteEffects.None,
             0f
@@ -201,4 +205,6 @@ public class DrawService
     }
 
     public SpriteFont GetFont() => _font;
+    
+    public Texture2D GetPixelTexture() => _pixelTexture;
 }
