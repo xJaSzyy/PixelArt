@@ -28,7 +28,7 @@ public class Button(DrawService drawService, Texture2D? texture, Rectangle bound
 
         if (IsHovered)
         {
-            buttonColor = Lighten(buttonColor);
+            buttonColor = buttonColor == Color.White ? Colors.Yellow : Lighten(buttonColor);
         }
 
         if (Texture != null)

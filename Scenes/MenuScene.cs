@@ -97,7 +97,17 @@ public class MenuScene : IScene
     public void Update(GameTime gameTime)
     {
         var mouse = Mouse.GetState();
-        
+
+        if (_mouseService.IsLeftMouseButtonClicked(mouse))
+        {
+            if (_languageButton.IsHovered)
+            {
+                _languageService.ChangeLanguage();
+                ResizeLanguageButton();
+                _dialogService.SetText($"{_languageService.GetText("Menu.Pay")} ${_unlockLevelCost}?");
+            }
+        }
+
         if (!_dialogService.IsDialogOpen)
         {
             if (_mouseService.IsLeftMouseButtonClicked(mouse))
@@ -106,7 +116,8 @@ public class MenuScene : IScene
                 {
                     if (level.IsLocked)
                     {
-                        _dialogService.ShowDialog($"Pay ${_unlockLevelCost}?", () => UnlockLevel(level));
+                        _dialogService.ShowDialog($"{_languageService.GetText("Menu.Pay")} ${_unlockLevelCost}?",
+                            () => UnlockLevel(level));
                     }
                     else
                     {
@@ -116,27 +127,15 @@ public class MenuScene : IScene
                     }
                 }
             }
-
-            _levelService.Update(_mouseService, mouse);
-            
-            _mouseService.SetMouse(mouse);
-        }
-        else
-        {
-            if (_mouseService.IsLeftMouseButtonClicked(mouse))
-            {
-                if (_languageButton.IsHovered)
-                {
-                    _languageService.ChangeLanguage();
-                    ResizeLanguageButton();
-                }
-            }
         }
 
+        _levelService.Update(_mouseService, mouse);
         _languageButton.Update(mouse);
         _dialogService.Update(mouse, gameTime);
         _popupService.Update(gameTime);
         _backgroundService.Update(gameTime);
+
+        _mouseService.SetMouse(mouse);
     }
 
     public void Draw(GameTime gameTime)

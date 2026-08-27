@@ -18,10 +18,10 @@ public class DialogService
     private string _text = string.Empty;
     private Func<bool> _onConfirm;
 
-    private readonly Point _dialogSize = new(320, 196);
+    private Point _dialogSize;
 
     private const int _buttonSize = 64;
-    private const int _spacing = 40;
+    private const int _spacing = 16;
 
     private readonly Button _confirmButton;
     private readonly Button _cancelButton;
@@ -133,10 +133,6 @@ public class DialogService
             ? EaseInCubic(_animationProgress)
             : EaseOutBack(_animationProgress);
 
-        var dialogPosition = new Point(
-            (int)(screenCenter.X - _dialogSize.X / 2f),
-            (int)(screenCenter.Y - _dialogSize.Y / 2f));
-
         var transformMatrix =
             Matrix.CreateTranslation(
                 -screenCenter.X,
@@ -153,7 +149,13 @@ public class DialogService
         spriteBatch.End();
         spriteBatch.Begin(samplerState: SamplerState.PointClamp, transformMatrix: transformMatrix);
         
-        var textSize = _drawService.MeasureString(_text);
+        var textSize = _drawService.MeasureString(_text, 2f);
+        
+        _dialogSize = new Point((int)(textSize.X + 48), (int)(textSize.Y + _buttonSize + 80));
+        
+        var dialogPosition = new Point(
+            (int)(screenCenter.X - _dialogSize.X / 2f),
+            (int)(screenCenter.Y - _dialogSize.Y / 2f));
         
         _drawService.DrawRoundedRectangle(
             spriteBatch,
@@ -188,8 +190,7 @@ public class DialogService
         _drawService.DrawString(
             spriteBatch,
             _text,
-            new Vector2(
-                screenCenter.X,
+            new Vector2(screenCenter.X,
                 dialogPosition.Y + textSize.Y + _spacing),
             Colors.Yellow,
             2f);
@@ -222,6 +223,11 @@ public class DialogService
 
         _isClosing = false;
         _animationProgress = 0f;
+    }
+
+    public void SetText(string text)
+    {
+        _text = text;
     }
 
     private void OnConfirmButtonClicked()
