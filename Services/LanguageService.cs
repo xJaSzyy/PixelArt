@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 using PixelArt.Models;
 
 namespace PixelArt.Services;
@@ -10,20 +12,23 @@ public class LanguageService
     
     public LanguageService()
     {
-        CurrentLanguage = _languages[0];
+        var lang = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+
+        CurrentLanguage = _languages
+            .FirstOrDefault(l => l.ShortName.Equals(lang, StringComparison.CurrentCultureIgnoreCase)) ?? _languages[0];
     }
 
     private readonly List<Language> _languages =
     [
         new()
         {
-            Name = "Russian",
-            ShortName = "RU"
+            Name = "English",
+            ShortName = "EN"
         },
         new()
         {
-            Name = "English",
-            ShortName = "EN"
+            Name = "Russian",
+            ShortName = "RU"
         }
     ];
 
