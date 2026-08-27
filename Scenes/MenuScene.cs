@@ -36,7 +36,7 @@ public class MenuScene : IScene
     private const int _unlockLevelCost = 49;
     private const int _headerHeight = 64;
     private const float _headerTextScale = 1.5f;
-    private const int _headerSideMargin = 32;
+    private const int _headerMarginBetweenElements = 64;
     private const int _headerProgressBarHeight = 8;
     private const int _headerProgressBarExtraWidth = 64;
     
@@ -91,6 +91,7 @@ public class MenuScene : IScene
             Font = _drawService.GetFont()
         };
         
+        _levelService.Resize();
         ResizeLanguageButton();
         
         _completedLevelsCount = _levelService.Levels.Count(l => l.IsFinished);
@@ -167,31 +168,42 @@ public class MenuScene : IScene
             new Rectangle(0, 0, _graphicsDevice.Viewport.Width, _headerHeight), 
             Colors.DarkBackground);
 
+        var headerCenter = new Vector2(_graphicsDevice.Viewport.Width / 2f, 32);
+        var coinsText = "$" + _playerService.Coins;
+        var headerAvailableWidth = headerCenter.X - _headerMarginBetweenElements - _drawService.MeasureString(coinsText).X;
+        
         var completedLevelsText = $"{_completedLevelsCount}/{_totalLevelsCount}";
+
+        var completedLevelsTextPosition =
+            new Vector2(headerAvailableWidth
+                        - _drawService.MeasureString(completedLevelsText).X * .5f
+                        - _headerProgressBarExtraWidth * .5f, 20
+            );
         
         _drawService.DrawString(_spriteBatch,
             completedLevelsText,
-            new Vector2(
-                _drawService.MeasureString(completedLevelsText).X * .5f + _headerSideMargin + _headerProgressBarExtraWidth * .5f,
-                20
-            ),
+            completedLevelsTextPosition,
             Colors.LightBackground,
             1.25f);
         
-        _drawService.DrawProgressBar(_spriteBatch, 
-            new Rectangle(new Point(_headerSideMargin, 40), 
-                new Point((int)(_drawService.MeasureString(completedLevelsText).X + _headerProgressBarExtraWidth), _headerProgressBarHeight)), 
+        var progressBarSize = 
+            new Point((int)(_drawService.MeasureString(completedLevelsText).X 
+                            + _headerProgressBarExtraWidth), _headerProgressBarHeight
+            );
+        var progressBarLocation =
+            new Point((int)(headerAvailableWidth
+                            - progressBarSize.X), 40
+            );
+        
+        _drawService.DrawProgressBar(_spriteBatch, new Rectangle(progressBarLocation, progressBarSize), 
             _totalLevelsCount > 0 ? (float)_completedLevelsCount / _totalLevelsCount : 0f, 
             Colors.LightBackground, 
             Colors.LightBackground, 
             Colors.Green);
         
         _drawService.DrawString(_spriteBatch,
-            "$" + _playerService.Coins,
-            new Vector2(
-                _graphicsDevice.Viewport.Width / 2f,
-                32
-            ),
+            coinsText,
+            headerCenter,
             Colors.Yellow,
             2f);
         
@@ -201,7 +213,6 @@ public class MenuScene : IScene
     public void OnClientSizeChanged(object sender, EventArgs e)
     {
         ResizeLanguageButton();
-        
         _levelService.Resize();
     }
 
@@ -210,17 +221,17 @@ public class MenuScene : IScene
         var language = _languageService.CurrentLanguage.ShortName;
         
         _languageButton.Text = language;
-        
-        var textSize = _drawService.MeasureString(language, _headerTextScale);
 
-        var textWidth = (int)MathF.Ceiling(textSize.X);
-        var textHeight = (int)MathF.Ceiling(textSize.Y);
+        var headerCenterX = _graphicsDevice.Viewport.Width / 2f;
+        
+        var stringSize = _drawService.MeasureString(language, _headerTextScale);
+        var textSize = new Point((int)MathF.Ceiling(stringSize.X), (int)MathF.Ceiling(stringSize.Y));
 
         _languageButton.Bounds = new Rectangle(
-            _graphicsDevice.Viewport.Width - textWidth - 2 - _headerSideMargin,
+            (int)(headerCenterX + _headerMarginBetweenElements + textSize.X),
             20,
-            textWidth + 2,
-            textHeight + 2
+            textSize.X + 2,
+            textSize.Y + 2
         );
     }
 
