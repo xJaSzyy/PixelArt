@@ -40,7 +40,6 @@ public class LanguageService
                 ["Menu.Pay"] = "Заплатить",
                 ["Menu.NotEnoughCoins"] = "Не хватает монет",
             },
-
             ["EN"] = new Dictionary<string, string>
             {
                 ["Menu.Pay"] = "Pay",

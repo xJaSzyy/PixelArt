@@ -36,6 +36,9 @@ public class MenuScene : IScene
     private const int _unlockLevelCost = 49;
     private const int _headerHeight = 64;
     private const float _headerTextScale = 1.5f;
+    private const int _headerSideMargin = 32;
+    private const int _headerProgressBarHeight = 8;
+    private const int _headerProgressBarExtraWidth = 64;
     
     private int _completedLevelsCount;
     private int _totalLevelsCount;
@@ -169,15 +172,15 @@ public class MenuScene : IScene
         _drawService.DrawString(_spriteBatch,
             completedLevelsText,
             new Vector2(
-                _drawService.MeasureString(completedLevelsText).X + 112,
-                32
+                _drawService.MeasureString(completedLevelsText).X * .5f + _headerSideMargin + _headerProgressBarExtraWidth * .5f,
+                20
             ),
             Colors.LightBackground,
-            _headerTextScale);
+            1.25f);
         
         _drawService.DrawProgressBar(_spriteBatch, 
-            new Rectangle(new Point(16, 24), 
-                new Point((int)(_drawService.MeasureString(completedLevelsText).X + 40), 16)), 
+            new Rectangle(new Point(_headerSideMargin, 40), 
+                new Point((int)(_drawService.MeasureString(completedLevelsText).X + _headerProgressBarExtraWidth), _headerProgressBarHeight)), 
             _totalLevelsCount > 0 ? (float)_completedLevelsCount / _totalLevelsCount : 0f, 
             Colors.LightBackground, 
             Colors.LightBackground, 
@@ -214,7 +217,7 @@ public class MenuScene : IScene
         var textHeight = (int)MathF.Ceiling(textSize.Y);
 
         _languageButton.Bounds = new Rectangle(
-            _graphicsDevice.Viewport.Width - textWidth - 2 - 16,
+            _graphicsDevice.Viewport.Width - textWidth - 2 - _headerSideMargin,
             20,
             textWidth + 2,
             textHeight + 2
