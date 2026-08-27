@@ -5,6 +5,8 @@ namespace PixelArt.Services;
 
 public class PopupTextService
 {
+    private readonly DrawService _drawService;
+    
     private string _text;
     private Vector2 _position;
     private Color _color;
@@ -15,7 +17,12 @@ public class PopupTextService
 
     private float _delayTimer;
 
-    public bool IsVisible => _text != null && _delayTimer <= 0f;
+    private bool IsVisible => _text != null && _delayTimer <= 0f;
+    
+    public PopupTextService(DrawService drawService)
+    {
+        _drawService = drawService;
+    }
 
     public void Show(
         string text,
@@ -87,7 +94,7 @@ public class PopupTextService
         _position.Y -= 20f * deltaTime;
     }
 
-    public void Draw(SpriteBatch spriteBatch, SpriteFont font)
+    public void Draw(SpriteBatch spriteBatch)
     {
         if (!IsVisible)
         {
@@ -99,18 +106,6 @@ public class PopupTextService
 
         var color = _color * alpha;
 
-        var size = font.MeasureString(_text!) * _scale;
-        var position = _position - size / 2f;
-
-        spriteBatch.DrawString(
-            font,
-            _text!,
-            position,
-            color,
-            0f,
-            Vector2.Zero,
-            _scale,
-            SpriteEffects.None,
-            0f);
+        _drawService.DrawString(spriteBatch, _text, _position, color, _scale);
     }
 }

@@ -85,7 +85,7 @@ public class LevelService
             if (level.IsLocked)
             {
                 var bounds = level.Button.Bounds;
-                bounds.Location += new Point(_buttonSize - _iconSize, level.Button.IsHovered ? -4 : 0);
+                bounds.Location += new Point(_buttonSize - _iconSize, level.Button.IsHovered ? -2 : 0);
                 bounds.Size = new Point(_iconSize, _iconSize);
                 
                 spriteBatch.Draw(_lockTexture, bounds, Colors.Red);
@@ -93,7 +93,7 @@ public class LevelService
             else if (level.IsFinished)
             {
                 var bounds = level.Button.Bounds;
-                bounds.Location += new Point(_buttonSize - _iconSize, level.Button.IsHovered ? -4 : 0);
+                bounds.Location += new Point(_buttonSize - _iconSize, level.Button.IsHovered ? -2 : 0);
                 bounds.Size = new Point(_iconSize, _iconSize);
 
                 spriteBatch.Draw(_checkTexture, bounds, Colors.Green);

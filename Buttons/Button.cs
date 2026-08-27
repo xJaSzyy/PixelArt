@@ -37,7 +37,7 @@ public class Button(DrawService drawService, Texture2D? texture, Rectangle bound
 
             if (IsHovered)
             {
-                rect.Y -= 4;
+                rect.Y -= 2;
             }
 
             spriteBatch.Draw(Texture, rect, buttonColor);
@@ -50,7 +50,7 @@ public class Button(DrawService drawService, Texture2D? texture, Rectangle bound
 
             if (IsHovered)
             {
-                rect.Y -= 4;
+                rect.Y -= 2;
                 textColor = Lighten(textColor);
             }
             

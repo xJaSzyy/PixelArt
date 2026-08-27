@@ -87,7 +87,8 @@ public class DrawService
         float progress,
         Color borderColor,
         Color emptyColor,
-        Color fillColor)
+        Color fillColor,
+        int borderThickness = 1)
     {
         spriteBatch.Draw(
             _pixelTexture,
@@ -95,10 +96,10 @@ public class DrawService
             borderColor);
 
         var innerBounds = new Rectangle(
-            bounds.X + 1,
-            bounds.Y + 1,
-            bounds.Width - 2,
-            bounds.Height - 2);
+            bounds.X + borderThickness,
+            bounds.Y + borderThickness,
+            bounds.Width - borderThickness * 2,
+            bounds.Height - borderThickness * 2);
 
         spriteBatch.Draw(
             _pixelTexture,

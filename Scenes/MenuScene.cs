@@ -36,9 +36,10 @@ public class MenuScene : IScene
     private const int _unlockLevelCost = 49;
     private const int _headerHeight = 64;
     private const float _headerTextScale = 1.5f;
-    private const int _headerMarginBetweenElements = 64;
     private const int _headerProgressBarHeight = 8;
-    private const int _headerProgressBarExtraWidth = 64;
+    private const int _headerProgressBarExtraWidth = 48;
+    private const int _headerElementsPadding = 8;
+    
     
     private int _completedLevelsCount;
     private int _totalLevelsCount;
@@ -86,7 +87,7 @@ public class MenuScene : IScene
             Rectangle.Empty)
         {
             Text = _languageService.CurrentLanguage.ShortName,
-            TextColor = Colors.LightBackground,
+            TextColor = Colors.Text,
             TextScale = _headerTextScale,
             Font = _drawService.GetFont()
         };
@@ -157,7 +158,7 @@ public class MenuScene : IScene
 
         DrawHeader();
                 
-        _popupService.Draw(_spriteBatch, _drawService.GetFont());
+        _popupService.Draw(_spriteBatch);
 
         _spriteBatch.End();
     }
@@ -166,44 +167,32 @@ public class MenuScene : IScene
     {
         _drawService.DrawRectangle(_spriteBatch, 
             new Rectangle(0, 0, _graphicsDevice.Viewport.Width, _headerHeight), 
-            Colors.DarkBackground);
+            Colors.Background);
 
-        var headerCenter = new Vector2(_graphicsDevice.Viewport.Width / 2f, 32);
+        var center = new Vector2(_graphicsDevice.Viewport.Width / 2f, 32);
         var coinsText = "$" + _playerService.Coins;
-        var headerAvailableWidth = headerCenter.X - _headerMarginBetweenElements - _drawService.MeasureString(coinsText).X;
         
         var completedLevelsText = $"{_completedLevelsCount}/{_totalLevelsCount}";
 
-        var completedLevelsTextPosition =
-            new Vector2(headerAvailableWidth
-                        - _drawService.MeasureString(completedLevelsText).X * .5f
-                        - _headerProgressBarExtraWidth * .5f, 20
-            );
-        
         _drawService.DrawString(_spriteBatch,
             completedLevelsText,
-            completedLevelsTextPosition,
-            Colors.LightBackground,
+            new Vector2(center.X, center.Y - _headerElementsPadding),
+            Colors.Text,
             1.25f);
         
-        var progressBarSize = 
-            new Point((int)(_drawService.MeasureString(completedLevelsText).X 
-                            + _headerProgressBarExtraWidth), _headerProgressBarHeight
-            );
-        var progressBarLocation =
-            new Point((int)(headerAvailableWidth
-                            - progressBarSize.X), 40
-            );
+        var progressBarSize = new Point((int)(_drawService.MeasureString(completedLevelsText).X + _headerProgressBarExtraWidth), _headerProgressBarHeight);
+        var progressBarLocation = new Point((int)(center.X - progressBarSize.X * .5f), (int)(center.Y + _headerElementsPadding));
         
         _drawService.DrawProgressBar(_spriteBatch, new Rectangle(progressBarLocation, progressBarSize), 
             _totalLevelsCount > 0 ? (float)_completedLevelsCount / _totalLevelsCount : 0f, 
-            Colors.LightBackground, 
-            Colors.LightBackground, 
-            Colors.Green);
+            Colors.Text, 
+            Colors.Text, 
+            Colors.Green,
+            2);
         
         _drawService.DrawString(_spriteBatch,
             coinsText,
-            headerCenter,
+            new Vector2(_graphicsDevice.Viewport.Width - _drawService.MeasureString(coinsText).X - _headerProgressBarExtraWidth, center.Y),
             Colors.Yellow,
             2f);
         
@@ -222,13 +211,11 @@ public class MenuScene : IScene
         
         _languageButton.Text = language;
 
-        var headerCenterX = _graphicsDevice.Viewport.Width / 2f;
-        
         var stringSize = _drawService.MeasureString(language, _headerTextScale);
         var textSize = new Point((int)MathF.Ceiling(stringSize.X), (int)MathF.Ceiling(stringSize.Y));
 
         _languageButton.Bounds = new Rectangle(
-            (int)(headerCenterX + _headerMarginBetweenElements + textSize.X),
+            _headerProgressBarExtraWidth,
             20,
             textSize.X + 2,
             textSize.Y + 2
@@ -256,7 +243,7 @@ public class MenuScene : IScene
                     _graphicsDevice.Viewport.Width / 2f + _drawService.MeasureString("$" + _playerService.Coins).X * 1.8f,
                     32
                 ),
-                0.5f,
+                1.25f,
                 Colors.Red);
             
             return true;

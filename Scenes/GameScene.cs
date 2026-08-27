@@ -191,7 +191,7 @@ public class GameScene : IScene
                         _drawService.MeasureString(popupText).Y * 2.5f
                     ),
                     1.25f,
-                    .75f,
+                    1.5f,
                     Colors.Green,
                     2f);
 
@@ -222,7 +222,7 @@ public class GameScene : IScene
             _restartButton.Draw(_spriteBatch);
         }
         
-        _popupService.Draw(_spriteBatch, _drawService.GetFont());
+        _popupService.Draw(_spriteBatch);
 
         _spriteBatch.End();
     }
