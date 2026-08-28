@@ -173,23 +173,27 @@ public class MenuScene : IScene
         var coinsText = "$" + _playerService.Coins;
         
         var completedLevelsText = $"{_completedLevelsCount}/{_totalLevelsCount}";
+        var progress = _totalLevelsCount > 0 ? (float)_completedLevelsCount / _totalLevelsCount : 0f;
 
         _drawService.DrawString(_spriteBatch,
             completedLevelsText,
-            new Vector2(center.X, center.Y - _headerElementsPadding),
-            Colors.Text,
-            1.25f);
-        
-        var progressBarSize = new Point((int)(_drawService.MeasureString(completedLevelsText).X + _headerProgressBarExtraWidth), _headerProgressBarHeight);
-        var progressBarLocation = new Point((int)(center.X - progressBarSize.X * .5f), (int)(center.Y + _headerElementsPadding));
-        
-        _drawService.DrawProgressBar(_spriteBatch, new Rectangle(progressBarLocation, progressBarSize), 
-            _totalLevelsCount > 0 ? (float)_completedLevelsCount / _totalLevelsCount : 0f, 
+            new Vector2(center.X, center.Y - (progress < 1 ? _headerElementsPadding : -1)),
             Colors.Text, 
-            Colors.Text, 
-            Colors.Green,
-            2);
-        
+            progress >= 1 ? _headerTextScale : 1.25f);
+
+        if (progress < 1)
+        {
+            var progressBarSize = new Point((int)(_drawService.MeasureString(completedLevelsText).X + _headerProgressBarExtraWidth), _headerProgressBarHeight);
+            var progressBarLocation = new Point((int)(center.X - progressBarSize.X * .5f), (int)(center.Y + _headerElementsPadding));
+
+            _drawService.DrawProgressBar(_spriteBatch, new Rectangle(progressBarLocation, progressBarSize),
+                progress,
+                Colors.Text,
+                Colors.Text,
+                Colors.Green,
+                2);
+        }
+
         _drawService.DrawString(_spriteBatch,
             coinsText,
             new Vector2(_graphicsDevice.Viewport.Width - _drawService.MeasureString(coinsText).X - _headerProgressBarExtraWidth, center.Y),
