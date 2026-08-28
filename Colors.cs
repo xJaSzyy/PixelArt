@@ -12,6 +12,9 @@ public static class Colors
 
     public static readonly Color Black = new(0, 0, 0);
     public static readonly Color Text = new(241, 232, 213);
+    
+    public static readonly Color PanelOuter = new(35, 37, 52, 220);
+    public static readonly Color PanelInner = new(28, 30, 44, 220);
 
     public static bool IsDark(Color color)
     {

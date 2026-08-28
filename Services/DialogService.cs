@@ -164,9 +164,9 @@ public class DialogService
                 dialogPosition.Y + 6,
                 _dialogSize.X,
                 _dialogSize.Y),
-            new Color(Colors.Black, 32),
+            new Color(Colors.Black, 100),
             6);
-        
+
         _drawService.DrawRoundedRectangle(
             spriteBatch,
             new Rectangle(
@@ -174,9 +174,9 @@ public class DialogService
                 dialogPosition.Y,
                 _dialogSize.X,
                 _dialogSize.Y),
-            new Color(Colors.Background, 180),
+            Colors.PanelOuter,
             6);
-        
+
         _drawService.DrawRoundedRectangle(
             spriteBatch,
             new Rectangle(
@@ -184,25 +184,26 @@ public class DialogService
                 dialogPosition.Y + 6,
                 _dialogSize.X - 12,
                 _dialogSize.Y - 12),
-            new Color(Colors.Background, 240),
+            Colors.PanelInner,
             6);
-        
+
         _drawService.DrawString(
             spriteBatch,
             _text,
-            new Vector2(screenCenter.X,
+            new Vector2(
+                screenCenter.X,
                 dialogPosition.Y + textSize.Y + _spacing),
             Colors.Yellow,
             2f);
 
         _confirmButton.Bounds = new Rectangle(
-            (int)screenCenter.X - _buttonSize,
+            (int)screenCenter.X - _buttonSize - _spacing / 2,
             (int)screenCenter.Y,
             _buttonSize,
             _buttonSize);
 
         _cancelButton.Bounds = new Rectangle(
-            (int)screenCenter.X,
+            (int)screenCenter.X + _spacing / 2,
             (int)screenCenter.Y,
             _buttonSize,
             _buttonSize);
