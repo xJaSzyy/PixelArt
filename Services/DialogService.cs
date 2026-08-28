@@ -174,7 +174,7 @@ public class DialogService
                 dialogPosition.Y,
                 _dialogSize.X,
                 _dialogSize.Y),
-            Colors.LightBackground,
+            new Color(Colors.Background, 180),
             6);
         
         _drawService.DrawRoundedRectangle(
@@ -184,7 +184,7 @@ public class DialogService
                 dialogPosition.Y + 6,
                 _dialogSize.X - 12,
                 _dialogSize.Y - 12),
-            new Color(Colors.DarkBackground, 160),
+            new Color(Colors.Background, 240),
             6);
         
         _drawService.DrawString(

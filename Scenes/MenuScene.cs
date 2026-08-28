@@ -156,10 +156,6 @@ public class MenuScene : IScene
         _levelService.Draw(_spriteBatch);
         _dialogService.Draw(_spriteBatch);
         
-        _drawService.DrawRectangle(_spriteBatch,
-            new Rectangle(new Point(0, _headerHeight), new Point(_graphicsDevice.Viewport.Width, 2)),
-            Colors.Text);
-        
         DrawHeader();
                 
         _popupService.Draw(_spriteBatch);

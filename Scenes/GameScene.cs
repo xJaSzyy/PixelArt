@@ -202,7 +202,7 @@ public class GameScene : IScene
 
     public void Draw(GameTime gameTime)
     {
-        _graphicsDevice.Clear(Colors.LightBackground);
+        _graphicsDevice.Clear(Colors.Background);
         
         _spriteBatch.Begin(
             samplerState: SamplerState.PointClamp
@@ -218,8 +218,8 @@ public class GameScene : IScene
 
         if (!_processorService.ReplayLaunched)
         {
-            _homeButton.Draw(_spriteBatch);
-            _restartButton.Draw(_spriteBatch);
+            _homeButton.Draw(_spriteBatch, Colors.Text);
+            _restartButton.Draw(_spriteBatch, Colors.Text);
         }
         
         _popupService.Draw(_spriteBatch);
