@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using PixelArt.Models;
 
 namespace PixelArt.Services;
 
@@ -18,10 +20,19 @@ public class PixelService
 
     private Texture2D _pixelTexture;
 
-    private readonly Color[,] _colors = new Color[GridWidth, GridHeight];
+    /*private readonly Color[,] _colors = new Color[GridWidth, GridHeight];
+    private readonly bool[,] _painted = new bool[GridWidth, GridHeight];*/
 
-    private readonly bool[,] _painted = new bool[GridWidth, GridHeight];
+    private List<Pixel> _pixels = [];
 
+    public class Pixel
+    {
+        public int X { get; set; }
+        public int Y { get; set; }
+        public Color Color { get; set; }
+        public Point Position => new Point(X, Y);
+    }
+    
     public float PixelSize { get; set; } = 24f;
 
     public Vector2 Position { get; private set; }
@@ -58,16 +69,14 @@ public class PixelService
         
         Reset();
         
-        foreach (var point in _contour)
-        {
-            _colors[point.X, point.Y] = Color.DarkBlue;
-            _painted[point.X, point.Y] = true;
-        }
-        
         foreach (var point in _keyPoints)
         {
-            _colors[point.X, point.Y] = Color.DarkRed;
-            _painted[point.X, point.Y] = true;
+            var pixel = _pixels.FirstOrDefault(x => x.Position == point);
+
+            if (pixel != null)
+            {
+                pixel.Color = Color.DarkRed;
+            }
         }
     }
     
@@ -175,8 +184,21 @@ public class PixelService
         {
             for (var x = 0; x < GridWidth; x++)
             {
-                _colors[x, y] = Color.Transparent;
-                _painted[x, y] = false;
+                var pixel = _pixels.FirstOrDefault(pixel => pixel.Position == new Point(x, y));
+
+                if (pixel != null)
+                {
+                    pixel.Color = Color.Transparent;
+                }
+                else
+                {
+                    _pixels.Add(new Pixel
+                    {
+                        X = x,
+                        Y = y,
+                        Color = Color.Transparent
+                    });
+                }
             }
         }
     }
@@ -359,8 +381,14 @@ public class PixelService
             return false;
         }
 
-        _colors[x, y] = CurrentColor;
-        _painted[x, y] = true;
+        var pixel = _pixels.FirstOrDefault(pixel => pixel.Position == new Point(x, y));
+
+        if (pixel == null)
+        {
+            return false;
+        }
+
+        pixel.Color = CurrentColor;
 
         return true;
     }
@@ -372,32 +400,17 @@ public class PixelService
             return false;
         }
 
-        _colors[x, y] = Color.Transparent;
-        _painted[x, y] = false;
+        var pixel = _pixels.FirstOrDefault(pixel => pixel.Position == new Point(x, y));
+
+        if (pixel == null)
+        {
+            return false;
+        }
+
+        pixel.Color = Color.Transparent;
+
 
         return true;
-    }
-
-    public Color GetPixelColor(int x, int y)
-    {
-        if (x < 0 || x >= GridWidth ||
-            y < 0 || y >= GridHeight)
-        {
-            return Color.Transparent;
-        }
-
-        return _colors[x, y];
-    }
-
-    public void SetPixelColor(int x, int y, Color color)
-    {
-        if (x < 0 || x >= GridWidth || y < 0 || y >= GridHeight)
-        {
-            return;
-        }
-
-        _colors[x, y] = color;
-        _painted[x, y] = true;
     }
 
     public void Draw(SpriteBatch spriteBatch)
@@ -413,32 +426,14 @@ public class PixelService
                     (int)PixelSize
                 );
 
-                if (_painted[x, y])
-                {
-                    spriteBatch.Draw(_pixelTexture, rectangle, _colors[x, y]);
-                }
-                else
-                {
-                    var sourceColor = _sourceData[y * _sourceTexture.Width + x];
+                var pixel = _pixels.FirstOrDefault(pixel => pixel.Position == new Point(x, y));
 
-                    if (sourceColor.A == 0)
-                    {
-                        spriteBatch.Draw(
-                            _pixelTexture,
-                            rectangle,
-                            new Color(80, 80, 80)
-                        );
-                    }
-                    else
-                    {
-                        spriteBatch.Draw(
-                            _pixelTexture,
-                            rectangle,
-                            new Rectangle(x, y, 1, 1),
-                            new Color(72, 72, 72)
-                        );
-                    }
+                if (pixel == null)
+                {
+                    continue;
                 }
+
+                spriteBatch.Draw(_pixelTexture, rectangle, pixel.Color);
             }
         }
     }
