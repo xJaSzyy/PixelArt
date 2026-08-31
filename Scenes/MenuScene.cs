@@ -127,7 +127,7 @@ public class MenuScene : IScene
                     else
                     {
                         _processorService.SetLevel(level);
-                        _sceneService.SetScene<GameScene>();
+                        _sceneService.SetScene<GameScene2>();
                         break;
                     }
                 }

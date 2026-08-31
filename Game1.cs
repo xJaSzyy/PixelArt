@@ -49,9 +49,11 @@ public class Game1 : Game
         collection.AddSingleton<SoundService>();
         collection.AddSingleton<BackgroundParticleService>();
         collection.AddSingleton<LanguageService>();
+        collection.AddSingleton<PixelService>();
         
         collection.AddTransient<MenuScene>();
         collection.AddTransient<GameScene>();
+        collection.AddTransient<GameScene2>();
         
         _services = collection.BuildServiceProvider();
 
