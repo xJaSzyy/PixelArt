@@ -81,6 +81,11 @@ public class GameScene2 : IScene
             {
                 Restart();
             }
+            
+        } 
+        else if (_mouseService.IsLeftMouseButtonReleased(mouse))
+        {
+            _pixelService.CheckContourMatch();
         }
 
         HandlePainting(mouse, keyboard);

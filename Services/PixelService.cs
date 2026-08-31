@@ -8,51 +8,28 @@ using PixelArt.Models;
 
 namespace PixelArt.Services;
 
-public class PixelService
+public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService)
 {
-    public const int GridWidth = 32;
-    public const int GridHeight = 32;
-
-    private readonly GraphicsDevice _graphicsDevice;
-
-    private Texture2D _sourceTexture;
-    private Color[] _sourceData;
-
-    private Texture2D _pixelTexture;
-
-    /*private readonly Color[,] _colors = new Color[GridWidth, GridHeight];
-    private readonly bool[,] _painted = new bool[GridWidth, GridHeight];*/
-
-    private List<Pixel> _pixels = [];
-
-    public class Pixel
-    {
-        public int X { get; set; }
-        public int Y { get; set; }
-        public Color Color { get; set; }
-        public Point Position => new Point(X, Y);
-    }
-    
-    public float PixelSize { get; set; } = 24f;
-
-    public Vector2 Position { get; private set; }
-
+    private Vector2 Position { get; set; }
     public Color CurrentColor { get; set; } = Color.YellowGreen;
     
+    private const int _gridWidth = 32;
+    private const int _gridHeight = 32;
+    private const int _pixelSize = 16;
+    
+    private readonly List<Pixel> _pixels = [];
+    private Texture2D _sourceTexture;
+    private Color[] _sourceData;
+    private Texture2D _pixelTexture;
     private readonly List<Point> _contour = [];
     private readonly List<Point> _keyPoints = [];
 
     private Rectangle Bounds => new(
         (int)Position.X,
         (int)Position.Y,
-        GridWidth * (int)PixelSize,
-        GridHeight * (int)PixelSize
+        _gridWidth * _pixelSize,
+        _gridHeight * _pixelSize
     );
-
-    public PixelService(GraphicsDevice graphicsDevice)
-    {
-        _graphicsDevice = graphicsDevice;
-    }
 
     public void LoadContent(ContentManager content)
     {
@@ -60,7 +37,7 @@ public class PixelService
         _sourceData = new Color[_sourceTexture.Width * _sourceTexture.Height];
         _sourceTexture.GetData(_sourceData);
 
-        _pixelTexture = new Texture2D(_graphicsDevice, 1, 1);
+        _pixelTexture = new Texture2D(graphicsDevice, 1, 1);
         _pixelTexture.SetData([Color.White]);
 
         _contour.Clear();
@@ -78,6 +55,103 @@ public class PixelService
                 pixel.Color = Color.DarkRed;
             }
         }
+    }
+
+    public bool CheckContourMatch(float requiredPercent = 0.98f)
+    {
+        if (_contour.Count == 0)
+            return false;
+
+        var painted = _pixels
+            .Where(x => x.Color.A > 0)
+            .Select(x => x.Position)
+            .ToHashSet();
+
+        if (painted.Count == 0)
+            return false;
+
+        var matchedContourPoints = 0;
+
+        foreach (var contourPoint in _contour)
+        {
+            if (IsPointNear(contourPoint, painted, 1))
+            {
+                matchedContourPoints++;
+            }
+        }
+
+        var contourCoverage =
+            (float)matchedContourPoints / _contour.Count;
+
+        // Теперь проверяем обратное:
+        // пользователь не должен нарисовать слишком много
+        // точек далеко от оригинального контура.
+        var matchedPaintedPoints = 0;
+
+        foreach (var paintedPoint in painted)
+        {
+            if (IsPointNear(paintedPoint, _contour, 1))
+            {
+                matchedPaintedPoints++;
+            }
+        }
+
+        var drawingAccuracy =
+            (float)matchedPaintedPoints / painted.Count;
+
+        var result =
+                contourCoverage >= requiredPercent /*&&
+                drawingAccuracy >= requiredPercent;*/;
+
+        Console.WriteLine(
+            $"Contour: {contourCoverage:P1}, " +
+            $"Drawing: {drawingAccuracy:P1}, " +
+            $"Result: {result}"
+        );
+
+        return result;
+    }
+    
+    private static bool IsPointNear(
+        Point point,
+        HashSet<Point> points,
+        int tolerance)
+    {
+        for (var y = -tolerance; y <= tolerance; y++)
+        {
+            for (var x = -tolerance; x <= tolerance; x++)
+            {
+                if (points.Contains(new Point(
+                        point.X + x,
+                        point.Y + y)))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+    
+    private static bool IsPointNear(
+        Point point,
+        List<Point> points,
+        int tolerance)
+    {
+        for (var y = -tolerance; y <= tolerance; y++)
+        {
+            for (var x = -tolerance; x <= tolerance; x++)
+            {
+                var target = new Point(
+                    point.X + x,
+                    point.Y + y);
+
+                if (points.Contains(target))
+                    return true;
+            }
+        }
+
+        return false;
     }
     
     private static float DistanceToLine(
@@ -103,9 +177,9 @@ public class PixelService
 
         Point start = new(-1, -1);
 
-        for (var y = 0; y < GridHeight && start.X == -1; y++)
+        for (var y = 0; y < _gridHeight && start.X == -1; y++)
         {
-            for (var x = 0; x < GridWidth; x++)
+            for (var x = 0; x < _gridWidth; x++)
             {
                 if (IsBoundary(x, y))
                 {
@@ -135,7 +209,7 @@ public class PixelService
 
         contour.Add(current);
 
-        var maxIterations = GridWidth * GridHeight * 8;
+        var maxIterations = _gridWidth * _gridHeight * 8;
 
         for (var iteration = 0; iteration < maxIterations; iteration++)
         {
@@ -180,9 +254,9 @@ public class PixelService
     
     public void Reset()
     {
-        for (var y = 0; y < GridHeight; y++)
+        for (var y = 0; y < _gridHeight; y++)
         {
-            for (var x = 0; x < GridWidth; x++)
+            for (var x = 0; x < _gridWidth; x++)
             {
                 var pixel = _pixels.FirstOrDefault(pixel => pixel.Position == new Point(x, y));
 
@@ -347,8 +421,8 @@ public class PixelService
     
     public void Center(int viewportWidth, int viewportHeight)
     {
-        var width = GridWidth * PixelSize;
-        var height = GridHeight * PixelSize;
+        var width = _gridWidth * _pixelSize;
+        var height = _gridHeight * _pixelSize;
 
         Position = new Vector2(
             (viewportWidth - width) / 2f,
@@ -368,10 +442,10 @@ public class PixelService
 
         var localPosition = screenPosition - Position;
 
-        x = (int)(localPosition.X / PixelSize);
-        y = (int)(localPosition.Y / PixelSize);
+        x = (int)(localPosition.X / _pixelSize);
+        y = (int)(localPosition.Y / _pixelSize);
 
-        return x >= 0 && x < GridWidth && y >= 0 && y < GridHeight;
+        return x >= 0 && x < _gridWidth && y >= 0 && y < _gridHeight;
     }
 
     public bool TryPaint(Vector2 screenPosition)
@@ -415,15 +489,15 @@ public class PixelService
 
     public void Draw(SpriteBatch spriteBatch)
     {
-        for (var y = 0; y < GridHeight; y++)
+        for (var y = 0; y < _gridHeight; y++)
         {
-            for (var x = 0; x < GridWidth; x++)
+            for (var x = 0; x < _gridWidth; x++)
             {
                 var rectangle = new Rectangle(
-                    (int)(Position.X + x * PixelSize),
-                    (int)(Position.Y + y * PixelSize),
-                    (int)PixelSize,
-                    (int)PixelSize
+                    (int)(Position.X + x * _pixelSize),
+                    (int)(Position.Y + y * _pixelSize),
+                    _pixelSize,
+                    _pixelSize
                 );
 
                 var pixel = _pixels.FirstOrDefault(pixel => pixel.Position == new Point(x, y));
@@ -434,6 +508,11 @@ public class PixelService
                 }
 
                 spriteBatch.Draw(_pixelTexture, rectangle, pixel.Color);
+
+                if (_keyPoints.Contains(pixel.Position))
+                {
+                    drawService.DrawString(spriteBatch, _keyPoints.IndexOf(pixel.Position).ToString(), rectangle.Center.ToVector2(), Color.White, 1f);
+                }
             }
         }
     }
