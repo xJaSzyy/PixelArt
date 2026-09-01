@@ -116,6 +116,10 @@ public class GameScene2 : IScene
             var mousePosition = mouse.Position.ToVector2();
             _pixelService.TryPaint(mousePosition);
         }
+        else
+        {
+            _pixelService.ResetPainting();
+        }
     }
     
     private void HandleScroll(MouseState mouse, KeyboardState keyboard)
