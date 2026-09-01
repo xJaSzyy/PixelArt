@@ -10,4 +10,6 @@ public class Pixel
     public Color OriginalColor { get; set; }
     public Color GrayColor { get; set; }
     public Point Position => new(X, Y);
+
+    public bool IsFinished => CurrentColor == OriginalColor;
 }

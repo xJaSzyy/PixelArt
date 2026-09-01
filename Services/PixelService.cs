@@ -11,7 +11,8 @@ namespace PixelArt.Services;
 public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService)
 {
     private Vector2 Position { get; set; }
-    public Color CurrentColor { get; set; } = Color.Yellow;
+    public Color CurrentColor { get; set; }
+    public bool ContourFinished { get; private set; } = false;
     
     private const int _gridWidth = 32;
     private const int _gridHeight = 32;
@@ -23,6 +24,7 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
     private Texture2D _pixelTexture;
     private readonly List<Point> _contour = [];
     private readonly List<Point> _keyPoints = [];
+    private Dictionary<Color, int> _colorIndexes;
 
     private Rectangle Bounds => new(
         (int)Position.X,
@@ -40,6 +42,8 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
         _pixelTexture = new Texture2D(graphicsDevice, 1, 1);
         _pixelTexture.SetData([Color.White]);
 
+        CurrentColor = Color.Yellow;
+        
         _contour.Clear();
         _contour.AddRange(TraceContour());
         BuildKeyPoints();
@@ -70,9 +74,23 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
 
                 spriteBatch.Draw(_pixelTexture, rectangle, pixel.CurrentColor);
 
-                if (_keyPoints.Contains(pixel.Position))
+                if (_keyPoints.Contains(pixel.Position) && !pixel.IsFinished)
                 {
-                    drawService.DrawString(spriteBatch, (_keyPoints.IndexOf(pixel.Position) + 1).ToString(), rectangle.Center.ToVector2(), Color.Yellow, .75f);
+                    var text = (_keyPoints.IndexOf(pixel.Position) + 1).ToString();
+                    var color = Color.Yellow;
+
+                    if (ContourFinished)
+                    {
+                        text = (_colorIndexes[CurrentColor] + 1).ToString();
+                        color = Colors.IsDark(pixel.CurrentColor) ? Color.White : Color.Black;
+                    }
+                    
+                    drawService.DrawString(
+                        spriteBatch, 
+                        text, 
+                        rectangle.Center.ToVector2(), 
+                        color, 
+                        .75f);
                 }
             }
         }
@@ -110,8 +128,18 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
             return false;
         }
 
+        if (ContourFinished && pixel.OriginalColor != CurrentColor)
+        {
+            return false;
+        }
+
         pixel.CurrentColor = CurrentColor;
 
+        if (ContourFinished && _pixels.Where(p => p.OriginalColor == CurrentColor).All(p => p.IsFinished))
+        {
+            TryChangeColor();
+        }
+        
         return true;
     }
 
@@ -167,42 +195,44 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
             !IsSolid(x, y - 1) ||
             !IsSolid(x, y + 1);
     }
-    
+
     public void Reset()
+    {
+        ContourFinished = false;
+        
+        _colorIndexes = new Dictionary<Color, int>();
+
+        for (var y = 0; y < _gridHeight; y++)
         {
-            var colorIndexes = new Dictionary<Color, int>();
-            
-            for (var y = 0; y < _gridHeight; y++)
+            for (var x = 0; x < _gridWidth; x++)
             {
-                for (var x = 0; x < _gridWidth; x++)
+                var index = y * _sourceTexture.Width + x;
+                var originalColor = _sourceData[index];
+
+                if (originalColor.A == 255 && !_colorIndexes.ContainsKey(originalColor))
                 {
-                    var index = y * _sourceTexture.Width + x;
-                    var originalColor = _sourceData[index];
-    
-                    if (originalColor.A == 255 && !colorIndexes.ContainsKey(originalColor))
-                    {
-                        colorIndexes[originalColor] = colorIndexes.Count;
-                    }
-    
-                    var colorIndex = colorIndexes.GetValueOrDefault(originalColor, -1);
-    
-                    _pixels.Add(new Pixel
-                    {
-                        X = x,
-                        Y = y,
-                        CurrentColor = Color.Transparent,
-                        OriginalColor = _sourceData[index],
-                        GrayColor = colorIndex >= 0
-                            ? Utils.GenerateGrayColor(colorIndex, colorIndexes.Count)
-                            : Color.Transparent
-                    });
+                    _colorIndexes[originalColor] = _colorIndexes.Count;
                 }
+
+                var colorIndex = _colorIndexes.GetValueOrDefault(originalColor, -1);
+
+                _pixels.Add(new Pixel
+                {
+                    X = x,
+                    Y = y,
+                    CurrentColor = Color.Transparent,
+                    OriginalColor = _sourceData[index],
+                    GrayColor = colorIndex >= 0
+                        ? Utils.GenerateGrayColor(colorIndex, _colorIndexes.Count)
+                        : Color.Transparent
+                });
             }
         }
-    
+    }
+
     public bool CheckContourMatch(float requiredPercent = 0.98f)
     {
-        if (_contour.Count == 0)
+        if (_contour.Count == 0 || ContourFinished)
         {
             return false;
         }
@@ -241,6 +271,8 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
 
     private void FinishContour()
     {
+        ContourFinished = true;
+        
         foreach (var pixel in _pixels)
         {
             var color = pixel.GrayColor;
@@ -254,6 +286,29 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
         }
         
         _keyPoints.Clear();
+
+        TryChangeColor();
+    }
+
+    private bool TryChangeColor()
+    {
+        var pixelData = _pixels.FirstOrDefault(pixel => !pixel.IsFinished);
+
+        if (pixelData == null)
+        {
+            Console.WriteLine("IMAGE FINISHED");
+            return false;
+        }
+        
+        CurrentColor = pixelData.OriginalColor;
+        
+        _keyPoints.Clear();
+        foreach (var pixel in _pixels.Where(p => p.OriginalColor == CurrentColor))
+        {
+            _keyPoints.Add(pixel.Position);
+        }
+
+        return true;
     }
 
     private static bool IsPointNear(Point point, HashSet<Point> points, int tolerance)
