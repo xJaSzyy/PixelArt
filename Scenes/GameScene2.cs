@@ -106,18 +106,11 @@ public class GameScene2 : IScene
 
     private void HandlePainting(MouseState mouse, KeyboardState keyboard)
     {
-        if ((_mouseService.IsLeftMouseButtonPressed(mouse) ||
+        if ((_mouseService.IsLeftMouseButtonPressed(mouse) || 
              keyboard.IsKeyDown(Keys.Space)) &&
-            !IsMouseOverUI() &&
-            Utils.Remap(
-                _cameraService.Zoom,
-                _cameraService.MinZoom,
-                _cameraService.MinZoom * 2,
-                0f,
-                1f) > 0.01f)
+            !IsMouseOverUI())
         {
             var mousePosition = mouse.Position.ToVector2();
-
             _pixelService.TryPaint(mousePosition);
         }
     }
@@ -184,7 +177,6 @@ public class GameScene2 : IScene
     private void Restart()
     {
         ColoringIsCompleted = false;
-
         _pixelService.Reset();
     }
 

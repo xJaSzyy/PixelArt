@@ -96,11 +96,7 @@ public class PixelProcessorService
     
                 for (var i = 0; i < total; i++)
                 {
-                    var gray = GenerateGrayValue(i, total);
-    
-                    var previewColor = new Color(gray,
-                        gray,
-                        gray);
+                    var grayColor = Utils.GenerateGrayColor(i, total);
     
                     var group = sortedGroups[i];
     
@@ -108,11 +104,11 @@ public class PixelProcessorService
     
                     foreach (var pixel in group.Pixels)
                     {
-                        pixel.CurrentColor = previewColor;
-                        pixel.GrayColor = previewColor;
+                        pixel.CurrentColor = grayColor;
+                        pixel.GrayColor = grayColor;
     
                         var index = pixel.TexturePositionY * CurrentLevel.Texture.Width + pixel.TexturePositionX;
-                        _texturePixels[index] = previewColor;
+                        _texturePixels[index] = grayColor;
                     }
                 }
             }
@@ -215,23 +211,6 @@ public class PixelProcessorService
                 );
             }
         }
-    }
-    
-    private static byte GenerateGrayValue(int index, int total)
-    {
-        if (total <= 1)
-        {
-            return 220;
-        }
-        
-        const int min = 150;
-        const int max = 230;
-        
-        var value = max -
-                    index * (max - min) /
-                    (total - 1);
-        
-        return (byte)value;
     }
     
     public void PaintAtMousePosition(MouseState mouse, Color color)

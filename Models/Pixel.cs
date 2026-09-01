@@ -6,6 +6,8 @@ public class Pixel
 {
     public int X { get; set; }
     public int Y { get; set; }
-    public Color Color { get; set; }
+    public Color CurrentColor { get; set; }
+    public Color OriginalColor { get; set; }
+    public Color GrayColor { get; set; }
     public Point Position => new(X, Y);
 }

@@ -127,9 +127,17 @@ public class MenuScene : IScene
                     else
                     {
                         _processorService.SetLevel(level);
-                        _sceneService.SetScene<GameScene2>();
+                        _sceneService.SetScene<GameScene>();
                         break;
                     }
+                }
+            }
+            else if (_mouseService.IsRightMouseButtonClicked(mouse))
+            {
+                foreach (var level in _levelService.Levels.Where(l => l.Button.IsHovered))
+                {
+                    _processorService.SetLevel(level);
+                    _sceneService.SetScene<GameScene2>();
                 }
             }
         }

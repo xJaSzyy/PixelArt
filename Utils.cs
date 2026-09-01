@@ -31,4 +31,19 @@ public static class Utils
 
         return MathHelper.Lerp(toMin, toMax, t);
     }
+    
+    public static Color GenerateGrayColor(int index, int total)
+    {
+        if (total <= 1)
+        {
+            return new Color(220, 220, 220);
+        }
+        
+        const int min = 150;
+        const int max = 230;
+        
+        var value = max - index * (max - min) / (total - 1);
+        
+        return new Color(value, value, value);
+    }
 }

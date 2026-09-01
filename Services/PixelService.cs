@@ -44,6 +44,7 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
         _contour.AddRange(TraceContour());
         BuildKeyPoints();
         
+        _pixels.Clear();
         Reset();
         
         foreach (var point in _keyPoints)
@@ -52,7 +53,7 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
 
             if (pixel != null)
             {
-                pixel.Color = Color.DarkRed;
+                pixel.CurrentColor = Color.DarkRed;
             }
         }
     }
@@ -60,15 +61,19 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
     public bool CheckContourMatch(float requiredPercent = 0.98f)
     {
         if (_contour.Count == 0)
+        {
             return false;
+        }
 
         var painted = _pixels
-            .Where(x => x.Color.A > 0)
+            .Where(x => x.CurrentColor.A > 0)
             .Select(x => x.Position)
             .ToHashSet();
 
         if (painted.Count == 0)
+        {
             return false;
+        }
 
         var matchedContourPoints = 0;
 
@@ -80,34 +85,16 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
             }
         }
 
-        var contourCoverage =
-            (float)matchedContourPoints / _contour.Count;
+        var contourCoverage = (float)matchedContourPoints / _contour.Count;
+        
+        var result = contourCoverage >= requiredPercent;
 
-        // Теперь проверяем обратное:
-        // пользователь не должен нарисовать слишком много
-        // точек далеко от оригинального контура.
-        var matchedPaintedPoints = 0;
+        Console.WriteLine($"Contour: {contourCoverage:P1}, " + $"Result: {result}");
 
-        foreach (var paintedPoint in painted)
+        if (result)
         {
-            if (IsPointNear(paintedPoint, _contour, 1))
-            {
-                matchedPaintedPoints++;
-            }
+            _pixels.ForEach(pixel => pixel.CurrentColor = pixel.GrayColor);
         }
-
-        var drawingAccuracy =
-            (float)matchedPaintedPoints / painted.Count;
-
-        var result =
-                contourCoverage >= requiredPercent /*&&
-                drawingAccuracy >= requiredPercent;*/;
-
-        Console.WriteLine(
-            $"Contour: {contourCoverage:P1}, " +
-            $"Drawing: {drawingAccuracy:P1}, " +
-            $"Result: {result}"
-        );
 
         return result;
     }
@@ -194,14 +181,14 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
 
         Point[] directions =
         [
-            new Point(0, -1),
-            new Point(1, -1),
-            new Point(1, 0),
-            new Point(1, 1),
-            new Point(0, 1),
-            new Point(-1, 1),
-            new Point(-1, 0),
-            new Point(-1, -1)
+            new(0, -1),
+            new(1, -1),
+            new(1, 0),
+            new(1, 1),
+            new(0, 1),
+            new(-1, 1),
+            new(-1, 0),
+            new(-1, -1)
         ];
 
         var current = start;
@@ -227,7 +214,9 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
                     current.Y + direction.Y);
 
                 if (!IsSolid(next.X, next.Y))
+                {
                     continue;
+                }
 
                 current = next;
                 previousDirection = directionIndex;
@@ -235,18 +224,24 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
                 if (current == start)
                 {
                     if (contour.Count > 2)
+                    {
                         return contour;
+                    }
                 }
 
                 if (contour[^1] != current)
+                {
                     contour.Add(current);
+                }
 
                 found = true;
                 break;
             }
 
             if (!found)
+            {
                 break;
+            }
         }
 
         return contour;
@@ -254,25 +249,32 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
     
     public void Reset()
     {
+        var colorIndexes = new Dictionary<Color, int>();
+        
         for (var y = 0; y < _gridHeight; y++)
         {
             for (var x = 0; x < _gridWidth; x++)
             {
-                var pixel = _pixels.FirstOrDefault(pixel => pixel.Position == new Point(x, y));
+                var index = y * _sourceTexture.Width + x;
+                var originalColor = _sourceData[index];
 
-                if (pixel != null)
+                if (originalColor.A == 255 && !colorIndexes.ContainsKey(originalColor))
                 {
-                    pixel.Color = Color.Transparent;
+                    colorIndexes[originalColor] = colorIndexes.Count;
                 }
-                else
+
+                var colorIndex = colorIndexes.GetValueOrDefault(originalColor, -1);
+
+                _pixels.Add(new Pixel
                 {
-                    _pixels.Add(new Pixel
-                    {
-                        X = x,
-                        Y = y,
-                        Color = Color.Transparent
-                    });
-                }
+                    X = x,
+                    Y = y,
+                    CurrentColor = Color.Transparent,
+                    OriginalColor = _sourceData[index],
+                    GrayColor = colorIndex >= 0
+                        ? Utils.GenerateGrayColor(colorIndex, colorIndexes.Count)
+                        : Color.Transparent
+                });
             }
         }
     }
@@ -291,7 +293,9 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
     private bool IsBoundary(int x, int y)
     {
         if (!IsSolid(x, y))
+        {
             return false;
+        }
 
         return
             !IsSolid(x - 1, y) ||
@@ -305,11 +309,11 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
         _keyPoints.Clear();
 
         if (_contour.Count < 3)
+        {
             return;
+        }
 
-        var points = _contour
-            .ConvertAll(p => new Vector2(p.X, p.Y));
-
+        var points = _contour.ConvertAll(p => new Vector2(p.X, p.Y));
         var simplified = SimplifyClosedContour(points, 1.5f);
 
         foreach (var point in simplified)
@@ -321,9 +325,7 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
         }
     }
     
-    private List<Vector2> SimplifyClosedContour(
-        List<Vector2> points,
-        float tolerance)
+    private List<Vector2> SimplifyClosedContour(List<Vector2> points, float tolerance)
     {
         if (points.Count <= 3)
         {
@@ -364,17 +366,13 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
         var result2 = SimplifyOpenContour(part2, tolerance);
 
         result1.RemoveAt(result1.Count - 1);
-
         result2.RemoveAt(result2.Count - 1);
-
         result1.AddRange(result2);
 
         return result1;
     }
     
-    private List<Vector2> SimplifyOpenContour(
-        List<Vector2> points,
-        float tolerance)
+    private List<Vector2> SimplifyOpenContour(List<Vector2> points, float tolerance)
     {
         if (points.Count <= 2)
         {
@@ -421,12 +419,9 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
     
     public void Center(int viewportWidth, int viewportHeight)
     {
-        var width = _gridWidth * _pixelSize;
-        var height = _gridHeight * _pixelSize;
-
         Position = new Vector2(
-            (viewportWidth - width) / 2f,
-            (viewportHeight - height) / 2f
+            (viewportWidth - _gridWidth * _pixelSize) / 2f,
+            (viewportHeight - _gridHeight * _pixelSize) / 2f
         );
     }
 
@@ -462,7 +457,7 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
             return false;
         }
 
-        pixel.Color = CurrentColor;
+        pixel.CurrentColor = CurrentColor;
 
         return true;
     }
@@ -481,7 +476,7 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
             return false;
         }
 
-        pixel.Color = Color.Transparent;
+        pixel.CurrentColor = Color.Transparent;
 
 
         return true;
@@ -507,11 +502,11 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
                     continue;
                 }
 
-                spriteBatch.Draw(_pixelTexture, rectangle, pixel.Color);
+                spriteBatch.Draw(_pixelTexture, rectangle, pixel.CurrentColor);
 
                 if (_keyPoints.Contains(pixel.Position))
                 {
-                    drawService.DrawString(spriteBatch, _keyPoints.IndexOf(pixel.Position).ToString(), rectangle.Center.ToVector2(), Color.White, 1f);
+                    drawService.DrawString(spriteBatch, (_keyPoints.IndexOf(pixel.Position) + 1).ToString(), rectangle.Center.ToVector2(), Color.White, .75f);
                 }
             }
         }
