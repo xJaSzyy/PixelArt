@@ -125,20 +125,11 @@ public class LevelService
                 level.IsLocked = true;
             }
 
-            var clone = new Texture2D(
-                _graphicsDevice,
-                texture.Width,
-                texture.Height,
-                texture.LevelCount > 1,
-                texture.Format
-            );
-
-            var data = new Color[texture.Width * texture.Height];
-            texture.GetData(data);
-            clone.SetData(data);
+            var clone = Utils.CloneTexture2D(_graphicsDevice, texture);
             
             level.Id = i;
             level.Texture = clone;
+            level.OriginalTexture = texture;
             level.Button = new Button(drawService, clone, Rectangle.Empty);
             
             Levels.Add(level);

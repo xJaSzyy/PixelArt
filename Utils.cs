@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace PixelArt;
 
@@ -45,5 +46,22 @@ public static class Utils
         var value = max - index * (max - min) / (total - 1);
         
         return new Color(value, value, value);
+    }
+
+    public static Texture2D CloneTexture2D(GraphicsDevice graphicsDevice, Texture2D texture)
+    {
+        var clone = new Texture2D(
+            graphicsDevice,
+            texture.Width,
+            texture.Height,
+            texture.LevelCount > 1,
+            texture.Format
+        );
+
+        var data = new Color[texture.Width * texture.Height];
+        texture.GetData(data);
+        clone.SetData(data);
+
+        return clone;
     }
 }

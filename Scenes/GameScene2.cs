@@ -59,7 +59,10 @@ public class GameScene2 : IScene
                 _buttonSize,
                 _buttonSize));
 
-        _pixelService.LoadContent(content);
+        var texture = _services.GetRequiredService<PixelProcessorService>().CurrentLevel.OriginalTexture;
+        var clone = Utils.CloneTexture2D(_graphicsDevice, texture);
+        
+        _pixelService.LoadContent(content, clone);
 
         _pixelService.Center(
             _graphicsDevice.Viewport.Width,
