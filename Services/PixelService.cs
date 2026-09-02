@@ -20,13 +20,14 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
     private const int _gridHeight = 32;
     private const int _pixelSize = 16;
     
-    private readonly List<Pixel> _pixels = [];
+    //private readonly List<Pixel> _pixels = [];
     private Texture2D _sourceTexture;
     private Color[] _sourceData;
     private Texture2D _pixelTexture;
     private readonly List<Point> _contour = [];
     private readonly List<Point> _keyPoints = [];
     private Dictionary<Color, int> _colorIndexes;
+    private readonly Dictionary<Point, Pixel> _pixelsByPosition = [];
 
     private Rectangle Bounds => new(
         (int)Position.X,
@@ -62,7 +63,7 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
                     _pixelSize
                 );
 
-                var pixel = _pixels.FirstOrDefault(pixel => pixel.Position == new Point(x, y));
+                var pixel = _pixelsByPosition[new Point(x, y)];
 
                 if (pixel == null)
                 {
@@ -74,7 +75,7 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
                 if (_keyPoints.Contains(pixel.Position) && !pixel.IsFinished)
                 {
                     var text = (_keyPoints.IndexOf(pixel.Position) + 1).ToString();
-                    var color = Color.Yellow;
+                    var color = pixel.CurrentColor == Color.Yellow ? Color.Black : Color.Yellow;
 
                     if (ContourFinished)
                     {
@@ -113,8 +114,6 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
         return x >= 0 && x < _gridWidth && y >= 0 && y < _gridHeight;
     }
 
-    private Pixel _lastPaintPixel = null;
-    
     public bool TryPaint(Vector2 screenPosition)
     {
         if (!TryGetGridPosition(screenPosition, out var x, out var y))
@@ -122,94 +121,31 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
             return false;
         }
 
-        var pixel = _pixels.FirstOrDefault(pixel => pixel.Position == new Point(x, y));
+        var pixel = _pixelsByPosition[new Point(x, y)];
 
         if (pixel == null)
         {
             return false;
         }
 
-        if (ContourFinished && pixel.OriginalColor != CurrentColor)
+        if (ContourFinished && (pixel.OriginalColor == Color.Transparent || pixel.IsFinished))
         {
             return false;
         }
         
-        if (_lastPaintPixel != null)
-        {
-            PaintLine(_lastPaintPixel.Position, pixel.Position, CurrentColor);
-        }
-        else
-        {
-            pixel.CurrentColor = CurrentColor;
-        }
+        pixel.CurrentColor = CurrentColor;
 
-        _lastPaintPixel = pixel;
-
-        if (ContourFinished && _pixels.Where(p => p.OriginalColor == CurrentColor).All(p => p.IsFinished))
+        if (ContourFinished && _pixelsByPosition.Where(p => p.Value.OriginalColor == CurrentColor).All(p => p.Value.IsFinished))
         {
             TryChangeColor();
         }
         
         return true;
     }
-    
-    public void ResetPainting()
-    {
-        _lastPaintPixel = null;
-    }
-    
-    private void PaintLine(Point start, Point end, Color color)
-    {
-        var x0 = start.X;
-        var y0 = start.Y;
-
-        var x1 = end.X;
-        var y1 = end.Y;
-
-        var dx = Math.Abs(x1 - x0);
-        var dy = Math.Abs(y1 - y0);
-
-        var sx = x0 < x1 ? 1 : -1;
-        var sy = y0 < y1 ? 1 : -1;
-
-        var err = dx - dy;
-
-        while (true)
-        {
-            if (x0 >= 0 && x0 < _gridWidth && y0 >= 0 && y0 < _gridHeight)
-            {
-                var b = SetPixel(new Point(x0, y0), color);
-
-                if (b)
-                {
-                    break; 
-                }
-            }
-
-            if (x0 == x1 && y0 == y1)
-            {
-                break;
-            }
-
-            var e2 = 2 * err;
-
-            if (e2 > -dy)
-            {
-                err -= dy;
-                x0 += sx;
-            }
-
-            if (e2 < dx)
-            {
-                err += dx;
-                y0 += sy;
-            }
-        }
-    }
 
     private bool SetPixel(Point position, Color color)
     {
-        var pixel = _pixels.FirstOrDefault(x => x.Position == position);
+        var pixel = _pixelsByPosition[position];
 
         if (pixel != null)
         {
@@ -224,35 +160,15 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
 
         return false;
     }
-    
-    public bool TryErase(Vector2 screenPosition)
-    {
-        if (!TryGetGridPosition(screenPosition, out var x, out var y))
-        {
-            return false;
-        }
 
-        var pixel = _pixels.FirstOrDefault(pixel => pixel.Position == new Point(x, y));
-
-        if (pixel == null)
-        {
-            return false;
-        }
-
-        pixel.CurrentColor = Color.Transparent;
-
-
-        return true;
-    }
-    
     public void Center(int viewportWidth, int viewportHeight)
-        {
-            Position = new Vector2(
-                (viewportWidth - _gridWidth * _pixelSize) / 2f,
-                (viewportHeight - _gridHeight * _pixelSize) / 2f
-            );
-        }
-    
+    {
+        Position = new Vector2(
+            (viewportWidth - _gridWidth * _pixelSize) / 2f,
+            (viewportHeight - _gridHeight * _pixelSize) / 2f
+        );
+    }
+
     private bool IsSolid(int x, int y)
     {
         if (x < 0 || x >= _sourceTexture.Width ||
@@ -280,11 +196,13 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
 
     public void Reset()
     {
+        CurrentColor = Color.Yellow;
+        
         _contour.Clear();
         _contour.AddRange(TraceContour());
         BuildKeyPoints();
         
-        _pixels.Clear();
+        _pixelsByPosition.Clear();
         
         ContourFinished = false;
         
@@ -304,7 +222,7 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
 
                 var colorIndex = _colorIndexes.GetValueOrDefault(originalColor, -1);
 
-                _pixels.Add(new Pixel
+                var pixelToAdd = new Pixel
                 {
                     X = x,
                     Y = y,
@@ -313,7 +231,9 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
                     GrayColor = colorIndex >= 0
                         ? Utils.GenerateGrayColor(colorIndex, _colorIndexes.Count)
                         : Color.Transparent
-                });
+                };
+                
+                _pixelsByPosition.Add(pixelToAdd.Position, pixelToAdd);
             }
         }
     }
@@ -325,9 +245,9 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
             return false;
         }
 
-        var painted = _pixels
-            .Where(x => x.CurrentColor.A > 0)
-            .Select(x => x.Position)
+        var painted = _pixelsByPosition
+            .Where(x => x.Value.CurrentColor.A > 0)
+            .Select(x => x.Value.Position)
             .ToHashSet();
 
         if (painted.Count == 0)
@@ -361,16 +281,16 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
     {
         ContourFinished = true;
         
-        foreach (var pixel in _pixels)
+        foreach (var pixel in _pixelsByPosition)
         {
-            var color = pixel.GrayColor;
+            var color = pixel.Value.GrayColor;
             
-            if (_contour.Contains(pixel.Position))
+            if (_contour.Contains(pixel.Value.Position))
             {
-                color = pixel.OriginalColor;
+                color = pixel.Value.OriginalColor;
             }
 
-            pixel.CurrentColor = color;
+            pixel.Value.CurrentColor = color;
         }
         
         _keyPoints.Clear();
@@ -380,7 +300,7 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
 
     private bool TryChangeColor()
     {
-        var pixelData = _pixels.FirstOrDefault(pixel => !pixel.IsFinished);
+        var pixelData = _pixelsByPosition.FirstOrDefault(pixel => !pixel.Value.IsFinished).Value;
 
         if (pixelData == null)
         {
@@ -391,10 +311,10 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
         CurrentColor = pixelData.OriginalColor;
         
         _keyPoints.Clear();
-        foreach (var pixel in _pixels.Where(p => p.OriginalColor == CurrentColor && !p.IsFinished))
+        foreach (var pixel in _pixelsByPosition.Where(p => p.Value.OriginalColor == CurrentColor && !p.Value.IsFinished))
         {
-            _keyPoints.Add(pixel.Position);
-            pixel.CurrentColor = _highlightColor;
+            _keyPoints.Add(pixel.Key);
+            pixel.Value.CurrentColor = _highlightColor;
         }
 
         return true;
