@@ -19,6 +19,7 @@ public class GameScene2 : IScene
     private readonly GraphicsDevice _graphicsDevice;
     private readonly SpriteBatch _spriteBatch;
     private readonly MouseService _mouseService;
+    private readonly KeyboardService _keyboardService;
     private readonly DrawService _drawService;
     private readonly PopupTextService _popupService;
     private readonly CameraService _cameraService;
@@ -38,6 +39,7 @@ public class GameScene2 : IScene
         _graphicsDevice = _services.GetRequiredService<GraphicsDevice>();
         _spriteBatch = new SpriteBatch(_graphicsDevice);
         _mouseService = _services.GetRequiredService<MouseService>();
+        _keyboardService = _services.GetRequiredService<KeyboardService>();
         _drawService = _services.GetRequiredService<DrawService>();
         _popupService = _services.GetRequiredService<PopupTextService>();
         _cameraService = _services.GetRequiredService<CameraService>();
@@ -86,9 +88,8 @@ public class GameScene2 : IScene
             {
                 Restart();
             }
-            
         } 
-        else if (_mouseService.IsLeftMouseButtonReleased(mouse))
+        else if (_keyboardService.IsKeyUpOnce(keyboard, Keys.Space))
         {
             _pixelService.CheckContourMatch();
         }
@@ -107,12 +108,13 @@ public class GameScene2 : IScene
         _backgroundService.Update(gameTime);
         
         _mouseService.SetMouse(mouse);
+        _keyboardService.SetState(keyboard);
     }
 
     private void HandlePainting(MouseState mouse, KeyboardState keyboard)
     {
         if ((_mouseService.IsLeftMouseButtonPressed(mouse) || 
-             keyboard.IsKeyDown(Keys.Space)) &&
+             _keyboardService.IsKeyPressed(keyboard, Keys.Space)) &&
             !IsMouseOverUI())
         {
             var mousePosition = mouse.Position.ToVector2();
@@ -122,7 +124,7 @@ public class GameScene2 : IScene
     
     private void HandleScroll(MouseState mouse, KeyboardState keyboard)
     {
-        if (!_mouseService.IsScroll(mouse) || !keyboard.IsKeyDown(Keys.LeftControl))
+        if (!_mouseService.IsScroll(mouse) || !_keyboardService.IsKeyPressed(keyboard, Keys.LeftControl))
         {
             return;
         }

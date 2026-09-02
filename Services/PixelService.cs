@@ -256,11 +256,11 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
         }
     }
 
-    public bool CheckContourMatch(float requiredPercent = 0.98f)
+    public void CheckContourMatch(float requiredPercent = 0.98f)
     {
         if (_contour.Count == 0 || ContourFinished)
         {
-            return false;
+            return;
         }
 
         var painted = _pixelsByPosition
@@ -270,7 +270,7 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
 
         if (painted.Count == 0)
         {
-            return false;
+            return;
         }
 
         var matchedContourPoints = 0;
@@ -291,8 +291,6 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
         {
             FinishContour();
         }
-
-        return result;
     }
 
     private void FinishContour()

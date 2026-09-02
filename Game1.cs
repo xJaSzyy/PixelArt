@@ -50,6 +50,7 @@ public class Game1 : Game
         collection.AddSingleton<BackgroundParticleService>();
         collection.AddSingleton<LanguageService>();
         collection.AddSingleton<PixelService>();
+        collection.AddSingleton<KeyboardService>();
         
         collection.AddTransient<MenuScene>();
         collection.AddTransient<GameScene>();
