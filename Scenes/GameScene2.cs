@@ -43,6 +43,8 @@ public class GameScene2 : IScene
         _cameraService = _services.GetRequiredService<CameraService>();
         _backgroundService = _services.GetRequiredService<BackgroundParticleService>();
         _pixelService = _services.GetRequiredService<PixelService>();
+
+        _cameraService.SetZoomBounds(1f, 2.5f);
     }
 
     public void LoadContent(ContentManager content)
@@ -120,33 +122,20 @@ public class GameScene2 : IScene
     
     private void HandleScroll(MouseState mouse, KeyboardState keyboard)
     {
-        if (_mouseService.IsScroll(mouse))
+        if (!_mouseService.IsScroll(mouse) || !keyboard.IsKeyDown(Keys.LeftControl))
         {
-            var scrollDelta = _mouseService.GetScrollDelta(mouse);
-            
-            if (keyboard.IsKeyDown(Keys.LeftControl))
-            {
-                _cameraService.ChangeZoom(mouse, scrollDelta);
-            }
-            else
-            {
-                if (scrollDelta > 0)
-                {
-                }
-                else
-                {
-                }
-            }
+            return;
         }
+        
+        var scrollDelta = _mouseService.GetScrollDelta(mouse);
+        _cameraService.ChangeZoom(mouse, scrollDelta);
     }
 
     public void Draw(GameTime gameTime)
     {
         _graphicsDevice.Clear(Colors.Background);
 
-        _spriteBatch.Begin(
-            samplerState: SamplerState.PointClamp
-        );
+        _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
         _backgroundService.Draw(_spriteBatch);
 

@@ -12,7 +12,7 @@ public class CameraService
     
     private Vector2 _cameraPosition;
 
-    private const float _zoomSpeed = 0.1f;
+    private float _zoomSpeed = 0.1f;
 
     private bool _isDragging;
     private Point _lastMousePosition;
@@ -58,5 +58,11 @@ public class CameraService
     public Vector2 GetPosition()
     {
         return _cameraPosition;
+    }
+
+    public void SetZoomBounds(float min, float max)
+    {
+        MinZoom = min;
+        MaxZoom = max;
     }
 }

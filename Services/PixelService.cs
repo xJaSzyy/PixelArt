@@ -8,7 +8,7 @@ using PixelArt.Models;
 
 namespace PixelArt.Services;
 
-public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService)
+public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService, CameraService cameraService)
 {
     private Vector2 Position { get; set; }
     public Color CurrentColor { get; set; }
@@ -20,7 +20,6 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
     private const int _gridHeight = 32;
     private const int _pixelSize = 16;
     
-    //private readonly List<Pixel> _pixels = [];
     private Texture2D _sourceTexture;
     private Color[] _sourceData;
     private Texture2D _pixelTexture;
@@ -32,8 +31,8 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
     private Rectangle Bounds => new(
         (int)Position.X,
         (int)Position.Y,
-        _gridWidth * _pixelSize,
-        _gridHeight * _pixelSize
+        (int)(_gridWidth * _pixelSize * cameraService.Zoom),
+        (int)(_gridHeight * _pixelSize * cameraService.Zoom)
     );
 
     public void LoadContent(ContentManager content, Texture2D texture)
@@ -56,12 +55,7 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
         {
             for (var x = 0; x < _gridWidth; x++)
             {
-                var rectangle = new Rectangle(
-                    (int)(Position.X + x * _pixelSize),
-                    (int)(Position.Y + y * _pixelSize),
-                    _pixelSize,
-                    _pixelSize
-                );
+                var rectangle = GetImageBounds(x, y);
 
                 var pixel = _pixelsByPosition[new Point(x, y)];
 
@@ -95,6 +89,21 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
             }
         }
     }
+    
+    public Rectangle GetImageBounds(int x, int y)
+    {
+        var width = (int)(_pixelSize * cameraService.Zoom);
+        var height = (int)(_pixelSize * cameraService.Zoom);
+
+        var cameraPos = cameraService.GetPosition();
+        
+        return new Rectangle(
+            (int)(cameraPos.X + Position.X + x * _pixelSize * cameraService.Zoom),
+            (int)(cameraPos.Y + Position.Y + y * _pixelSize* cameraService.Zoom),
+            width, 
+            height
+        );
+    }
 
     private bool TryGetGridPosition(Vector2 screenPosition, out int x, out int y)
     {
@@ -106,10 +115,10 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
             return false;
         }
 
-        var localPosition = screenPosition - Position;
+        var localPosition = screenPosition - Position - cameraService.GetPosition();
 
-        x = (int)(localPosition.X / _pixelSize);
-        y = (int)(localPosition.Y / _pixelSize);
+        x = (int)(localPosition.X / (_pixelSize * cameraService.Zoom));
+        y = (int)(localPosition.Y / (_pixelSize * cameraService.Zoom));
 
         return x >= 0 && x < _gridWidth && y >= 0 && y < _gridHeight;
     }
@@ -172,9 +181,12 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
 
     public void Center(int viewportWidth, int viewportHeight)
     {
+        var width = _gridWidth * _pixelSize * cameraService.Zoom;
+        var height = _gridHeight * _pixelSize * cameraService.Zoom;
+
         Position = new Vector2(
-            (viewportWidth - _gridWidth * _pixelSize) / 2f,
-            (viewportHeight - _gridHeight * _pixelSize) / 2f
+            (viewportWidth - width) / 2f,
+            (viewportHeight - height) / 2f
         );
     }
 
