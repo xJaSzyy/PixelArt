@@ -42,12 +42,14 @@ public class CameraService
     public void ChangeZoom(MouseState mouse, int scrollDelta)
     {
         var oldZoom = Zoom;
+
         var mouseWorld = (mouse.Position.ToVector2() - _cameraPosition) / oldZoom;
 
         Zoom += scrollDelta > 0 ? _zoomSpeed : -_zoomSpeed;
         Zoom = MathHelper.Clamp(Zoom, MinZoom, MaxZoom);
 
-        _cameraPosition = mouse.Position.ToVector2() - mouseWorld * Zoom;
+        _cameraPosition =
+            mouse.Position.ToVector2() - mouseWorld * Zoom;
     }
 
     public void SetPosition(Vector2 position)
@@ -60,10 +62,11 @@ public class CameraService
         return _cameraPosition;
     }
 
-    public void SetZoomBounds(float min, float max)
+    public void SetZoomBounds(float min, float max, float speed)
     {
         MinZoom = min;
         MaxZoom = max;
+        _zoomSpeed = speed;
 
         Zoom = 1f;
         _cameraPosition = Vector2.Zero;

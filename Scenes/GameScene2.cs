@@ -44,7 +44,7 @@ public class GameScene2 : IScene
         _backgroundService = _services.GetRequiredService<BackgroundParticleService>();
         _pixelService = _services.GetRequiredService<PixelService>();
 
-        _cameraService.SetZoomBounds(1f, 2.5f);
+        _cameraService.SetZoomBounds(1f, 2.5f, .2f);
     }
 
     public void LoadContent(ContentManager content)

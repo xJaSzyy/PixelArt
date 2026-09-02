@@ -86,32 +86,46 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
             }
         }
     }
-    
-    public Rectangle GetImageBounds(int x, int y)
-    {
-        var width = (int)(_pixelSize * cameraService.Zoom);
-        var height = (int)(_pixelSize * cameraService.Zoom);
 
+    private Rectangle GetImageBounds(int x, int y)
+    {
         var cameraPos = cameraService.GetPosition();
-        
+        var zoom = cameraService.Zoom;
+
+        var worldX = Position.X + x * _pixelSize;
+        var worldY = Position.Y + y * _pixelSize;
+
+        var left = (int)MathF.Round(cameraPos.X + worldX * zoom);
+        var top = (int)MathF.Round(cameraPos.Y + worldY * zoom);
+
+        var right = (int)MathF.Round(
+            cameraPos.X + (worldX + _pixelSize) * zoom);
+
+        var bottom = (int)MathF.Round(
+            cameraPos.Y + (worldY + _pixelSize) * zoom);
+
         return new Rectangle(
-            (int)(cameraPos.X + Position.X + x * _pixelSize * cameraService.Zoom),
-            (int)(cameraPos.Y + Position.Y + y * _pixelSize* cameraService.Zoom),
-            width, 
-            height
+            left,
+            top,
+            right - left,
+            bottom - top
         );
     }
 
-    private bool TryGetGridPosition(Vector2 screenPosition, out int x, out int y)
+    private bool TryGetGridPosition(
+        Vector2 screenPosition,
+        out int x,
+        out int y)
     {
         var cameraPos = cameraService.GetPosition();
 
-        var localPosition = screenPosition - cameraPos - Position;
+        var worldPosition =
+            (screenPosition - cameraPos) / cameraService.Zoom;
 
-        var cellSize = _pixelSize * cameraService.Zoom;
+        var localPosition = worldPosition - Position;
 
-        x = (int)(localPosition.X / cellSize);
-        y = (int)(localPosition.Y / cellSize);
+        x = (int)(localPosition.X / _pixelSize);
+        y = (int)(localPosition.Y / _pixelSize);
 
         return x >= 0 &&
                x < _gridWidth &&
@@ -159,12 +173,17 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
 
     public void Center(int viewportWidth, int viewportHeight)
     {
-        var width = _gridWidth * _pixelSize * cameraService.Zoom;
-        var height = _gridHeight * _pixelSize * cameraService.Zoom;
+        var width = _gridWidth * _pixelSize;
+        var height = _gridHeight * _pixelSize;
+
+        var zoom = cameraService.Zoom;
+
+        var viewportWorldWidth = viewportWidth / zoom;
+        var viewportWorldHeight = viewportHeight / zoom;
 
         Position = new Vector2(
-            (viewportWidth - width) / 2f,
-            (viewportHeight - height) / 2f
+            (viewportWorldWidth - width) / 2f,
+            (viewportWorldHeight - height) / 2f
         );
     }
 
@@ -551,5 +570,19 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
         leftResult.AddRange(rightResult);
 
         return leftResult;
+    }
+    
+    public void ZoomAt(Vector2 mousePosition, float oldZoom, float newZoom)
+    {
+        var cameraPosition = cameraService.GetPosition();
+
+        var oldCellSize = _pixelSize * oldZoom;
+        var newCellSize = _pixelSize * newZoom;
+
+        var mouseRelativeToImage = mousePosition - cameraPosition - Position;
+
+        Position = mousePosition
+                   - cameraPosition
+                   - mouseRelativeToImage / oldCellSize * newCellSize;
     }
 }

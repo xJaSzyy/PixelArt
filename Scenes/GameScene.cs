@@ -46,6 +46,8 @@ public class GameScene : IScene
         _popupService = _services.GetRequiredService<PopupTextService>();
         _cameraService = _services.GetRequiredService<CameraService>();
         _backgroundService = _services.GetRequiredService<BackgroundParticleService>();
+        
+        _cameraService.SetZoomBounds(.2f, 2f, .1f);
     }
 
     public void LoadContent(ContentManager content)
