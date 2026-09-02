@@ -204,6 +204,11 @@ public class PixelProcessorService
                 var scale = _cameraService.Zoom +
                             _pixelSize.X * (colorGroup.Number.ToString().Length == 1 ? 0.0045f : 0.003f);
 
+                if (pixel.CurrentColor != pixel.GrayColor && pixel.CurrentColor != _highlightColor)
+                {
+                    color *= .6f;
+                }
+                
                 drawService.DrawString(
                     spriteBatch,
                     colorGroup.Number.ToString(),
@@ -316,8 +321,7 @@ public class PixelProcessorService
             return;
         }
 
-        pixel.CurrentColor = color;
-        _texturePixels[index] = color;
+        
 
         if (color == pixel.OriginalColor)
         {
@@ -333,6 +337,9 @@ public class PixelProcessorService
             _particleService.Spawn(pixel.GetWorldPosition(_pixelSize.X, _pixelSize.Y), particleColor, 5);
             _soundService.PlayPaintingSound();
         }
+        
+        pixel.CurrentColor = color;
+        _texturePixels[index] = color;
     }
 
     public void SetPixelSize(float pixelWidth, float pixelHeight)
