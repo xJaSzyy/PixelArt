@@ -135,14 +135,16 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
 
         var currentColor = CurrentColor;
         
-        if (pixel.OriginalColor != currentColor)
+        if (pixel.OriginalColor != currentColor && ContourFinished)
         {
-            currentColor = Color.Lerp(CurrentColor, pixel.GrayColor, 0.5f);
+            currentColor = Color.Lerp(CurrentColor, pixel.GrayColor, 0.6f);
         }
             
         pixel.CurrentColor = currentColor;
         
-        if (ContourFinished && _pixelsByPosition.Where(p => p.Value.OriginalColor == CurrentColor).All(p => p.Value.IsFinished))
+        if (ContourFinished && _pixelsByPosition
+                .Where(p => p.Value.OriginalColor == CurrentColor)
+                .All(p => p.Value.IsFinished))
         {
             TryChangeColor();
         }
