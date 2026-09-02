@@ -321,8 +321,6 @@ public class PixelProcessorService
             return;
         }
 
-        
-
         if (color == pixel.OriginalColor)
         {
             CurrentLevel.History.Add(index);
@@ -336,6 +334,10 @@ public class PixelProcessorService
 
             _particleService.Spawn(pixel.GetWorldPosition(_pixelSize.X, _pixelSize.Y), particleColor, 5);
             _soundService.PlayPaintingSound();
+        }
+        else
+        {
+            color = Color.Lerp(color, pixel.GrayColor, 0.6f);
         }
         
         pixel.CurrentColor = color;

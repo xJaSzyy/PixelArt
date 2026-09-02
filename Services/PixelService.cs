@@ -132,9 +132,16 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
         {
             return false;
         }
-        
-        pixel.CurrentColor = CurrentColor;
 
+        var currentColor = CurrentColor;
+        
+        if (pixel.OriginalColor != currentColor)
+        {
+            currentColor = Color.Lerp(CurrentColor, pixel.GrayColor, 0.5f);
+        }
+            
+        pixel.CurrentColor = currentColor;
+        
         if (ContourFinished && _pixelsByPosition.Where(p => p.Value.OriginalColor == CurrentColor).All(p => p.Value.IsFinished))
         {
             TryChangeColor();
@@ -451,7 +458,7 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
         }
 
         var points = _contour.ConvertAll(p => new Vector2(p.X, p.Y));
-        var simplified = SimplifyClosedContour(points, 1.5f);
+        var simplified = SimplifyClosedContour(points, 1f);
 
         foreach (var point in simplified)
         {
