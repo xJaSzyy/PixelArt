@@ -64,5 +64,8 @@ public class CameraService
     {
         MinZoom = min;
         MaxZoom = max;
+
+        Zoom = 1f;
+        _cameraPosition = Vector2.Zero;
     }
 }

@@ -28,13 +28,6 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
     private Dictionary<Color, int> _colorIndexes;
     private readonly Dictionary<Point, Pixel> _pixelsByPosition = [];
 
-    private Rectangle Bounds => new(
-        (int)Position.X,
-        (int)Position.Y,
-        (int)(_gridWidth * _pixelSize * cameraService.Zoom),
-        (int)(_gridHeight * _pixelSize * cameraService.Zoom)
-    );
-
     public void LoadContent(ContentManager content, Texture2D texture)
     {
         _sourceTexture = texture;
@@ -74,10 +67,14 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
                     if (ContourFinished)
                     {
                         text = (_colorIndexes[CurrentColor] + 1).ToString();
-                        color = Colors.IsDark(pixel.CurrentColor) ? Color.White : Color.Black;
+                        color = Color.Lerp(
+                            Color.Transparent,
+                            Colors.IsDark(pixel.CurrentColor) ? Color.White : Color.Black,
+                            Utils.Remap(cameraService.Zoom, cameraService.MinZoom, cameraService.MinZoom * 2f, 0f, 1f)
+                        );
                     }
                     
-                    var scale = _pixelSize * (text.Length == 1 ? 0.035f : 0.025f);
+                    var scale = cameraService.Zoom * _pixelSize * (text.Length == 1 ? 0.035f : 0.025f);
                     
                     drawService.DrawString(
                         spriteBatch, 
@@ -107,20 +104,19 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
 
     private bool TryGetGridPosition(Vector2 screenPosition, out int x, out int y)
     {
-        x = -1;
-        y = -1;
+        var cameraPos = cameraService.GetPosition();
 
-        if (!Bounds.Contains(screenPosition))
-        {
-            return false;
-        }
+        var localPosition = screenPosition - cameraPos - Position;
 
-        var localPosition = screenPosition - Position - cameraService.GetPosition();
+        var cellSize = _pixelSize * cameraService.Zoom;
 
-        x = (int)(localPosition.X / (_pixelSize * cameraService.Zoom));
-        y = (int)(localPosition.Y / (_pixelSize * cameraService.Zoom));
+        x = (int)(localPosition.X / cellSize);
+        y = (int)(localPosition.Y / cellSize);
 
-        return x >= 0 && x < _gridWidth && y >= 0 && y < _gridHeight;
+        return x >= 0 &&
+               x < _gridWidth &&
+               y >= 0 &&
+               y < _gridHeight;
     }
 
     public bool TryPaint(Vector2 screenPosition)
@@ -159,24 +155,6 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
         }
         
         return true;
-    }
-
-    private bool SetPixel(Point position, Color color)
-    {
-        var pixel = _pixelsByPosition[position];
-
-        if (pixel != null)
-        {
-            if (ContourFinished && pixel.CurrentColor != _highlightColor)
-            {
-                return false;
-            }
-            
-            pixel.CurrentColor = color;
-            return true;
-        }
-
-        return false;
     }
 
     public void Center(int viewportWidth, int viewportHeight)

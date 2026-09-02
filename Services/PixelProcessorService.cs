@@ -201,8 +201,7 @@ public class PixelProcessorService
                     Colors.IsDark(pixel.CurrentColor) ? Color.White : Color.Black,
                     Utils.Remap(_cameraService.Zoom, _cameraService.MinZoom, _cameraService.MinZoom * 2f, 0f, 1f)
                 );
-                var scale = _cameraService.Zoom +
-                            _pixelSize.X * (colorGroup.Number.ToString().Length == 1 ? 0.0045f : 0.003f);
+                var scale = _cameraService.Zoom + _pixelSize.X * (colorGroup.Number.ToString().Length == 1 ? 0.0045f : 0.003f);
 
                 if (pixel.CurrentColor != pixel.GrayColor && pixel.CurrentColor != _highlightColor)
                 {
