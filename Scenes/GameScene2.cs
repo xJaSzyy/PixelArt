@@ -66,7 +66,7 @@ public class GameScene2 : IScene
         var texture = _services.GetRequiredService<PixelProcessorService>().CurrentLevel.OriginalTexture;
         var clone = Utils.CloneTexture2D(_graphicsDevice, texture);
         
-        _pixelService.LoadContent(content, clone);
+        _pixelService.LoadContent(clone);
 
         _pixelService.Center(
             _graphicsDevice.Viewport.Width,
@@ -89,19 +89,16 @@ public class GameScene2 : IScene
                 Restart();
             }
         } 
-        else if (_mouseService.IsLeftMouseButtonReleased(mouse) || _keyboardService.IsKeyUpOnce(keyboard, Keys.Space))
-        {
-            _pixelService.CheckContourMatch();
-        }
-
+        
         HandlePainting(mouse, keyboard);
         HandleScroll(mouse, keyboard);
-        
+
         if (!ColoringIsCompleted)
         {
             _cameraService.Update(mouse);
         }
 
+        _pixelService.Update(gameTime);
         _homeButton.Update(mouse);
         _restartButton.Update(mouse);
         _popupService.Update(gameTime);

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using PixelArt.Models;
 
@@ -18,6 +17,10 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
 
     private readonly Point _gridSize = new(32, 32);
     private const int _pixelSize = 16;
+    private const float _grayTransitionDuration = 0.8f;
+    
+    private float _grayTransitionTime;
+    private bool _isFadingToGray;
     
     private ContourService _contourService;
     
@@ -28,8 +31,11 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
     private readonly List<Point> _keyPoints = [];
     private Dictionary<Color, int> _colorIndexes;
     private readonly Dictionary<Point, Pixel> _pixelsByPosition = [];
+    
+    private Point? _startPoint;
+    private Point? _endPoint;
 
-    public void LoadContent(ContentManager content, Texture2D texture)
+    public void LoadContent(Texture2D texture)
     {
         _sourceTexture = texture;
         _sourceData = new Color[_sourceTexture.Width * _sourceTexture.Height];
@@ -43,6 +49,34 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
         CurrentColor = Color.Yellow;
         
         Reset();
+    }
+    
+    public void Update(GameTime gameTime)
+    {
+        CheckContourFinished();
+        
+        if (!_isFadingToGray)
+        {
+            return;
+        }
+
+        _grayTransitionTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+        if (_grayTransitionTime >= _grayTransitionDuration)
+        {
+            _grayTransitionTime = _grayTransitionDuration;
+            _isFadingToGray = false;
+
+            foreach (var pixel in _pixelsByPosition.Values)
+            {
+                if (!pixel.IsFinished)
+                {
+                    pixel.CurrentColor = pixel.GrayColor;
+                }
+            }
+            
+            ChangeColor();
+        }
     }
     
     public void Draw(SpriteBatch spriteBatch)
@@ -60,13 +94,30 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
                     continue;
                 }
 
-                spriteBatch.Draw(_pixelTexture, rectangle, pixel.CurrentColor);
+                var color1 = pixel.CurrentColor;
+
+                if (_isFadingToGray && !pixel.IsFinished)
+                {
+                    var progress = MathHelper.Clamp(
+                        _grayTransitionTime / _grayTransitionDuration,
+                        0f,
+                        1f
+                    );
+
+                    color1 = Color.Lerp(
+                        pixel.CurrentColor,
+                        pixel.GrayColor,
+                        progress
+                    );
+                }
+
+                spriteBatch.Draw(_pixelTexture, rectangle, color1);
 
                 if (_keyPoints.Contains(pixel.Position) && !pixel.IsFinished)
                 {
-                    var text = (_keyPoints.IndexOf(pixel.Position) + 1).ToString();
+                    var text = (_keyPoints.LastIndexOf(pixel.Position) + 1).ToString();
                     var color = pixel.CurrentColor == Color.Yellow ? Color.Black : Color.Yellow;
-
+                    
                     if (ContourFinished)
                     {
                         text = (_colorIndexes[CurrentColor] + 1).ToString();
@@ -156,10 +207,20 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
         }
 
         var currentColor = CurrentColor;
-        
-        if (pixel.OriginalColor != currentColor && ContourFinished)
+
+        if (ContourFinished && pixel.OriginalColor != currentColor)
         {
             currentColor = Color.Lerp(CurrentColor, pixel.GrayColor, 0.6f);
+        }
+
+        if (!ContourFinished)
+        {
+            Test(pixel.Position);
+            
+            if (pixel.CurrentColor == pixel.OriginalColor && pixel.CurrentColor != Color.Transparent)
+            {
+                return;
+            }
         }
             
         pixel.CurrentColor = currentColor;
@@ -191,6 +252,9 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
     public void Reset()
     {
         CurrentColor = Color.Yellow;
+
+        _startPoint = null;
+        _endPoint = null;
         
         _contour.Clear();
         _contour.AddRange(_contourService.TraceContour());
@@ -232,61 +296,31 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
         }
     }
 
-    public void CheckContourMatch(float requiredPercent = 0.98f)
+    public void CheckContourFinished()
     {
         if (_contour.Count == 0 || ContourFinished)
         {
             return;
         }
-
-        var painted = _pixelsByPosition
-            .Where(x => x.Value.CurrentColor.A > 0)
-            .Select(x => x.Value.Position)
-            .ToHashSet();
-
-        if (painted.Count == 0)
+        
+        foreach (var point in _contour)
         {
-            return;
-        }
-
-        var matchedContourPoints = 0;
-
-        foreach (var contourPoint in _contour)
-        {
-            if (Utils.IsPointNear(contourPoint, painted, 1))
+            if (!_pixelsByPosition[point].IsFinished)
             {
-                matchedContourPoints++;
+                return;
             }
         }
-
-        var contourCoverage = (float)matchedContourPoints / _contour.Count;
         
-        var result = contourCoverage >= requiredPercent;
-
-        if (result)
-        {
-            FinishContour();
-        }
+        FinishContour();
     }
 
     private void FinishContour()
     {
-        foreach (var pixel in _pixelsByPosition)
-        {
-            var color = pixel.Value.GrayColor;
-            
-            if (_contour.Contains(pixel.Value.Position))
-            {
-                color = pixel.Value.OriginalColor;
-            }
-
-            pixel.Value.CurrentColor = color;
-        }
-        
         ContourFinished = true;
         _keyPoints.Clear();
 
-        ChangeColor();
+        _grayTransitionTime = 0f;
+        _isFadingToGray = true;
     }
 
     private void ChangeColor()
@@ -302,7 +336,8 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
         CurrentColor = pixelData.OriginalColor;
         
         _keyPoints.Clear();
-        foreach (var pixel in _pixelsByPosition.Where(p => p.Value.OriginalColor == CurrentColor && !p.Value.IsFinished))
+        foreach (var pixel in _pixelsByPosition
+                     .Where(p => p.Value.OriginalColor == CurrentColor && !p.Value.IsFinished))
         {
             _keyPoints.Add(pixel.Key);
             pixel.Value.CurrentColor = _highlightColor;
@@ -327,6 +362,80 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
                 (int)MathF.Round(point.X),
                 (int)MathF.Round(point.Y)
             ));
+        }
+    }
+
+    private void Test(Point point)
+    {
+        if (_keyPoints.Contains(point))
+        {
+            if (_startPoint == null)
+            {
+                _startPoint = point;
+            }
+            else if (_endPoint == null && point != _startPoint)
+            {
+                _endPoint = point;
+            }
+        }
+
+        if (_startPoint != null && _endPoint != null)
+        {
+            if (Math.Abs(_keyPoints.IndexOf(_startPoint.Value) - _keyPoints.LastIndexOf(_endPoint.Value)) != 1)
+            {
+                _startPoint = _endPoint;
+                _endPoint = null;
+                return;
+            }
+            
+            var all = 0;
+            var painted = 0;
+            
+            var startIndex = _contour.IndexOf(_startPoint.Value);
+            var endIndex = _contour.LastIndexOf(_endPoint.Value);
+
+            if (_contour.IndexOf(_startPoint.Value) > _contour.LastIndexOf(_endPoint.Value))
+            {
+                startIndex = _contour.LastIndexOf(_endPoint.Value);
+                endIndex = _contour.IndexOf(_startPoint.Value);
+            }
+            
+            for (var i = startIndex; i < endIndex; i++)
+            {
+                all++;
+
+                if (_pixelsByPosition[_contour[i]].CurrentColor != Color.Transparent)
+                {
+                    painted++;
+                }
+            }
+
+            if ((float)painted / all > .85f)
+            {
+                for (var i = startIndex; i <= endIndex; i++)
+                {
+                    _pixelsByPosition[_contour[i]].CurrentColor = _pixelsByPosition[_contour[i]].OriginalColor;
+
+                    if (_contour[i] == _keyPoints[0] && _keyPoints[0] != _keyPoints[^1])
+                    {
+                        var first = _keyPoints[0];
+                        _keyPoints.Add(first);
+                        _contour.Add(first);
+                        _pixelsByPosition[first].CurrentColor = Color.Transparent;
+                    }
+                }
+                
+                foreach (var keyValuePair in _pixelsByPosition)
+                {
+                    if (!keyValuePair.Value.IsFinished)
+                    {
+                        keyValuePair.Value.CurrentColor = Color.Transparent;
+                    }
+                }
+                
+                _startPoint = null;
+                _endPoint = null;
+            }
         }
     }
 }
