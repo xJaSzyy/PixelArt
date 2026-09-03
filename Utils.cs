@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -48,23 +47,7 @@ public static class Utils
 
         return clone;
     }
-    
-    public static bool IsPointNear(Point point, HashSet<Point> points, int tolerance)
-    {
-        for (var y = -tolerance; y <= tolerance; y++)
-        {
-            for (var x = -tolerance; x <= tolerance; x++)
-            {
-                if (points.Contains(new Point(point.X + x, point.Y + y)))
-                {
-                    return true;
-                }
-            }
-        }
 
-        return false;
-    }
-    
     public static float DistanceToLine(Vector2 point, Vector2 lineStart, Vector2 lineEnd)
     {
         var line = lineEnd - lineStart;

@@ -215,7 +215,7 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
 
         if (!ContourFinished)
         {
-            Test(pixel.Position);
+            CheckKeyPointsConnected(pixel.Position);
             
             if (pixel.CurrentColor == pixel.OriginalColor && pixel.CurrentColor != Color.Transparent)
             {
@@ -296,7 +296,7 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
         }
     }
 
-    public void CheckContourFinished()
+    private void CheckContourFinished()
     {
         if (_contour.Count == 0 || ContourFinished)
         {
@@ -325,7 +325,10 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
 
     private void ChangeColor()
     {
-        var pixelData = _pixelsByPosition.FirstOrDefault(pixel => !pixel.Value.IsFinished).Value;
+        var pixelData = _pixelsByPosition
+            .Where(pixel => !pixel.Value.IsFinished)
+            .OrderBy(x => _colorIndexes[x.Value.OriginalColor])
+            .FirstOrDefault().Value;
 
         if (pixelData == null)
         {
@@ -365,7 +368,7 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
         }
     }
 
-    private void Test(Point point)
+    private void CheckKeyPointsConnected(Point point)
     {
         if (_keyPoints.Contains(point))
         {
@@ -410,7 +413,7 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
                 }
             }
 
-            if ((float)painted / all > .85f)
+            if ((float)painted / all > .8f)
             {
                 for (var i = startIndex; i <= endIndex; i++)
                 {
