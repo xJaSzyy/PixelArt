@@ -11,14 +11,15 @@ namespace PixelArt.Services;
 public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService, CameraService cameraService)
 {
     private Vector2 Position { get; set; }
-    public Color CurrentColor { get; set; }
-    public bool ContourFinished { get; private set; } = false;
+    private Color CurrentColor { get; set; }
+    private bool ContourFinished { get; set; }
     
     private readonly Color _highlightColor = new(72, 72, 72);
-    
-    private const int _gridWidth = 32;
-    private const int _gridHeight = 32;
+
+    private readonly Point _gridSize = new(32, 32);
     private const int _pixelSize = 16;
+    
+    private ContourService _contourService;
     
     private Texture2D _sourceTexture;
     private Color[] _sourceData;
@@ -34,6 +35,8 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
         _sourceData = new Color[_sourceTexture.Width * _sourceTexture.Height];
         _sourceTexture.GetData(_sourceData);
 
+        _contourService = new ContourService(_sourceTexture, _sourceData, _gridSize);
+
         _pixelTexture = new Texture2D(graphicsDevice, 1, 1);
         _pixelTexture.SetData([Color.White]);
 
@@ -44,9 +47,9 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
     
     public void Draw(SpriteBatch spriteBatch)
     {
-        for (var y = 0; y < _gridHeight; y++)
+        for (var y = 0; y < _gridSize.Y; y++)
         {
-            for (var x = 0; x < _gridWidth; x++)
+            for (var x = 0; x < _gridSize.X; x++)
             {
                 var rectangle = GetImageBounds(x, y);
 
@@ -128,28 +131,28 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
         y = (int)(localPosition.Y / _pixelSize);
 
         return x >= 0 &&
-               x < _gridWidth &&
+               x < _gridSize.X &&
                y >= 0 &&
-               y < _gridHeight;
+               y < _gridSize.Y;
     }
 
-    public bool TryPaint(Vector2 screenPosition)
+    public void PaintAt(Vector2 screenPosition)
     {
         if (!TryGetGridPosition(screenPosition, out var x, out var y))
         {
-            return false;
+            return;
         }
 
         var pixel = _pixelsByPosition[new Point(x, y)];
 
         if (pixel == null)
         {
-            return false;
+            return;
         }
 
         if (ContourFinished && (pixel.OriginalColor == Color.Transparent || pixel.IsFinished))
         {
-            return false;
+            return;
         }
 
         var currentColor = CurrentColor;
@@ -165,16 +168,14 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
                 .Where(p => p.Value.OriginalColor == CurrentColor)
                 .All(p => p.Value.IsFinished))
         {
-            TryChangeColor();
+            ChangeColor();
         }
-        
-        return true;
     }
 
     public void Center(int viewportWidth, int viewportHeight)
     {
-        var width = _gridWidth * _pixelSize;
-        var height = _gridHeight * _pixelSize;
+        var width = _gridSize.X * _pixelSize;
+        var height = _gridSize.Y * _pixelSize;
 
         var zoom = cameraService.Zoom;
 
@@ -187,37 +188,12 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
         );
     }
 
-    private bool IsSolid(int x, int y)
-    {
-        if (x < 0 || x >= _sourceTexture.Width ||
-            y < 0 || y >= _sourceTexture.Height)
-        {
-            return false;
-        }
-
-        return _sourceData[y * _sourceTexture.Width + x].A > 0;
-    }
-    
-    private bool IsBoundary(int x, int y)
-    {
-        if (!IsSolid(x, y))
-        {
-            return false;
-        }
-
-        return
-            !IsSolid(x - 1, y) ||
-            !IsSolid(x + 1, y) ||
-            !IsSolid(x, y - 1) ||
-            !IsSolid(x, y + 1);
-    }
-
     public void Reset()
     {
         CurrentColor = Color.Yellow;
         
         _contour.Clear();
-        _contour.AddRange(TraceContour());
+        _contour.AddRange(_contourService.TraceContour());
         BuildKeyPoints();
         
         _pixelsByPosition.Clear();
@@ -226,9 +202,9 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
         
         _colorIndexes = new Dictionary<Color, int>();
 
-        for (var y = 0; y < _gridHeight; y++)
+        for (var y = 0; y < _gridSize.Y; y++)
         {
-            for (var x = 0; x < _gridWidth; x++)
+            for (var x = 0; x < _gridSize.X; x++)
             {
                 var index = y * _sourceTexture.Width + x;
                 var originalColor = _sourceData[index];
@@ -277,7 +253,7 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
 
         foreach (var contourPoint in _contour)
         {
-            if (IsPointNear(contourPoint, painted, 1))
+            if (_contourService.IsPointNear(contourPoint, painted, 1))
             {
                 matchedContourPoints++;
             }
@@ -295,8 +271,6 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
 
     private void FinishContour()
     {
-        ContourFinished = true;
-        
         foreach (var pixel in _pixelsByPosition)
         {
             var color = pixel.Value.GrayColor;
@@ -309,19 +283,20 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
             pixel.Value.CurrentColor = color;
         }
         
+        ContourFinished = true;
         _keyPoints.Clear();
 
-        TryChangeColor();
+        ChangeColor();
     }
 
-    private bool TryChangeColor()
+    private void ChangeColor()
     {
         var pixelData = _pixelsByPosition.FirstOrDefault(pixel => !pixel.Value.IsFinished).Value;
 
         if (pixelData == null)
         {
             Console.WriteLine("IMAGE FINISHED");
-            return false;
+            return;
         }
         
         CurrentColor = pixelData.OriginalColor;
@@ -332,129 +307,6 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
             _keyPoints.Add(pixel.Key);
             pixel.Value.CurrentColor = _highlightColor;
         }
-
-        return true;
-    }
-
-    private static bool IsPointNear(Point point, HashSet<Point> points, int tolerance)
-    {
-        for (var y = -tolerance; y <= tolerance; y++)
-        {
-            for (var x = -tolerance; x <= tolerance; x++)
-            {
-                if (points.Contains(new Point(
-                        point.X + x,
-                        point.Y + y)))
-                {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-    
-    private static float DistanceToLine(Vector2 point, Vector2 lineStart, Vector2 lineEnd)
-    {
-        var line = lineEnd - lineStart;
-
-        if (line.LengthSquared() == 0)
-            return Vector2.Distance(point, lineStart);
-
-        var cross = MathF.Abs(
-            line.X * (lineStart.Y - point.Y) -
-            (lineStart.X - point.X) * line.Y);
-
-        return cross / line.Length();
-    }
-    
-    private List<Point> TraceContour()
-    {
-        var contour = new List<Point>();
-
-        Point start = new(-1, -1);
-
-        for (var y = 0; y < _gridHeight && start.X == -1; y++)
-        {
-            for (var x = 0; x < _gridWidth; x++)
-            {
-                if (IsBoundary(x, y))
-                {
-                    start = new Point(x, y);
-                    break;
-                }
-            }
-        }
-
-        if (start.X == -1)
-            return contour;
-
-        Point[] directions =
-        [
-            new(0, -1),
-            new(1, -1),
-            new(1, 0),
-            new(1, 1),
-            new(0, 1),
-            new(-1, 1),
-            new(-1, 0),
-            new(-1, -1)
-        ];
-
-        var current = start;
-        var previousDirection = 0;
-
-        contour.Add(current);
-
-        var maxIterations = _gridWidth * _gridHeight * 8;
-
-        for (var iteration = 0; iteration < maxIterations; iteration++)
-        {
-            var found = false;
-
-            var startDirection = (previousDirection + 6) % 8;
-
-            for (var i = 0; i < 8; i++)
-            {
-                var directionIndex = (startDirection + i) % 8;
-                var direction = directions[directionIndex];
-
-                var next = new Point(
-                    current.X + direction.X,
-                    current.Y + direction.Y);
-
-                if (!IsSolid(next.X, next.Y))
-                {
-                    continue;
-                }
-
-                current = next;
-                previousDirection = directionIndex;
-
-                if (current == start)
-                {
-                    if (contour.Count > 2)
-                    {
-                        return contour;
-                    }
-                }
-
-                if (contour[^1] != current)
-                {
-                    contour.Add(current);
-                }
-
-                found = true;
-                break;
-            }
-
-            if (!found)
-            {
-                break;
-            }
-        }
-
-        return contour;
     }
     
     private void BuildKeyPoints()
@@ -467,7 +319,7 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
         }
 
         var points = _contour.ConvertAll(p => new Vector2(p.X, p.Y));
-        var simplified = SimplifyClosedContour(points, 1f);
+        var simplified = _contourService.SimplifyClosedContour(points, .75f);
 
         foreach (var point in simplified)
         {
@@ -476,111 +328,5 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
                 (int)MathF.Round(point.Y)
             ));
         }
-    }
-    
-    private static List<Vector2> SimplifyClosedContour(List<Vector2> points, float tolerance)
-    {
-        if (points.Count <= 3)
-        {
-            return [..points];
-        }
-
-        var first = points[0];
-
-        var maxDistance = 0f;
-        var splitIndex = 0;
-
-        for (var i = 1; i < points.Count; i++)
-        {
-            var distance = Vector2.DistanceSquared(first, points[i]);
-
-            if (distance > maxDistance)
-            {
-                maxDistance = distance;
-                splitIndex = i;
-            }
-        }
-
-        var part1 = new List<Vector2>();
-
-        for (var i = 0; i <= splitIndex; i++)
-        {
-            part1.Add(points[i]);
-        }
-
-        var part2 = new List<Vector2>();
-
-        for (var i = splitIndex; i < points.Count; i++)
-        {
-            part2.Add(points[i]);
-        }
-
-        var result1 = SimplifyOpenContour(part1, tolerance);
-        var result2 = SimplifyOpenContour(part2, tolerance);
-
-        result1.RemoveAt(result1.Count - 1);
-        result2.RemoveAt(result2.Count - 1);
-        result1.AddRange(result2);
-
-        return result1;
-    }
-    
-    private static List<Vector2> SimplifyOpenContour(List<Vector2> points, float tolerance)
-    {
-        if (points.Count <= 2)
-        {
-            return [..points];
-        }
-
-        var maxDistance = 0f;
-        var index = 0;
-
-        for (var i = 1; i < points.Count - 1; i++)
-        {
-            var distance = DistanceToLine(
-                points[i],
-                points[0],
-                points[^1]);
-
-            if (distance > maxDistance)
-            {
-                maxDistance = distance;
-                index = i;
-            }
-        }
-
-        if (maxDistance <= tolerance)
-        {
-            return
-            [
-                points[0],
-                points[^1]
-            ];
-        }
-
-        var left = points.GetRange(0, index + 1);
-        var right = points.GetRange(index, points.Count - index);
-
-        var leftResult = SimplifyOpenContour(left, tolerance);
-        var rightResult = SimplifyOpenContour(right, tolerance);
-
-        leftResult.RemoveAt(leftResult.Count - 1);
-        leftResult.AddRange(rightResult);
-
-        return leftResult;
-    }
-    
-    public void ZoomAt(Vector2 mousePosition, float oldZoom, float newZoom)
-    {
-        var cameraPosition = cameraService.GetPosition();
-
-        var oldCellSize = _pixelSize * oldZoom;
-        var newCellSize = _pixelSize * newZoom;
-
-        var mouseRelativeToImage = mousePosition - cameraPosition - Position;
-
-        Position = mousePosition
-                   - cameraPosition
-                   - mouseRelativeToImage / oldCellSize * newCellSize;
     }
 }

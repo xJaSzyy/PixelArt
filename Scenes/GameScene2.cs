@@ -89,7 +89,7 @@ public class GameScene2 : IScene
                 Restart();
             }
         } 
-        else if (_keyboardService.IsKeyUpOnce(keyboard, Keys.Space))
+        else if (_mouseService.IsLeftMouseButtonReleased(mouse) || _keyboardService.IsKeyUpOnce(keyboard, Keys.Space))
         {
             _pixelService.CheckContourMatch();
         }
@@ -118,7 +118,7 @@ public class GameScene2 : IScene
             !IsMouseOverUI())
         {
             var mousePosition = mouse.Position.ToVector2();
-            _pixelService.TryPaint(mousePosition);
+            _pixelService.PaintAt(mousePosition);
         }
     }
     
