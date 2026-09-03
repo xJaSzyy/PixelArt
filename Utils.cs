@@ -48,4 +48,33 @@ public static class Utils
 
         return clone;
     }
-}
+    
+    public static bool IsPointNear(Point point, HashSet<Point> points, int tolerance)
+    {
+        for (var y = -tolerance; y <= tolerance; y++)
+        {
+            for (var x = -tolerance; x <= tolerance; x++)
+            {
+                if (points.Contains(new Point(point.X + x, point.Y + y)))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+    
+    public static float DistanceToLine(Vector2 point, Vector2 lineStart, Vector2 lineEnd)
+    {
+        var line = lineEnd - lineStart;
+
+        if (line.LengthSquared() == 0)
+            return Vector2.Distance(point, lineStart);
+
+        var cross = MathF.Abs(
+            line.X * (lineStart.Y - point.Y) -
+            (lineStart.X - point.X) * line.Y);
+
+        return cross / line.Length();
+    }}

@@ -253,7 +253,7 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
 
         foreach (var contourPoint in _contour)
         {
-            if (_contourService.IsPointNear(contourPoint, painted, 1))
+            if (Utils.IsPointNear(contourPoint, painted, 1))
             {
                 matchedContourPoints++;
             }
