@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -15,19 +16,19 @@ public static class Utils
 
         return MathHelper.Lerp(toMin, toMax, t);
     }
-    
+
     public static Color GenerateGrayColor(int index, int total)
     {
         if (total <= 1)
         {
             return new Color(220, 220, 220);
         }
-        
+
         const int min = 150;
         const int max = 230;
-        
+
         var value = max - index * (max - min) / (total - 1);
-        
+
         return new Color(value, value, value);
     }
 
@@ -60,4 +61,46 @@ public static class Utils
             (lineStart.X - point.X) * line.Y);
 
         return cross / line.Length();
-    }}
+    }
+
+    public static IEnumerable<Point> GetLine(Point start, Point end)
+    {
+        var x0 = start.X;
+        var y0 = start.Y;
+
+        var x1 = end.X;
+        var y1 = end.Y;
+
+        var dx = Math.Abs(x1 - x0);
+        var dy = Math.Abs(y1 - y0);
+
+        var sx = x0 < x1 ? 1 : -1;
+        var sy = y0 < y1 ? 1 : -1;
+
+        var err = dx - dy;
+
+        while (true)
+        {
+            yield return new Point(x0, y0);
+
+            if (x0 == x1 && y0 == y1)
+            {
+                break;
+            }
+
+            var e2 = 2 * err;
+
+            if (e2 > -dy)
+            {
+                err -= dy;
+                x0 += sx;
+            }
+
+            if (e2 < dx)
+            {
+                err += dx;
+                y0 += sy;
+            }
+        }
+    }
+}

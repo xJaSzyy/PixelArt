@@ -236,7 +236,14 @@ public class PixelProcessorService
 
         if (_lastPaintPixel.HasValue)
         {
-            PaintLine(_lastPaintPixel.Value, currentPixel, color);
+            foreach (var point in Utils.GetLine(_lastPaintPixel.Value, currentPixel))
+            {
+                if (point.X >= 0 && point.X < CurrentLevel.Texture.Width &&
+                    point.Y >= 0 && point.Y < CurrentLevel.Texture.Height)
+                {
+                    SetPixel(point.Y * CurrentLevel.Texture.Width + point.X, color);
+                }
+            }
         }
         else
         {
@@ -244,51 +251,6 @@ public class PixelProcessorService
         }
 
         _lastPaintPixel = currentPixel;
-    }
-
-    private void PaintLine(Point start, Point end, Color color)
-    {
-        var x0 = start.X;
-        var y0 = start.Y;
-
-        var x1 = end.X;
-        var y1 = end.Y;
-
-        var dx = Math.Abs(x1 - x0);
-        var dy = Math.Abs(y1 - y0);
-
-        var sx = x0 < x1 ? 1 : -1;
-        var sy = y0 < y1 ? 1 : -1;
-
-        var err = dx - dy;
-
-        while (true)
-        {
-            if (x0 >= 0 && x0 < CurrentLevel.Texture.Width &&
-                y0 >= 0 && y0 < CurrentLevel.Texture.Height)
-            {
-                SetPixel(y0 * CurrentLevel.Texture.Width + x0, color);
-            }
-
-            if (x0 == x1 && y0 == y1)
-            {
-                break;
-            }
-
-            var e2 = 2 * err;
-
-            if (e2 > -dy)
-            {
-                err -= dy;
-                x0 += sx;
-            }
-
-            if (e2 < dx)
-            {
-                err += dx;
-                y0 += sy;
-            }
-        }
     }
 
     public Rectangle GetImageBounds()

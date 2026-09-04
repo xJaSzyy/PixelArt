@@ -196,7 +196,7 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
             return;
         }
 
-        foreach (var point in GetLine(_lastPaintPoint.Value, currentPoint))
+        foreach (var point in Utils.GetLine(_lastPaintPoint.Value, currentPoint))
         {
             PaintPixel(point);
         }
@@ -248,47 +248,6 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
                 .All(p => p.Value.IsFinished))
         {
             ChangeColor();
-        }
-    }
-    
-    private static IEnumerable<Point> GetLine(Point from, Point to)
-    {
-        var x0 = from.X;
-        var y0 = from.Y;
-
-        var x1 = to.X;
-        var y1 = to.Y;
-
-        var dx = Math.Abs(x1 - x0);
-        var dy = Math.Abs(y1 - y0);
-
-        var sx = x0 < x1 ? 1 : -1;
-        var sy = y0 < y1 ? 1 : -1;
-
-        var error = dx - dy;
-
-        while (true)
-        {
-            yield return new Point(x0, y0);
-
-            if (x0 == x1 && y0 == y1)
-            {
-                break;
-            }
-
-            var e2 = error * 2;
-
-            if (e2 > -dy)
-            {
-                error -= dy;
-                x0 += sx;
-            }
-
-            if (e2 < dx)
-            {
-                error += dx;
-                y0 += sy;
-            }
         }
     }
     
