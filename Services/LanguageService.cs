@@ -62,7 +62,12 @@ public class LanguageService
 
         CurrentLanguage = _languages[nextIndex];
     }
-    
+
+    public void SetLanguage(Language language)
+    {
+        CurrentLanguage = language;
+    }
+
     public string GetText(string key)
     {
         if (_translations.TryGetValue(CurrentLanguage.ShortName, out var language) &&

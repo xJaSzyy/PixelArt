@@ -249,13 +249,15 @@ public class GameScene : IScene
         var saveService = _services.GetRequiredService<SaveService>();
         var levelService = _services.GetRequiredService<LevelService>();
         var playerService = _services.GetRequiredService<PlayerService>();
+        var languageService = _services.GetRequiredService<LanguageService>();
 
         _processorService.ClearHighlight();
         
         saveService.Save(new SaveData
         {
             Coins = playerService.Coins,
-            Levels = levelService.Levels
+            Levels = levelService.Levels,
+            Language = languageService.CurrentLanguage
         });
     }
     

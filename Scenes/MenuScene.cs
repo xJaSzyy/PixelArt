@@ -71,13 +71,15 @@ public class MenuScene : IScene
             var saveData = _saveService.Load();
             _levelService.LoadLevels(saveData.Levels, _headerHeight);
             _playerService.AddCoins(saveData.Coins);
+            _languageService.SetLanguage(saveData.Language);
         }
         else
         {
             _saveService.Save(new SaveData
             {
                 Coins = _playerService.Coins,
-                Levels = _levelService.Levels
+                Levels = _levelService.Levels,
+                Language = _languageService.CurrentLanguage
             });
         }
 
@@ -239,7 +241,8 @@ public class MenuScene : IScene
         _saveService.Save(new SaveData
         {
             Coins = _playerService.Coins,
-            Levels = _levelService.Levels
+            Levels = _levelService.Levels,
+            Language = _languageService.CurrentLanguage
         });
     }
 
