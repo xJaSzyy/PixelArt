@@ -326,8 +326,8 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
     private void ChangeColor()
     {
         var pixelData = _pixelsByPosition
-            .Where(pixel => !pixel.Value.IsFinished)
-            .OrderBy(x => _colorIndexes[x.Value.OriginalColor])
+            .Where(pixel => !pixel.Value.IsFinished && _colorIndexes.ContainsKey(pixel.Value.OriginalColor))
+            .OrderBy(pixel => _colorIndexes[pixel.Value.OriginalColor])
             .FirstOrDefault().Value;
 
         if (pixelData == null)
