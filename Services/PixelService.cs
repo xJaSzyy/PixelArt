@@ -35,6 +35,8 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
     
     private Point? _startPoint;
     private Point? _endPoint;
+    
+    private Point? _lastPaintPoint;
 
     public void LoadContent(Texture2D texture)
     {
@@ -181,17 +183,41 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
     {
         if (!TryGetGridPosition(screenPosition, out var x, out var y))
         {
+            _lastPaintPoint = null;
             return;
         }
 
-        var pixel = _pixelsByPosition[new Point(x, y)];
+        var currentPoint = new Point(x, y);
+
+        if (_lastPaintPoint == null)
+        {
+            PaintPixel(currentPoint);
+            _lastPaintPoint = currentPoint;
+            return;
+        }
+
+        foreach (var point in GetLine(_lastPaintPoint.Value, currentPoint))
+        {
+            PaintPixel(point);
+        }
+
+        _lastPaintPoint = currentPoint;
+    }
+    
+    private void PaintPixel(Point point)
+    {
+        if (!_pixelsByPosition.TryGetValue(point, out var pixel))
+        {
+            return;
+        }
 
         if (pixel == null)
         {
             return;
         }
 
-        if (ContourFinished && (pixel.OriginalColor == Color.Transparent || pixel.IsFinished))
+        if (ContourFinished &&
+            (pixel.OriginalColor == Color.Transparent || pixel.IsFinished))
         {
             return;
         }
@@ -206,21 +232,69 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
         if (!ContourFinished)
         {
             CheckKeyPointsConnected(pixel.Position);
-            
-            if (pixel.CurrentColor == pixel.OriginalColor && pixel.CurrentColor != Color.Transparent)
+
+            if (pixel.CurrentColor == pixel.OriginalColor &&
+                pixel.CurrentColor != Color.Transparent)
             {
                 return;
             }
         }
-            
+
         pixel.CurrentColor = currentColor;
-        
-        if (ContourFinished && _pixelsByPosition
+
+        if (ContourFinished &&
+            _pixelsByPosition
                 .Where(p => p.Value.OriginalColor == CurrentColor)
                 .All(p => p.Value.IsFinished))
         {
             ChangeColor();
         }
+    }
+    
+    private static IEnumerable<Point> GetLine(Point from, Point to)
+    {
+        var x0 = from.X;
+        var y0 = from.Y;
+
+        var x1 = to.X;
+        var y1 = to.Y;
+
+        var dx = Math.Abs(x1 - x0);
+        var dy = Math.Abs(y1 - y0);
+
+        var sx = x0 < x1 ? 1 : -1;
+        var sy = y0 < y1 ? 1 : -1;
+
+        var error = dx - dy;
+
+        while (true)
+        {
+            yield return new Point(x0, y0);
+
+            if (x0 == x1 && y0 == y1)
+            {
+                break;
+            }
+
+            var e2 = error * 2;
+
+            if (e2 > -dy)
+            {
+                error -= dy;
+                x0 += sx;
+            }
+
+            if (e2 < dx)
+            {
+                error += dx;
+                y0 += sy;
+            }
+        }
+    }
+    
+    public void StopPainting()
+    {
+        _lastPaintPoint = null;
     }
 
     public void Center(int viewportWidth, int viewportHeight)
