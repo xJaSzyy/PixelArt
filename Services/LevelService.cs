@@ -112,8 +112,13 @@ public class LevelService
         Levels.Clear();
         for (var i = 0; i < _levelsCount; i++)
         {
-            var texture = _contentManager.Load<Texture2D>($"Images/img{i + 1}");
+            var originalTexture = _contentManager.Load<Texture2D>($"Images/img{i + 1}");
 
+            var texture = ColorQuantizer.Quantize(
+                _graphicsDevice,
+                originalTexture,
+                64);
+            
             var level = new LevelData();
 
             if (useSaveData)

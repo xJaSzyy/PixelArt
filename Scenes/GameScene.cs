@@ -49,7 +49,7 @@ public class GameScene : IScene
         _cameraService = _services.GetRequiredService<CameraService>();
         _backgroundService = _services.GetRequiredService<BackgroundParticleService>();
         
-        _cameraService.SetZoomBounds(.2f, 2f, .1f);
+        _cameraService.SetZoomBounds(.2f, 2f, .05f);
     }
 
     public void LoadContent(ContentManager content)
@@ -134,6 +134,7 @@ public class GameScene : IScene
 
             if (selectedButton != null)
             {
+                
                 _processorService.PaintAtMousePosition(mouse, selectedButton.Color);
                 
                 var colorGroup = _processorService.CurrentLevel.ColorGroups.FirstOrDefault(x => x.OriginalColor == selectedButton.Color && x.IsFinished);
