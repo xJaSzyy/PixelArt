@@ -21,6 +21,7 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
     
     private float _grayTransitionTime;
     private bool _isFadingToGray;
+    private Color _currentHighlightedColor;
     
     private ContourService _contourService;
     
@@ -67,12 +68,9 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
             _grayTransitionTime = _grayTransitionDuration;
             _isFadingToGray = false;
 
-            foreach (var pixel in _pixelsByPosition.Values)
+            foreach (var pixel in _pixelsByPosition.Values.Where(pixel => !pixel.IsFinished))
             {
-                if (!pixel.IsFinished)
-                {
-                    pixel.CurrentColor = pixel.GrayColor;
-                }
+                pixel.CurrentColor = pixel.GrayColor;
             }
             
             ChangeColor();
@@ -93,27 +91,19 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
                 {
                     continue;
                 }
-
-                var color1 = pixel.CurrentColor;
-
+                
+                var progress = MathHelper.Clamp(_grayTransitionTime / _grayTransitionDuration, 0f, 1f);
+                
+                var pixelColor = pixel.CurrentColor;
+                
                 if (_isFadingToGray && !pixel.IsFinished)
                 {
-                    var progress = MathHelper.Clamp(
-                        _grayTransitionTime / _grayTransitionDuration,
-                        0f,
-                        1f
-                    );
-
-                    color1 = Color.Lerp(
-                        pixel.CurrentColor,
-                        pixel.GrayColor,
-                        progress
-                    );
+                    pixelColor = Color.Lerp(pixel.CurrentColor, pixel.OriginalColor == _currentHighlightedColor ? _highlightColor : pixel.GrayColor, progress);
                 }
+                
+                spriteBatch.Draw(_pixelTexture, rectangle, pixelColor);
 
-                spriteBatch.Draw(_pixelTexture, rectangle, color1);
-
-                if (_keyPoints.Contains(pixel.Position) && !pixel.IsFinished)
+                if ((_keyPoints.Contains(pixel.Position) || pixel.CurrentColor == _highlightColor) && !pixel.IsFinished)
                 {
                     var text = (_keyPoints.LastIndexOf(pixel.Position) + 1).ToString();
                     var color = pixel.CurrentColor == Color.Yellow ? Color.Black : Color.Yellow;
@@ -124,7 +114,7 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
                         color = Color.Lerp(
                             Color.Transparent,
                             Colors.IsDark(pixel.CurrentColor) ? Color.White : Color.Black,
-                            Utils.Remap(cameraService.Zoom, cameraService.MinZoom, cameraService.MinZoom * 2f, 0f, 1f)
+                            Utils.Remap(cameraService.Zoom, cameraService.MinZoom, cameraService.MinZoom * 1.5f, 0f, 1f) * progress
                         );
                     }
                     
@@ -319,6 +309,8 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
         ContourFinished = true;
         _keyPoints.Clear();
 
+        ChangeColor();
+        
         _grayTransitionTime = 0f;
         _isFadingToGray = true;
     }
@@ -337,6 +329,7 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
         }
         
         CurrentColor = pixelData.OriginalColor;
+        _currentHighlightedColor = pixelData.OriginalColor;
         
         _keyPoints.Clear();
         foreach (var pixel in _pixelsByPosition
@@ -382,63 +375,66 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
             }
         }
 
-        if (_startPoint != null && _endPoint != null)
+        if (_startPoint == null || _endPoint == null)
         {
-            if (Math.Abs(_keyPoints.IndexOf(_startPoint.Value) - _keyPoints.LastIndexOf(_endPoint.Value)) != 1)
-            {
-                _startPoint = _endPoint;
-                _endPoint = null;
-                return;
-            }
-            
-            var all = 0;
-            var painted = 0;
-            
-            var startIndex = _contour.IndexOf(_startPoint.Value);
-            var endIndex = _contour.LastIndexOf(_endPoint.Value);
+            return;
+        }
 
-            if (_contour.IndexOf(_startPoint.Value) > _contour.LastIndexOf(_endPoint.Value))
-            {
-                startIndex = _contour.LastIndexOf(_endPoint.Value);
-                endIndex = _contour.IndexOf(_startPoint.Value);
-            }
-            
-            for (var i = startIndex; i < endIndex; i++)
-            {
-                all++;
+        if (Math.Abs(_keyPoints.IndexOf(_startPoint.Value) - _keyPoints.LastIndexOf(_endPoint.Value)) != 1)
+        {
+            _startPoint = _endPoint;
+            _endPoint = null;
+            return;
+        }
 
-                if (_pixelsByPosition[_contour[i]].CurrentColor != Color.Transparent)
-                {
-                    painted++;
-                }
-            }
+        var startIndex = _contour.IndexOf(_startPoint.Value);
+        var endIndex = _contour.LastIndexOf(_endPoint.Value);
 
-            if ((float)painted / all > .8f)
+        if (_contour.IndexOf(_startPoint.Value) > _contour.LastIndexOf(_endPoint.Value))
+        {
+            startIndex = _contour.LastIndexOf(_endPoint.Value);
+            endIndex = _contour.IndexOf(_startPoint.Value);
+        }
+
+        var pixelsCount = 0;
+        var paintedPixelsCount = 0;
+
+        for (var i = startIndex; i < endIndex; i++)
+        {
+            pixelsCount++;
+
+            if (_pixelsByPosition[_contour[i]].CurrentColor != Color.Transparent)
             {
-                for (var i = startIndex; i <= endIndex; i++)
-                {
-                    _pixelsByPosition[_contour[i]].CurrentColor = _pixelsByPosition[_contour[i]].OriginalColor;
-
-                    if (_contour[i] == _keyPoints[0] && _keyPoints[0] != _keyPoints[^1])
-                    {
-                        var first = _keyPoints[0];
-                        _keyPoints.Add(first);
-                        _contour.Add(first);
-                        _pixelsByPosition[first].CurrentColor = Color.Transparent;
-                    }
-                }
-                
-                foreach (var keyValuePair in _pixelsByPosition)
-                {
-                    if (!keyValuePair.Value.IsFinished)
-                    {
-                        keyValuePair.Value.CurrentColor = Color.Transparent;
-                    }
-                }
-                
-                _startPoint = null;
-                _endPoint = null;
+                paintedPixelsCount++;
             }
         }
+
+        if (!((float)paintedPixelsCount / pixelsCount > .8f))
+        {
+            return;
+        }
+
+        for (var i = startIndex; i <= endIndex; i++)
+        {
+            var contourPoint = _contour[i];
+
+            _pixelsByPosition[contourPoint].CurrentColor = _pixelsByPosition[contourPoint].OriginalColor;
+
+            if (contourPoint == _keyPoints[0] && _keyPoints[0] != _keyPoints[^1])
+            {
+                var firstPoint = _keyPoints[0];
+                _keyPoints.Add(firstPoint);
+                _contour.Add(firstPoint);
+                _pixelsByPosition[firstPoint].CurrentColor = Color.Transparent;
+            }
+        }
+
+        foreach (var pixel in _pixelsByPosition.Values.Where(pixels => !pixels.IsFinished))
+        {
+            pixel.CurrentColor = Color.Transparent;
+        }
+
+        _startPoint = null;
+        _endPoint = null;
     }
 }
