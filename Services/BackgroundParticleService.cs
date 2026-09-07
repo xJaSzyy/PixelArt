@@ -15,10 +15,10 @@ public sealed class BackgroundParticleService
 
     private static readonly Color[] _palette =
     [
-        new(180, 195, 210, 7),
-        new(160, 180, 200, 6),
-        new(200, 210, 220, 8),
-        new(140, 170, 195, 5),
+        new(152, 155, 214, 7),
+        new(152, 155, 214, 6),
+        new(152, 155, 214, 8),
+        new(152, 155, 214, 5),
     ];
 
     public BackgroundParticleService(GraphicsDevice graphicsDevice, int particleCount = 32)
