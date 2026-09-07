@@ -1,11 +1,10 @@
-using System.Runtime.Intrinsics.X86;
-
 namespace PixelArt.Enums;
 
 public enum LevelType
 {
-    Drink = 1,
-    Fish = 2,
-    Food = 3,
-    Sword = 4
+    App = 1,
+    Drink = 2,
+    Fish = 3,
+    Food = 4,
+    Sword = 5
 }

@@ -21,7 +21,7 @@ public class LevelService
     private readonly ContentManager _contentManager;
 
     public List<LevelData> Levels { get; set; } = [];
-    public LevelType CurrentLevelType { get; set; } = LevelType.Drink;
+    public LevelType CurrentLevelType { get; set; } = LevelType.App;
     
     private const int _unlockedLevelsCount = 3;
     
@@ -41,6 +41,7 @@ public class LevelService
     
     private readonly Dictionary<LevelType, (string Folder, int Count)> _levelSets = new()
     {
+        [LevelType.App] = ("Images/App", 16),
         [LevelType.Drink] = ("Images/Drink", 16),
         [LevelType.Fish] = ("Images/Fish", 8),
         [LevelType.Food] = ("Images/Food", 12),

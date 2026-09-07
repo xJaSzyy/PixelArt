@@ -15,7 +15,7 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
     
     private readonly Color _highlightColor = new(72, 72, 72);
 
-    private readonly Point _gridSize = new(32, 32);
+    private Point _gridSize = new(32, 32);
     private const int _pixelSize = 16;
     private const float _grayTransitionDuration = 0.8f;
     
@@ -41,10 +41,12 @@ public class PixelService(GraphicsDevice graphicsDevice, DrawService drawService
     public void LoadContent(Texture2D texture)
     {
         _sourceTexture = texture;
-        _sourceData = new Color[_sourceTexture.Width * _sourceTexture.Height];
+        _sourceData = new Color[texture.Width * texture.Height];
         _sourceTexture.GetData(_sourceData);
+        
+        _gridSize = new Point(texture.Width, texture.Height);
 
-        _contourService = new ContourService(_sourceTexture, _sourceData, _gridSize);
+        _contourService = new ContourService(texture, _sourceData, _gridSize);
 
         _pixelTexture = new Texture2D(graphicsDevice, 1, 1);
         _pixelTexture.SetData([Color.White]);
