@@ -14,7 +14,6 @@ public class Button(DrawService drawService, Texture2D? texture, Rectangle bound
     public bool IsHovered { get; private set; }
     public string? Text { get; set; }
     public float TextScale { get; set; } = 1f;
-    public SpriteFont? Font { get; set; }
     public Color TextColor { get; set; } = Color.White;
 
     public void Update(MouseState mouse)
@@ -43,7 +42,7 @@ public class Button(DrawService drawService, Texture2D? texture, Rectangle bound
             spriteBatch.Draw(Texture, rect, buttonColor);
         }
 
-        if (Text != null && Font != null)
+        if (Text != null)
         {
             var rect = Bounds;
             var textColor = TextColor;

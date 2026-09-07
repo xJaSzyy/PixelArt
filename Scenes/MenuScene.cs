@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Xna.Framework;
@@ -6,6 +7,7 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using PixelArt.Buttons;
+using PixelArt.Enums;
 using PixelArt.Interfaces;
 using PixelArt.Models;
 using PixelArt.Services;
@@ -35,14 +37,17 @@ public class MenuScene : IScene
 
     private const int _unlockLevelCost = 49;
     private const int _headerHeight = 64;
+    private const int _typeButtonsHeight = 32;
     private const float _headerTextScale = 1.5f;
     private const int _headerProgressBarHeight = 8;
     private const int _headerProgressBarExtraWidth = 48;
     private const int _headerElementsPadding = 8;
-    
+    private const int _typeButtonsSpacing = 24;
     
     private int _completedLevelsCount;
     private int _totalLevelsCount;
+
+    private readonly List<Button> _typeButtons = [];
 
     public MenuScene(IServiceProvider services)
     {
@@ -69,7 +74,7 @@ public class MenuScene : IScene
         if (_levelService.Levels.Count == 0)
         {
             var saveData = _saveService.Load();
-            _levelService.LoadLevels(saveData.Levels, _headerHeight);
+            _levelService.LoadLevels(saveData.Levels, _headerHeight + _typeButtonsHeight);
             _playerService.AddCoins(saveData.Coins);
             _languageService.SetLanguage(saveData.Language);
         }
@@ -90,12 +95,25 @@ public class MenuScene : IScene
         {
             Text = _languageService.CurrentLanguage.ShortName,
             TextColor = Colors.Text,
-            TextScale = _headerTextScale,
-            Font = _drawService.GetFont()
+            TextScale = _headerTextScale
         };
+        
+        foreach (var type in Enum.GetNames<LevelType>())
+        {
+            _typeButtons.Add(new Button(
+                _drawService,
+                null,
+                Rectangle.Empty)
+            {
+                Text = type,
+                TextColor = Colors.Text,
+                TextScale = 1f
+            });
+        }
         
         _levelService.Resize();
         ResizeLanguageButton();
+        ResizeTypeButtons();
         
         _completedLevelsCount = _levelService.Levels.Count(l => l.IsFinished);
         _totalLevelsCount = _levelService.Levels.Count;
@@ -119,17 +137,28 @@ public class MenuScene : IScene
         {
             if (_mouseService.IsLeftMouseButtonClicked(mouse))
             {
-                foreach (var level in _levelService.Levels.Where(l => l.Button.IsHovered))
+                if (!IsMouseOverHeader(mouse))
                 {
-                    if (level.IsLocked)
+                    var hoveredLevel = _levelService.GetHoveredLevel();
+                    if (hoveredLevel != null)
                     {
-                        _dialogService.ShowDialog($"{_languageService.GetText("Menu.Pay")} ${_unlockLevelCost}?",
-                            () => UnlockLevel(level));
+                        if (hoveredLevel.IsLocked)
+                        {
+                            _dialogService.ShowDialog($"{_languageService.GetText("Menu.Pay")} ${_unlockLevelCost}?", () => UnlockLevel(hoveredLevel));
+                        }
+                        else
+                        {
+                            _processorService.SetLevel(hoveredLevel);
+                            _sceneService.SetScene<GameScene>();
+                        }
                     }
-                    else
+                }
+                
+                foreach (var typeButton in _typeButtons.Where(button => button.IsHovered))
+                {
+                    if (typeButton.Text != null)
                     {
-                        _processorService.SetLevel(level);
-                        _sceneService.SetScene<GameScene>();
+                        _levelService.SetLevelType(Enum.Parse<LevelType>(typeButton.Text));
                         break;
                     }
                 }
@@ -149,6 +178,7 @@ public class MenuScene : IScene
         _dialogService.Update(mouse, gameTime);
         _popupService.Update(gameTime);
         _backgroundService.Update(gameTime);
+        _typeButtons.ForEach(b => b.Update(mouse));
 
         _mouseService.SetMouse(mouse);
     }
@@ -167,7 +197,8 @@ public class MenuScene : IScene
         _dialogService.Draw(_spriteBatch);
         
         DrawHeader();
-                
+        
+        _typeButtons.ForEach(b => b.Draw(_spriteBatch));
         _popupService.Draw(_spriteBatch);
 
         _spriteBatch.End();
@@ -176,7 +207,7 @@ public class MenuScene : IScene
     private void DrawHeader()
     {
         _drawService.DrawRectangle(_spriteBatch, 
-            new Rectangle(0, 0, _graphicsDevice.Viewport.Width, _headerHeight), 
+            new Rectangle(0, 0, _graphicsDevice.Viewport.Width, _headerHeight + _typeButtonsHeight), 
             Colors.Background);
 
         var center = new Vector2(_graphicsDevice.Viewport.Width / 2f, 32);
@@ -216,6 +247,7 @@ public class MenuScene : IScene
     public void OnClientSizeChanged(object sender, EventArgs e)
     {
         ResizeLanguageButton();
+        ResizeTypeButtons();
         _levelService.Resize();
     }
 
@@ -234,6 +266,40 @@ public class MenuScene : IScene
             textSize.X + 2,
             textSize.Y + 2
         );
+    }
+    
+    private void ResizeTypeButtons()
+    {
+        var types = Enum.GetNames<LevelType>();
+
+        var sizes = types
+            .Select(type => _drawService.MeasureString(type))
+            .ToList();
+
+        var widths = sizes
+            .Select(size => (int)MathF.Ceiling(size.X))
+            .ToList();
+
+        var heights = sizes
+            .Select(size => (int)MathF.Ceiling(size.Y))
+            .ToList();
+
+        var totalWidth = widths.Sum()
+                         + _typeButtonsSpacing * (types.Length - 1);
+
+        var x = (_graphicsDevice.Viewport.Width - totalWidth) / 2;
+        var y = _headerHeight + (_typeButtonsHeight - heights.Max()) / 2;
+
+        for (var i = 0; i < _typeButtons.Count; i++)
+        {
+            _typeButtons[i].Bounds = new Rectangle(
+                x,
+                y,
+                widths[i],
+                heights[i]);
+
+            x += widths[i] + _typeButtonsSpacing;
+        }
     }
 
     public void OnGameExiting(object sender, EventArgs eventArgs)
@@ -274,5 +340,10 @@ public class MenuScene : IScene
             Colors.Red);
 
         return false;
+    }
+    
+    private bool IsMouseOverHeader(MouseState mouse)
+    {
+        return mouse.Position.Y < _headerHeight + _typeButtonsHeight;
     }
 }

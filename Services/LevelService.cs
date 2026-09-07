@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,6 +21,7 @@ public class LevelService
     private readonly ContentManager _contentManager;
 
     public List<LevelData> Levels { get; set; } = [];
+    private LevelType _currentLevelType = LevelType.Drink;
     
     private const int _unlockedLevelsCount = 3;
     
@@ -78,7 +80,7 @@ public class LevelService
         
         LayoutButtons();
         
-        foreach (var level in Levels)
+        foreach (var level in Levels.Where(l => l.Type == _currentLevelType))
         {
             level.Button.Update(mouse);
         }
@@ -86,7 +88,7 @@ public class LevelService
 
     public void Draw(SpriteBatch spriteBatch)
     {
-        foreach (var level in Levels)
+        foreach (var level in Levels.Where(l => l.Type == _currentLevelType))
         {
             level.Button.Draw(spriteBatch);
 
@@ -158,7 +160,11 @@ public class LevelService
     {
         var gridOffsetX = GetGridOffsetX();
 
-        for (var i = 0; i < Levels.Count; i++)
+        var visibleLevels = Levels
+            .Where(l => l.Type == _currentLevelType)
+            .ToList();
+
+        for (var i = 0; i < visibleLevels.Count; i++)
         {
             var column = i % _buttonsPerRow;
             var row = i / _buttonsPerRow;
@@ -169,11 +175,7 @@ public class LevelService
                     + row * (_buttonSize + _buttonSpacing)
                     - (int)_scroll;
 
-            Levels[i].Button.Bounds = new Rectangle(
-                x,
-                y,
-                _buttonSize,
-                _buttonSize);
+            visibleLevels[i].Button.Bounds = new Rectangle(x, y, _buttonSize, _buttonSize);
         }
     }
     
@@ -181,6 +183,11 @@ public class LevelService
     {
         _buttonsPerRow = Math.Max(1, (_graphicsDevice.Viewport.Width - _buttonSpacing) / (_buttonSize + _buttonSpacing));
         _scroll = 0f;
+        _targetScroll = 0f;
+    }
+
+    public void ResetScroll()
+    {
         _targetScroll = 0f;
     }
     
@@ -198,7 +205,7 @@ public class LevelService
     
     private float GetMaxScroll()
     {
-        var rows = (int)Math.Ceiling(Levels.Count / (float)_buttonsPerRow);
+        var rows = (int)Math.Ceiling(Levels.Count(l => l.Type == _currentLevelType) / (float)_buttonsPerRow);
         var contentBottom = _gridOffset.Y + _headerHeight + rows * (_buttonSize + _buttonSpacing);
         
         return Math.Max(0, contentBottom - _graphicsDevice.Viewport.Height);
@@ -206,10 +213,21 @@ public class LevelService
     
     private int GetGridOffsetX()
     {
-        var gridWidth =
-            _buttonsPerRow * _buttonSize +
-            (_buttonsPerRow - 1) * _buttonSpacing;
+        var gridWidth = _buttonsPerRow * _buttonSize + (_buttonsPerRow - 1) * _buttonSpacing;
 
         return (_graphicsDevice.Viewport.Width - gridWidth) / 2;
+    }
+
+    public void SetLevelType(LevelType type)
+    {
+        _currentLevelType = type;
+        ResetScroll();
+    }
+    
+    public LevelData? GetHoveredLevel()
+    {
+        return Levels
+            .Where(l => l.Type == _currentLevelType)
+            .FirstOrDefault(l => l.Button.IsHovered);
     }
 }
