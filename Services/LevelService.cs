@@ -21,7 +21,7 @@ public class LevelService
     private readonly ContentManager _contentManager;
 
     public List<LevelData> Levels { get; set; } = [];
-    private LevelType _currentLevelType = LevelType.Drink;
+    public LevelType CurrentLevelType { get; set; } = LevelType.Drink;
     
     private const int _unlockedLevelsCount = 3;
     
@@ -80,7 +80,7 @@ public class LevelService
         
         LayoutButtons();
         
-        foreach (var level in Levels.Where(l => l.Type == _currentLevelType))
+        foreach (var level in Levels.Where(l => l.Type == CurrentLevelType))
         {
             level.Button.Update(mouse);
         }
@@ -88,7 +88,7 @@ public class LevelService
 
     public void Draw(SpriteBatch spriteBatch)
     {
-        foreach (var level in Levels.Where(l => l.Type == _currentLevelType))
+        foreach (var level in Levels.Where(l => l.Type == CurrentLevelType))
         {
             level.Button.Draw(spriteBatch);
 
@@ -161,7 +161,7 @@ public class LevelService
         var gridOffsetX = GetGridOffsetX();
 
         var visibleLevels = Levels
-            .Where(l => l.Type == _currentLevelType)
+            .Where(l => l.Type == CurrentLevelType)
             .ToList();
 
         for (var i = 0; i < visibleLevels.Count; i++)
@@ -205,7 +205,7 @@ public class LevelService
     
     private float GetMaxScroll()
     {
-        var rows = (int)Math.Ceiling(Levels.Count(l => l.Type == _currentLevelType) / (float)_buttonsPerRow);
+        var rows = (int)Math.Ceiling(Levels.Count(l => l.Type == CurrentLevelType) / (float)_buttonsPerRow);
         var contentBottom = _gridOffset.Y + _headerHeight + rows * (_buttonSize + _buttonSpacing);
         
         return Math.Max(0, contentBottom - _graphicsDevice.Viewport.Height);
@@ -218,16 +218,10 @@ public class LevelService
         return (_graphicsDevice.Viewport.Width - gridWidth) / 2;
     }
 
-    public void SetLevelType(LevelType type)
-    {
-        _currentLevelType = type;
-        ResetScroll();
-    }
-    
     public LevelData? GetHoveredLevel()
     {
         return Levels
-            .Where(l => l.Type == _currentLevelType)
+            .Where(l => l.Type == CurrentLevelType)
             .FirstOrDefault(l => l.Button.IsHovered);
     }
 }

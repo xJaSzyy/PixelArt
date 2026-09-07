@@ -154,11 +154,12 @@ public class MenuScene : IScene
                     }
                 }
                 
-                foreach (var typeButton in _typeButtons.Where(button => button.IsHovered))
+                foreach (var typeButton in _typeButtons)
                 {
-                    if (typeButton.Text != null)
+                    if (typeButton.IsHovered && typeButton.Text != null)
                     {
-                        _levelService.SetLevelType(Enum.Parse<LevelType>(typeButton.Text));
+                        _levelService.CurrentLevelType = Enum.Parse<LevelType>(typeButton.Text);
+                        _levelService.ResetScroll();
                         break;
                     }
                 }
@@ -170,6 +171,20 @@ public class MenuScene : IScene
                     _processorService.SetLevel(level);
                     _sceneService.SetScene<GameScene2>();
                 }
+            }
+        }
+        
+        foreach (var typeButton in _typeButtons)
+        {
+            var text = _levelService.CurrentLevelType.ToString();
+
+            if (typeButton.Text != null && typeButton.Text == text)
+            {
+                typeButton.IsSelected = true;
+            }
+            else
+            {
+                typeButton.IsSelected = false;
             }
         }
 

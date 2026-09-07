@@ -12,6 +12,7 @@ public class Button(DrawService drawService, Texture2D? texture, Rectangle bound
     private Texture2D? Texture { get; set; } = texture;
     public Rectangle Bounds { get; set; } = bounds;
     public bool IsHovered { get; private set; }
+    public bool IsSelected { get; set; }
     public string? Text { get; set; }
     public float TextScale { get; set; } = 1f;
     public Color TextColor { get; set; } = Color.White;
@@ -54,6 +55,11 @@ public class Button(DrawService drawService, Texture2D? texture, Rectangle bound
             }
             
             drawService.DrawString(spriteBatch, Text, rect.Center.ToVector2(), textColor, TextScale);
+
+            if (IsSelected)
+            {
+                drawService.DrawRectangle(spriteBatch, new Rectangle(new Point(rect.X, rect.Y + rect.Height), new Point(rect.Width, 2)), textColor);
+            }
         }
     }
 
