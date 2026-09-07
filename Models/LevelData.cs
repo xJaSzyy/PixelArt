@@ -11,6 +11,7 @@ public class LevelData
     public int Id { get; set; }
     public LevelType Type { get; set; }
     [JsonIgnore] public Texture2D Texture { get; set; }
+    [JsonIgnore] public Texture2D GrayTexture { get; set; }
     [JsonIgnore] public Texture2D OriginalTexture { get; set; }
     public List<PixelColorGroup> ColorGroups { get; set; } = [];
     public List<PixelData> Pixels { get; set; } = [];

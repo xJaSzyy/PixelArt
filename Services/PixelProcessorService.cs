@@ -27,26 +27,28 @@ public class PixelProcessorService
     private readonly ParticleService _particleService;
     private readonly CameraService _cameraService;
     private readonly SoundService _soundService;
+    private readonly GraphicsDevice _graphicsDevice;
     
     private const float _minNumberPixelSize = 6f;
     private const int _brushRadius = 0;
     private const float _replayDuration = 1.25f;
-
-    public PixelProcessorService(ParticleService particleService, CameraService cameraService, SoundService soundService)
+    
+    private readonly Color _glowColor = new(228, 228, 235);
+    
+    public PixelProcessorService(ParticleService particleService, CameraService cameraService, SoundService soundService, GraphicsDevice graphicsDevice)
     {
         _particleService = particleService;
         _cameraService = cameraService;
         _soundService = soundService;
+        _graphicsDevice = graphicsDevice;
     }
 
     public void SetLevel(LevelData levelData)
     {
         CurrentLevel = levelData;
-
+        
         var size = CurrentLevel.Texture.Width * CurrentLevel.Texture.Height;
-
         _texturePixels = new Color[size];
-
         CurrentLevel.Texture.GetData(_texturePixels);
 
         _pixelLookup = new PixelData[size];
@@ -103,7 +105,9 @@ public class PixelProcessorService
             var original = _texturePixels[i];
 
             if (original.A != 255)
+            {
                 continue;
+            }
 
             if (!_groupsByColor.TryGetValue(original, out var group))
             {
@@ -158,6 +162,8 @@ public class PixelProcessorService
                 _texturePixels[pixel.Index] = grayColor;
             }
         }
+        
+        CurrentLevel.GrayTexture.SetData(_texturePixels);
     }
 
     private void RebuildExistingImage()
@@ -172,17 +178,6 @@ public class PixelProcessorService
 
         foreach (var pixel in CurrentLevel.Pixels)
         {
-            if (pixel.Index < 0 || pixel.Index >= _pixelLookup.Length)
-            {
-                Console.WriteLine(
-                    $"Invalid pixel index: {pixel.Index}, " +
-                    $"array size: {_pixelLookup.Length}, " +
-                    $"texture: {CurrentLevel.Texture.Width}x{CurrentLevel.Texture.Height}"
-                );
-
-                continue;
-            }
-
             _pixelLookup[pixel.Index] = pixel;
             _texturePixels[pixel.Index] = pixel.CurrentColor;
 
@@ -191,6 +186,16 @@ public class PixelProcessorService
                 group.Pixels.Add(pixel);
             }
         }
+
+        var size = CurrentLevel.Texture.Width * CurrentLevel.Texture.Height;
+        var texturePixels = new Color[size];
+        
+        foreach (var pixel in CurrentLevel.Pixels)
+        {
+            texturePixels[pixel.Index] = pixel.GrayColor;
+        }
+        
+        CurrentLevel.GrayTexture.SetData(texturePixels);
     }
 
     public void Update(GameTime gameTime)
@@ -255,11 +260,65 @@ public class PixelProcessorService
 
         var drawBounds = GetImageBounds();
 
-        spriteBatch.Draw(CurrentLevel.Texture, drawBounds, Color.White);
+        DrawGlow(spriteBatch, drawBounds);
 
-        DrawPixelNumbers(drawBounds, spriteBatch, drawService);
+        spriteBatch.Draw(
+            CurrentLevel.Texture,
+            drawBounds,
+            Color.White);
+
+        DrawPixelNumbers(
+            drawBounds,
+            spriteBatch,
+            drawService);
 
         _particleService.Draw(spriteBatch);
+    }
+    
+    private void DrawGlow(SpriteBatch spriteBatch, Rectangle bounds)
+    {
+        const int glowSize = 1;
+
+        for (var i = glowSize; i >= 1; i--)
+        {
+            var offset = i * 2;
+
+            spriteBatch.Draw(
+                CurrentLevel.GrayTexture,
+                new Rectangle(
+                    bounds.X - offset,
+                    bounds.Y,
+                    bounds.Width,
+                    bounds.Height),
+                _glowColor);
+
+            spriteBatch.Draw(
+                CurrentLevel.GrayTexture,
+                new Rectangle(
+                    bounds.X + offset,
+                    bounds.Y,
+                    bounds.Width,
+                    bounds.Height),
+                _glowColor);
+
+            spriteBatch.Draw(
+                CurrentLevel.GrayTexture,
+                new Rectangle(
+                    bounds.X,
+                    bounds.Y - offset,
+                    bounds.Width,
+                    bounds.Height),
+                _glowColor);
+
+            spriteBatch.Draw(
+                CurrentLevel.GrayTexture,
+                new Rectangle(
+                    bounds.X,
+                    bounds.Y + offset,
+                    bounds.Width,
+                    bounds.Height),
+                _glowColor);
+        }
     }
 
     private void DrawPixelNumbers(Rectangle bounds, SpriteBatch spriteBatch, DrawService drawService)
