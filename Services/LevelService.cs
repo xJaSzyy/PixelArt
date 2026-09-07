@@ -7,6 +7,7 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using PixelArt.Buttons;
+using PixelArt.Enums;
 using PixelArt.Models;
 
 namespace PixelArt.Services;
@@ -20,8 +21,7 @@ public class LevelService
 
     public List<LevelData> Levels { get; set; } = [];
     
-    private const int _levelsCount = 28;
-    private const int _unlockedLevelsCount = 4;
+    private const int _unlockedLevelsCount = 3;
     
     private const int _buttonSize = 128;
     private const int _iconSize = 40;
@@ -36,6 +36,14 @@ public class LevelService
     
     private readonly Texture2D _lockTexture;
     private readonly Texture2D _checkTexture;
+    
+    private readonly Dictionary<LevelType, (string Folder, int Count)> _levelSets = new()
+    {
+        [LevelType.Drink] = ("Images/Drink", 16),
+        [LevelType.Fish] = ("Images/Fish", 8),
+        [LevelType.Food] = ("Images/Food", 12),
+        [LevelType.Sword] = ("Images/Sword", 15)
+    };
 
     public LevelService(IServiceProvider services)
     {
@@ -106,41 +114,43 @@ public class LevelService
         _headerHeight = headerHeight;
 
         var drawService = _services.GetRequiredService<DrawService>();
-        
-        var useSaveData = savedLevels.Count == _levelsCount;
+
+        var useSaveData = savedLevels.Count == _levelSets.Values.Sum(x => x.Count);
         
         Levels.Clear();
-        for (var i = 0; i < _levelsCount; i++)
+        
+        foreach (var (type, data) in _levelSets)
         {
-            var originalTexture = _contentManager.Load<Texture2D>($"Images/img{i + 1}");
-
-            var texture = ColorQuantizer.Quantize(
-                _graphicsDevice,
-                originalTexture,
-                64);
-            
-            var level = new LevelData();
-
-            if (useSaveData)
+            for (var i = 0; i < data.Count; i++)
             {
-                level = savedLevels.First(x => x.Id == i);
-            }
-            else if (i > _unlockedLevelsCount - 1)
-            {
-                level.IsLocked = true;
-            }
+                var originalTexture = _contentManager.Load<Texture2D>($"{data.Folder}/{i + 1}");
 
-            var clone = Utils.CloneTexture2D(_graphicsDevice, texture);
+                var texture = ColorQuantizer.Quantize(_graphicsDevice, originalTexture, 64);
             
-            level.Id = i;
-            level.Texture = clone;
-            level.OriginalTexture = texture;
-            level.Button = new Button(drawService, clone, Rectangle.Empty);
+                var level = new LevelData();
+
+                if (useSaveData)
+                {
+                    level = savedLevels.First(x => x.Id == i && x.Type == type);
+                }
+                else if (i > _unlockedLevelsCount - 1)
+                {
+                    level.IsLocked = true;
+                }
+
+                var clone = Utils.CloneTexture2D(_graphicsDevice, texture);
             
-            Levels.Add(level);
+                level.Id = i;
+                level.Type = type;
+                level.Texture = clone;
+                level.OriginalTexture = texture;
+                level.Button = new Button(drawService, clone, Rectangle.Empty);
             
-            _processorService.SetLevel(level);
-            _processorService.ProcessImage();
+                Levels.Add(level);
+            
+                _processorService.SetLevel(level);
+                _processorService.ProcessImage();
+            }
         }
     }
 

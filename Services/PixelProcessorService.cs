@@ -172,8 +172,18 @@ public class PixelProcessorService
 
         foreach (var pixel in CurrentLevel.Pixels)
         {
-            _pixelLookup[pixel.Index] = pixel;
+            if (pixel.Index < 0 || pixel.Index >= _pixelLookup.Length)
+            {
+                Console.WriteLine(
+                    $"Invalid pixel index: {pixel.Index}, " +
+                    $"array size: {_pixelLookup.Length}, " +
+                    $"texture: {CurrentLevel.Texture.Width}x{CurrentLevel.Texture.Height}"
+                );
 
+                continue;
+            }
+
+            _pixelLookup[pixel.Index] = pixel;
             _texturePixels[pixel.Index] = pixel.CurrentColor;
 
             if (_groupsByColor.TryGetValue(pixel.OriginalColor, out var group))

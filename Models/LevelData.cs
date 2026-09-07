@@ -2,12 +2,14 @@ using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using Microsoft.Xna.Framework.Graphics;
 using PixelArt.Buttons;
+using PixelArt.Enums;
 
 namespace PixelArt.Models;
 
 public class LevelData
 {
     public int Id { get; set; }
+    public LevelType Type { get; set; }
     [JsonIgnore] public Texture2D Texture { get; set; }
     [JsonIgnore] public Texture2D OriginalTexture { get; set; }
     public List<PixelColorGroup> ColorGroups { get; set; } = [];
