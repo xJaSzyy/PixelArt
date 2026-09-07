@@ -17,9 +17,9 @@ public class Button(DrawService drawService, Texture2D? texture, Rectangle bound
     public float TextScale { get; set; } = 1f;
     public Color TextColor { get; set; } = Color.White;
 
-    public void Update(MouseState mouse)
+    public void Update(MouseState mouse, bool canHover = true)
     {
-        IsHovered = Bounds.Contains(mouse.Position);
+        IsHovered = Bounds.Contains(mouse.Position) && canHover;
     }
 
     public void Draw(SpriteBatch spriteBatch, Color? color = null)

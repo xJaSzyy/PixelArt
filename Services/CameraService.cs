@@ -48,8 +48,7 @@ public class CameraService
         Zoom += scrollDelta > 0 ? _zoomSpeed : -_zoomSpeed;
         Zoom = MathHelper.Clamp(Zoom, MinZoom, MaxZoom);
 
-        _cameraPosition =
-            mouse.Position.ToVector2() - mouseWorld * Zoom;
+        _cameraPosition = mouse.Position.ToVector2() - mouseWorld * Zoom;
     }
 
     public void SetPosition(Vector2 position)

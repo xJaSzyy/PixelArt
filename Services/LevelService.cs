@@ -79,10 +79,12 @@ public class LevelService
         }
         
         LayoutButtons();
+
+        var isMouseOverHeader = IsMouseOverHeader(mouse);
         
         foreach (var level in Levels.Where(l => l.Type == CurrentLevelType))
         {
-            level.Button.Update(mouse);
+            level.Button.Update(mouse, !isMouseOverHeader);
         }
     }
 
@@ -185,6 +187,13 @@ public class LevelService
         _scroll = 0f;
         _targetScroll = 0f;
     }
+    
+    public LevelData? GetHoveredLevel()
+    {
+        return Levels
+            .Where(l => l.Type == CurrentLevelType)
+            .FirstOrDefault(l => l.Button.IsHovered);
+    }
 
     public void ResetScroll()
     {
@@ -217,11 +226,9 @@ public class LevelService
 
         return (_graphicsDevice.Viewport.Width - gridWidth) / 2;
     }
-
-    public LevelData? GetHoveredLevel()
+    
+    private bool IsMouseOverHeader(MouseState mouse)
     {
-        return Levels
-            .Where(l => l.Type == CurrentLevelType)
-            .FirstOrDefault(l => l.Button.IsHovered);
+        return mouse.Position.Y < _headerHeight;
     }
 }
