@@ -114,9 +114,8 @@ public class MenuScene : IScene
         _levelService.Resize();
         ResizeLanguageButton();
         ResizeTypeButtons();
-        
-        _completedLevelsCount = _levelService.Levels.Count(l => l.IsFinished);
-        _totalLevelsCount = _levelService.Levels.Count;
+
+        UpdateLevelProgress();
     }
 
     public void Update(GameTime gameTime)
@@ -160,6 +159,7 @@ public class MenuScene : IScene
                     {
                         _levelService.CurrentLevelType = Enum.Parse<LevelType>(typeButton.Text);
                         _levelService.ResetScroll();
+                        UpdateLevelProgress();
                         break;
                     }
                 }
@@ -360,5 +360,15 @@ public class MenuScene : IScene
     private bool IsMouseOverHeader(MouseState mouse)
     {
         return mouse.Position.Y < _headerHeight + _typeButtonsHeight;
+    }
+
+    private void UpdateLevelProgress()
+    {
+        _completedLevelsCount = _levelService.Levels
+            .Where(x => x.Type == _levelService.CurrentLevelType)
+            .Count(l => l.IsFinished);
+        
+        _totalLevelsCount = _levelService.Levels
+            .Count(x => x.Type == _levelService.CurrentLevelType);
     }
 }
