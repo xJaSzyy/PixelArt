@@ -35,6 +35,20 @@ public class GameScene : IScene
     private const int _buttonSize = 56;
     private const int _buttonSpacing = 12;
     
+    private int _konamiIndex;
+    private KeyboardState _previousKeyboardState;
+    private readonly Keys[] _konamiCode =
+    [
+        Keys.Up,
+        Keys.Up,
+        Keys.Down,
+        Keys.Down,
+        Keys.Left,
+        Keys.Right,
+        Keys.Left,
+        Keys.Right
+    ];
+    
     public GameScene(IServiceProvider services)
     {
         _services = services;
@@ -100,6 +114,16 @@ public class GameScene : IScene
                 }
             }
         }
+        
+        foreach (var key in keyboard.GetPressedKeys())
+        {
+            if (!_previousKeyboardState.IsKeyDown(key))
+            {
+                CheckKonamiCode(key);
+            }
+        }
+
+        _previousKeyboardState = keyboard;
 
         HandlePainting(mouse, keyboard);
         HandleScroll(mouse, keyboard);
@@ -304,5 +328,24 @@ public class GameScene : IScene
             bounds.X + _graphicsDevice.Viewport.Width * 0.5f - imageBounds.Width * 0.5f,
             bounds.X + _graphicsDevice.Viewport.Height * 0.5f - imageBounds.Height * 0.5f
         ));
+    }
+    
+    private void CheckKonamiCode(Keys key)
+    {
+        if (key == _konamiCode[_konamiIndex])
+        {
+            _konamiIndex++;
+
+            if (_konamiIndex == _konamiCode.Length)
+            {
+                _konamiIndex = 0;
+
+                _processorService.BrushRadius++;
+            }
+        }
+        else
+        {
+            _konamiIndex = 0;
+        }
     }
 }

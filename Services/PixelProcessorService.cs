@@ -12,6 +12,7 @@ public class PixelProcessorService
 {
     public LevelData CurrentLevel { get; private set; }
     public bool ReplayLaunched { get; private set; }
+    public int BrushRadius { get; set; }
 
     private Vector2 _pixelSize;
     private int _historyIndex;
@@ -30,10 +31,9 @@ public class PixelProcessorService
     private readonly GraphicsDevice _graphicsDevice;
     
     private const float _minNumberPixelSize = 6f;
-    private const int _brushRadius = 0;
     private const float _replayDuration = 1.25f;
     
-    private readonly Color _glowColor = new(228, 228, 235);
+    private readonly Color _glowColor = new(171, 171, 171, 200);
     
     public PixelProcessorService(ParticleService particleService, CameraService cameraService, SoundService soundService, GraphicsDevice graphicsDevice)
     {
@@ -145,6 +145,12 @@ public class PixelProcessorService
         }
 
         var total = CurrentLevel.ColorGroups.Count;
+
+        CurrentLevel.ColorGroups = CurrentLevel.ColorGroups
+            .OrderByDescending(x =>
+                0.2126 * x.OriginalColor.R +
+                0.7152 * x.OriginalColor.G +
+                0.0722 * x.OriginalColor.B).ToList();
 
         for (var i = 0; i < total; i++)
         {
@@ -277,47 +283,60 @@ public class PixelProcessorService
     
     private void DrawGlow(SpriteBatch spriteBatch, Rectangle bounds)
     {
-        const int glowSize = 1;
+        const float glowSize = 0.5f;
+        const float step = 0.25f;
 
-        for (var i = glowSize; i >= 1; i--)
+        var position = new Vector2(bounds.X, bounds.Y);
+        var scale = new Vector2((float)bounds.Width / CurrentLevel.GrayTexture.Width,
+            (float)bounds.Height / CurrentLevel.GrayTexture.Height);
+
+        for (var i = glowSize; i > 0f; i -= step)
         {
-            var offset = i * 2;
+            var offset = i * 2f;
 
             spriteBatch.Draw(
                 CurrentLevel.GrayTexture,
-                new Rectangle(
-                    bounds.X - offset,
-                    bounds.Y,
-                    bounds.Width,
-                    bounds.Height),
-                _glowColor);
+                position + new Vector2(-offset, 0),
+                null,
+                _glowColor,
+                0f,
+                Vector2.Zero,
+                scale,
+                SpriteEffects.None,
+                0f);
 
             spriteBatch.Draw(
                 CurrentLevel.GrayTexture,
-                new Rectangle(
-                    bounds.X + offset,
-                    bounds.Y,
-                    bounds.Width,
-                    bounds.Height),
-                _glowColor);
+                position + new Vector2(offset, 0),
+                null,
+                _glowColor,
+                0f,
+                Vector2.Zero,
+                scale,
+                SpriteEffects.None,
+                0f);
 
             spriteBatch.Draw(
                 CurrentLevel.GrayTexture,
-                new Rectangle(
-                    bounds.X,
-                    bounds.Y - offset,
-                    bounds.Width,
-                    bounds.Height),
-                _glowColor);
+                position + new Vector2(0, -offset),
+                null,
+                _glowColor,
+                0f,
+                Vector2.Zero,
+                scale,
+                SpriteEffects.None,
+                0f);
 
             spriteBatch.Draw(
                 CurrentLevel.GrayTexture,
-                new Rectangle(
-                    bounds.X,
-                    bounds.Y + offset,
-                    bounds.Width,
-                    bounds.Height),
-                _glowColor);
+                position + new Vector2(0, offset),
+                null,
+                _glowColor,
+                0f,
+                Vector2.Zero,
+                scale,
+                SpriteEffects.None,
+                0f);
         }
     }
 
@@ -445,11 +464,11 @@ public class PixelProcessorService
         var width = CurrentLevel.Texture.Width;
         var height = CurrentLevel.Texture.Height;
 
-        var radiusSquared = _brushRadius * _brushRadius;
+        var radiusSquared = BrushRadius * BrushRadius;
 
-        for (var dy = -_brushRadius; dy <= _brushRadius; dy++)
+        for (var dy = -BrushRadius; dy <= BrushRadius; dy++)
         {
-            for (var dx = -_brushRadius; dx <= _brushRadius; dx++)
+            for (var dx = -BrushRadius; dx <= BrushRadius; dx++)
             {
                 if (dx * dx + dy * dy > radiusSquared)
                 {
