@@ -81,7 +81,7 @@ public class GameScene : IScene
                 _buttonSize,
                 _buttonSize));
         
-        _deleteButton = new Button(_drawService,content.Load<Texture2D>("Icons/restart"),
+        _deleteButton = new Button(_drawService,content.Load<Texture2D>("Icons/delete"),
             new Rectangle(_buttonSpacing,
                 _buttonSpacing + _buttonSize + _buttonSpacing,
                 _buttonSize,
@@ -151,9 +151,13 @@ public class GameScene : IScene
         _processorService.Update(gameTime);
         _homeButton.Update(mouse);
         _restartButton.Update(mouse);
-        _deleteButton.Update(mouse);
         _popupService.Update(gameTime);
         _backgroundService.Update(gameTime);
+
+        if (_processorService.CurrentLevel.Type == LevelType.Custom)
+        {
+            _deleteButton.Update(mouse);
+        }
         
         _mouseService.SetMouse(mouse);
         _keyboardService.SetState(keyboard);
@@ -263,7 +267,11 @@ public class GameScene : IScene
         {
             _homeButton.Draw(_spriteBatch, Colors.Text);
             _restartButton.Draw(_spriteBatch, Colors.Text);
-            _deleteButton.Draw(_spriteBatch, Colors.Text);
+            
+            if (_processorService.CurrentLevel.Type == LevelType.Custom)
+            {
+                _deleteButton.Draw(_spriteBatch, Colors.Text);
+            }
         }
         
         _popupService.Draw(_spriteBatch);
