@@ -19,6 +19,7 @@ public class LevelService
     private readonly GraphicsDevice _graphicsDevice;
     private readonly PixelProcessorService _processorService;
     private readonly ContentManager _contentManager;
+    private readonly DrawService _drawService;
 
     public List<LevelData> Levels { get; set; } = [];
     public LevelType CurrentLevelType { get; set; } = LevelType.App;
@@ -48,12 +49,14 @@ public class LevelService
         [LevelType.Sword] = ("Images/Sword", 15)
     };
 
+
     public LevelService(IServiceProvider services)
     {
         _services = services;
         _graphicsDevice = _services.GetRequiredService<GraphicsDevice>();
         _processorService = _services.GetRequiredService<PixelProcessorService>();
         _contentManager = _services.GetRequiredService<ContentManager>();
+        _drawService = _services.GetRequiredService<DrawService>();
         
         _lockTexture = _contentManager.Load<Texture2D>("Icons/lock");
         _checkTexture = _contentManager.Load<Texture2D>("Icons/check");
@@ -117,9 +120,7 @@ public class LevelService
     public void LoadLevels(List<LevelData> savedLevels, int headerHeight)
     {
         _headerHeight = headerHeight;
-
-        var drawService = _services.GetRequiredService<DrawService>();
-
+        
         var useSaveData = savedLevels.Count == _levelSets.Values.Sum(x => x.Count);
         
         Levels.Clear();
@@ -130,32 +131,47 @@ public class LevelService
             {
                 var originalTexture = _contentManager.Load<Texture2D>($"{data.Folder}/{i + 1}");
 
-                var texture = ColorQuantizer.Quantize(_graphicsDevice, originalTexture, 64);
-            
-                var level = new LevelData();
-
+                LevelData? savedLevel = null;
+                var isLocked = false;
+                
                 if (useSaveData)
                 {
-                    level = savedLevels.First(x => x.Id == i && x.Type == type);
+                    savedLevel = savedLevels.First(x => x.Id == i && x.Type == type);
+                    isLocked = savedLevel.IsLocked;
                 }
                 else if (i > _unlockedLevelsCount - 1)
                 {
-                    level.IsLocked = true;
+                    isLocked = true;
                 }
-
-                level.Id = i;
-                level.Type = type;
-                level.Texture = Utils.CloneTexture2D(_graphicsDevice, texture);
-                level.GrayTexture = Utils.CloneTexture2D(_graphicsDevice, texture);
-                level.OriginalTexture = texture;
-                level.Button = new Button(drawService, level.Texture, Rectangle.Empty);
-            
-                Levels.Add(level);
-            
-                _processorService.SetLevel(level);
-                _processorService.ProcessImage();
+                
+                AddLevel(originalTexture, i, type, savedLevel, isLocked);
             }
         }
+    }
+
+    public void AddLevel(Texture2D originalTexture, int levelId, LevelType type, LevelData? savedLevel = null, bool isLocked = false)
+    {
+        var texture = ColorQuantizer.Quantize(_graphicsDevice, originalTexture, 64);
+        
+        var level = new LevelData();
+
+        if (savedLevel != null)
+        {
+            level = savedLevel;
+        }
+
+        level.Id = levelId;
+        level.Type = type;
+        level.IsLocked = isLocked;
+        level.Texture = Utils.CloneTexture2D(_graphicsDevice, texture);
+        level.GrayTexture = Utils.CloneTexture2D(_graphicsDevice, texture);
+        level.OriginalTexture = texture;
+        level.Button = new Button(_drawService, level.Texture, Rectangle.Empty);
+            
+        Levels.Add(level);
+        
+        _processorService.SetLevel(level);
+        _processorService.ProcessImage();
     }
 
     private void LayoutButtons()

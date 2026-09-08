@@ -1,16 +1,26 @@
+#nullable enable
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using NativeFileDialogSharp;
 using PixelArt.Buttons;
 using PixelArt.Enums;
 using PixelArt.Interfaces;
 using PixelArt.Models;
 using PixelArt.Services;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
+using Color = Microsoft.Xna.Framework.Color;
+using Point = Microsoft.Xna.Framework.Point;
+using Rectangle = Microsoft.Xna.Framework.Rectangle;
 
 namespace PixelArt.Scenes;
 
@@ -32,8 +42,11 @@ public class MenuScene : IScene
     private readonly PopupTextService _popupService;
     private readonly BackgroundParticleService _backgroundService;
     private readonly LanguageService _languageService;
+    private readonly ImageLoaderService _imageLoaderService;
 
     private Button _languageButton;
+    private Button _testButton;
+    private Texture2D? _testTexture;
 
     private const int _unlockLevelCost = 49;
     private const int _headerHeight = 64;
@@ -67,6 +80,7 @@ public class MenuScene : IScene
         _popupService = services.GetRequiredService<PopupTextService>();
         _backgroundService = services.GetRequiredService<BackgroundParticleService>();
         _languageService = services.GetRequiredService<LanguageService>();
+        _imageLoaderService = _services.GetRequiredService<ImageLoaderService>();
     }
 
     public void LoadContent(ContentManager content)
@@ -94,6 +108,16 @@ public class MenuScene : IScene
             Rectangle.Empty)
         {
             Text = _languageService.CurrentLanguage.ShortName,
+            TextColor = Colors.Text,
+            TextScale = _headerTextScale
+        };
+        
+        _testButton = new Button(
+            _drawService,
+            null,
+            new Rectangle(new Point(0, 0), new Point(64, 64)))
+        {
+            Text = "+",
             TextColor = Colors.Text,
             TextScale = _headerTextScale
         };
@@ -164,6 +188,11 @@ public class MenuScene : IScene
                         break;
                     }
                 }
+
+                if (_testButton.IsHovered)
+                {
+                    OpenImageAsync();
+                }
             }
         }
         
@@ -180,15 +209,41 @@ public class MenuScene : IScene
                 typeButton.IsSelected = false;
             }
         }
+        
+        if (_filePickerTask != null && _filePickerTask.IsCompleted)
+        {
+            var path = _filePickerTask.Result;
+
+            _filePickerTask = null;
+
+            if (path != null)
+            {
+                _testTexture?.Dispose();
+                _testTexture = _imageLoaderService.LoadTexture(_graphicsDevice, path);
+            }
+        }
 
         _levelService.Update(_mouseService, mouse);
         _languageButton.Update(mouse);
+        _testButton.Update(mouse);
         _dialogService.Update(mouse, gameTime);
         _popupService.Update(gameTime);
         _backgroundService.Update(gameTime);
         _typeButtons.ForEach(b => b.Update(mouse));
 
         _mouseService.SetMouse(mouse);
+    }
+    
+    private Task<string?>? _filePickerTask;
+    
+    private void OpenImageAsync()
+    {
+        if (_filePickerTask != null)
+        {
+            return;
+        }
+
+        _filePickerTask = Task.Run(() => _imageLoaderService.PickImage());
     }
 
     public void Draw(GameTime gameTime)
@@ -205,8 +260,18 @@ public class MenuScene : IScene
         _dialogService.Draw(_spriteBatch);
         
         DrawHeader();
-        
+
+        if (_testTexture != null)
+        {
+            _spriteBatch.Draw(
+                _testTexture,
+                new Vector2(100, 100),
+                Color.White
+            );
+        }
+
         _typeButtons.ForEach(b => b.Draw(_spriteBatch));
+        _testButton.Draw(_spriteBatch);
         _popupService.Draw(_spriteBatch);
 
         _spriteBatch.End();
