@@ -46,9 +46,11 @@ public class MenuScene : IScene
 
     private Button _languageButton;
     
-    private Button _testButton;
-    private Texture2D? _testTexture;
+    private Button _loadImageButton;
+    private Texture2D? _loadedImageTexture;
     private Task<string?>? _filePickerTask;
+
+    private readonly Point _buttonSize = new(64, 64);
 
     private const int _unlockLevelCost = 49;
     private const int _headerHeight = 64;
@@ -114,15 +116,12 @@ public class MenuScene : IScene
             TextScale = _headerTextScale
         };
         
-        _testButton = new Button(
+        _loadImageButton = new Button(
             _drawService,
-            null,
-            new Rectangle(new Point((int)(_graphicsDevice.Viewport.Width * .5f), (int)(_graphicsDevice.Viewport.Height * .5f)), new Point(64, 64)))
-        {
-            Text = "+",
-            TextColor = Colors.Text,
-            TextScale = _headerTextScale
-        };
+            content.Load<Texture2D>("Icons/plus"),
+            new Rectangle(
+                new Point((int)(_graphicsDevice.Viewport.Width * .5f) - _buttonSize.X / 2, (int)(_graphicsDevice.Viewport.Height * .5f) - _buttonSize.Y / 2), 
+                _buttonSize));
         
         foreach (var type in Enum.GetNames<LevelType>())
         {
@@ -191,7 +190,7 @@ public class MenuScene : IScene
                     }
                 }
 
-                if (_testButton.IsHovered)
+                if (_loadImageButton.IsHovered)
                 {
                     OpenImageAsync();
                 }
@@ -220,12 +219,12 @@ public class MenuScene : IScene
 
             if (path != null)
             {
-                _testTexture?.Dispose();
-                _testTexture = _imageLoaderService.LoadTexture(_graphicsDevice, path);
-                if (_testTexture != null)
+                _loadedImageTexture?.Dispose();
+                _loadedImageTexture = _imageLoaderService.LoadTexture(_graphicsDevice, path);
+                if (_loadedImageTexture != null)
                 {
                     _levelService.AddCustomLevel(
-                        _testTexture, 
+                        _loadedImageTexture, 
                         _levelService.Levels.Count(x => x.Type == LevelType.Custom), 
                         LevelType.Custom);
                 }
@@ -241,7 +240,7 @@ public class MenuScene : IScene
 
         if (_levelService.CurrentLevelType == LevelType.Custom)
         {
-            _testButton.Update(mouse);
+            _loadImageButton.Update(mouse);
         }
         
         _mouseService.SetMouse(mouse);
@@ -262,21 +261,12 @@ public class MenuScene : IScene
         
         DrawHeader();
 
-        if (_testTexture != null)
-        {
-            _spriteBatch.Draw(
-                _testTexture,
-                new Vector2(100, 100),
-                Color.White
-            );
-        }
-
         _typeButtons.ForEach(b => b.Draw(_spriteBatch));
         _popupService.Draw(_spriteBatch);
         
         if (_levelService.CurrentLevelType == LevelType.Custom)
         {
-            _testButton.Draw(_spriteBatch);
+            _loadImageButton.Draw(_spriteBatch);
         }
 
         _spriteBatch.End();

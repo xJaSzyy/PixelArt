@@ -148,7 +148,7 @@ public class LevelService
                 AddLevel(originalTexture, i, type, savedLevel, isLocked);
             }
         }
-        
+
         foreach (var savedLevel in savedLevels.Where(x => x.Type == LevelType.Custom))
         {
             var originalTexture = _contentManager.Load<Texture2D>($"Images/Custom/{savedLevel.Id}");
@@ -194,23 +194,13 @@ public class LevelService
     {
         AddLevel(originalTexture, levelId, type, savedLevel, isLocked);
         
-        var path = Path.Combine(
-            AppContext.BaseDirectory,
-            "Content",
-            "Images",
-            "Custom",
-            $"{levelId}.png");
+        var path = Path.Combine(AppContext.BaseDirectory, "Content", "Images", "Custom", $"{levelId}.png");
 
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
 
         using var stream = File.Create(path);
 
-        originalTexture.SaveAsPng(
-            stream,
-            originalTexture.Width,
-            originalTexture.Height);
-        
-        Console.WriteLine($"SAVE: {path}");
+        originalTexture.SaveAsPng(stream, originalTexture.Width, originalTexture.Height);
     }
     
     private void LayoutButtons()

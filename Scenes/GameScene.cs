@@ -6,6 +6,7 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using PixelArt.Buttons;
+using PixelArt.Enums;
 using PixelArt.Interfaces;
 using PixelArt.Models;
 using PixelArt.Services;
@@ -31,6 +32,7 @@ public class GameScene : IScene
 
     private Button _homeButton;
     private Button _restartButton;
+    private Button _deleteButton;
 
     private const int _buttonSize = 56;
     private const int _buttonSpacing = 12;
@@ -78,6 +80,12 @@ public class GameScene : IScene
                 _buttonSpacing,
                 _buttonSize,
                 _buttonSize));
+        
+        _deleteButton = new Button(_drawService,content.Load<Texture2D>("Icons/restart"),
+            new Rectangle(_buttonSpacing,
+                _buttonSpacing + _buttonSize + _buttonSpacing,
+                _buttonSize,
+                _buttonSize));
 
         var pixelTexture = new Texture2D(_graphicsDevice, 1, 1);
         pixelTexture.SetData([Color.White]);
@@ -111,6 +119,11 @@ public class GameScene : IScene
                 {
                     Restart();
                 }
+                else if (_deleteButton.IsHovered && _processorService.CurrentLevel.Type == LevelType.Custom)
+                {
+                    _services.GetRequiredService<LevelService>().Levels.Remove(_processorService.CurrentLevel);
+                    _services.GetRequiredService<SceneService>().SetScene<MenuScene>();
+                }
             }
         }
         
@@ -138,6 +151,7 @@ public class GameScene : IScene
         _processorService.Update(gameTime);
         _homeButton.Update(mouse);
         _restartButton.Update(mouse);
+        _deleteButton.Update(mouse);
         _popupService.Update(gameTime);
         _backgroundService.Update(gameTime);
         
@@ -249,6 +263,7 @@ public class GameScene : IScene
         {
             _homeButton.Draw(_spriteBatch, Colors.Text);
             _restartButton.Draw(_spriteBatch, Colors.Text);
+            _deleteButton.Draw(_spriteBatch, Colors.Text);
         }
         
         _popupService.Draw(_spriteBatch);
@@ -302,7 +317,7 @@ public class GameScene : IScene
             return true;
         }
 
-        if (_homeButton.IsHovered || _restartButton.IsHovered)
+        if (_homeButton.IsHovered || _restartButton.IsHovered || _deleteButton.IsHovered)
         {
             return true;
         }
