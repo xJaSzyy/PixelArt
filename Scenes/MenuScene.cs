@@ -144,6 +144,7 @@ public class MenuScene : IScene
                         if (hoveredLevel.IsLocked)
                         {
                             _dialogService.ShowDialog($"{_languageService.GetText("Menu.Pay")} ${_unlockLevelCost}?", () => UnlockLevel(hoveredLevel));
+                            _mouseService.SetMouse(mouse);
                         }
                         else
                         {
