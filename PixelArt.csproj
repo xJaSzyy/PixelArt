@@ -30,6 +30,7 @@
         <PackageReference Include="SixLabors.ImageSharp" Version="4.1.1" />
     </ItemGroup>
     <ItemGroup>
+      <Folder Include="Content\Images\Custom\" />
       <Folder Include="Content\Sounds\" />
     </ItemGroup>
 </Project>

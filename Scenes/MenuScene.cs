@@ -45,8 +45,10 @@ public class MenuScene : IScene
     private readonly ImageLoaderService _imageLoaderService;
 
     private Button _languageButton;
+    
     private Button _testButton;
     private Texture2D? _testTexture;
+    private Task<string?>? _filePickerTask;
 
     private const int _unlockLevelCost = 49;
     private const int _headerHeight = 64;
@@ -115,7 +117,7 @@ public class MenuScene : IScene
         _testButton = new Button(
             _drawService,
             null,
-            new Rectangle(new Point(0, 0), new Point(64, 64)))
+            new Rectangle(new Point((int)(_graphicsDevice.Viewport.Width * .5f), (int)(_graphicsDevice.Viewport.Height * .5f)), new Point(64, 64)))
         {
             Text = "+",
             TextColor = Colors.Text,
@@ -220,30 +222,29 @@ public class MenuScene : IScene
             {
                 _testTexture?.Dispose();
                 _testTexture = _imageLoaderService.LoadTexture(_graphicsDevice, path);
+                if (_testTexture != null)
+                {
+                    _levelService.AddCustomLevel(
+                        _testTexture, 
+                        _levelService.Levels.Count(x => x.Type == LevelType.Custom), 
+                        LevelType.Custom);
+                }
             }
         }
 
         _levelService.Update(_mouseService, mouse);
         _languageButton.Update(mouse);
-        _testButton.Update(mouse);
         _dialogService.Update(mouse, gameTime);
         _popupService.Update(gameTime);
         _backgroundService.Update(gameTime);
         _typeButtons.ForEach(b => b.Update(mouse));
 
-        _mouseService.SetMouse(mouse);
-    }
-    
-    private Task<string?>? _filePickerTask;
-    
-    private void OpenImageAsync()
-    {
-        if (_filePickerTask != null)
+        if (_levelService.CurrentLevelType == LevelType.Custom)
         {
-            return;
+            _testButton.Update(mouse);
         }
-
-        _filePickerTask = Task.Run(() => _imageLoaderService.PickImage());
+        
+        _mouseService.SetMouse(mouse);
     }
 
     public void Draw(GameTime gameTime)
@@ -271,8 +272,12 @@ public class MenuScene : IScene
         }
 
         _typeButtons.ForEach(b => b.Draw(_spriteBatch));
-        _testButton.Draw(_spriteBatch);
         _popupService.Draw(_spriteBatch);
+        
+        if (_levelService.CurrentLevelType == LevelType.Custom)
+        {
+            _testButton.Draw(_spriteBatch);
+        }
 
         _spriteBatch.End();
     }
@@ -428,5 +433,15 @@ public class MenuScene : IScene
         
         _totalLevelsCount = _levelService.Levels
             .Count(x => x.Type == _levelService.CurrentLevelType);
+    }
+    
+    private void OpenImageAsync()
+    {
+        if (_filePickerTask != null)
+        {
+            return;
+        }
+
+        _filePickerTask = Task.Run(() => ImageLoaderService.PickImage());
     }
 }

@@ -11,14 +11,16 @@ namespace PixelArt.Services;
 
 public class ImageLoaderService
 {
-    public string? PickImage()
+    private readonly Point _maxSize = new(128, 128);
+    
+    public static string? PickImage()
     {
-        var result = Dialog.FileOpen(
-            "png,jpg,jpeg,bmp"
-        );
+        var result = Dialog.FileOpen("png,jpg,jpeg,bmp");
 
         if (result.IsError || string.IsNullOrWhiteSpace(result.Path))
+        {
             return null;
+        }
 
         return result.Path;
     }
@@ -31,11 +33,14 @@ public class ImageLoaderService
 
             image.Mutate(x => x.AutoOrient());
 
-            image.Mutate(x => x.Resize(new ResizeOptions
+            if (image.Width > _maxSize.X || image.Height > _maxSize.Y)
             {
-                Size = new Size(256, 256),
-                Mode = ResizeMode.Max
-            }));
+                image.Mutate(x => x.Resize(new ResizeOptions
+                {
+                    Size = new Size(_maxSize.X, _maxSize.Y),
+                    Mode = ResizeMode.Max
+                }));
+            }
 
             using var stream = new MemoryStream();
 

@@ -1,6 +1,7 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Xna.Framework;
@@ -121,7 +122,7 @@ public class LevelService
     {
         _headerHeight = headerHeight;
         
-        var useSaveData = savedLevels.Count == _levelSets.Values.Sum(x => x.Count);
+        var useSaveData = savedLevels.Count(x => x.Type != LevelType.Custom) == _levelSets.Values.Sum(x => x.Count);
         
         Levels.Clear();
         
@@ -147,9 +148,20 @@ public class LevelService
                 AddLevel(originalTexture, i, type, savedLevel, isLocked);
             }
         }
+        
+        foreach (var savedLevel in savedLevels.Where(x => x.Type == LevelType.Custom))
+        {
+            var originalTexture = _contentManager.Load<Texture2D>($"Images/Custom/{savedLevel.Id}");
+            
+            AddLevel(originalTexture, savedLevel.Id, savedLevel.Type, savedLevel);
+        }
     }
 
-    public void AddLevel(Texture2D originalTexture, int levelId, LevelType type, LevelData? savedLevel = null, bool isLocked = false)
+    private void AddLevel(Texture2D originalTexture, 
+        int levelId, 
+        LevelType type, 
+        LevelData? savedLevel = null, 
+        bool isLocked = false)
     {
         var texture = ColorQuantizer.Quantize(_graphicsDevice, originalTexture, 64);
         
@@ -169,11 +181,38 @@ public class LevelService
         level.Button = new Button(_drawService, level.Texture, Rectangle.Empty);
             
         Levels.Add(level);
-        
+
         _processorService.SetLevel(level);
         _processorService.ProcessImage();
     }
 
+    public void AddCustomLevel(Texture2D originalTexture, 
+        int levelId, 
+        LevelType type, 
+        LevelData? savedLevel = null, 
+        bool isLocked = false)
+    {
+        AddLevel(originalTexture, levelId, type, savedLevel, isLocked);
+        
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Content",
+            "Images",
+            "Custom",
+            $"{levelId}.png");
+
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+
+        using var stream = File.Create(path);
+
+        originalTexture.SaveAsPng(
+            stream,
+            originalTexture.Width,
+            originalTexture.Height);
+        
+        Console.WriteLine($"SAVE: {path}");
+    }
+    
     private void LayoutButtons()
     {
         var gridOffsetX = GetGridOffsetX();
