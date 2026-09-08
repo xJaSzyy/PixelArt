@@ -119,9 +119,7 @@ public class MenuScene : IScene
         _loadImageButton = new Button(
             _drawService,
             content.Load<Texture2D>("Icons/plus"),
-            new Rectangle(
-                new Point((int)(_graphicsDevice.Viewport.Width * .5f) - _buttonSize.X / 2, (int)(_graphicsDevice.Viewport.Height * .5f) - _buttonSize.Y / 2), 
-                _buttonSize));
+            Rectangle.Empty);
         
         foreach (var type in Enum.GetNames<LevelType>())
         {
@@ -135,10 +133,8 @@ public class MenuScene : IScene
                 TextScale = 1f
             });
         }
-        
-        _levelService.Resize();
-        ResizeLanguageButton();
-        ResizeTypeButtons();
+
+        ResizeAll();
 
         UpdateLevelProgress();
     }
@@ -186,6 +182,7 @@ public class MenuScene : IScene
                         _levelService.CurrentLevelType = Enum.Parse<LevelType>(typeButton.Text);
                         _levelService.ResetScroll();
                         UpdateLevelProgress();
+                        ResizeAll();
                         break;
                     }
                 }
@@ -227,6 +224,7 @@ public class MenuScene : IScene
                         _loadedImageTexture, 
                         _levelService.Levels.Count(x => x.Type == LevelType.Custom), 
                         LevelType.Custom);
+                    ResizeAll();
                 }
             }
         }
@@ -314,9 +312,15 @@ public class MenuScene : IScene
 
     public void OnClientSizeChanged(object sender, EventArgs e)
     {
+        ResizeAll();
+    }
+
+    private void ResizeAll()
+    {
         ResizeLanguageButton();
         ResizeTypeButtons();
         _levelService.Resize();
+        _loadImageButton.Bounds = _levelService.GetNextLevelBounds(_buttonSize.X, _buttonSize.Y);
     }
 
     private void ResizeLanguageButton()

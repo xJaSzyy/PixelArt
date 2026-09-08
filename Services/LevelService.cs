@@ -276,4 +276,32 @@ public class LevelService
     {
         return mouse.Position.Y < _headerHeight;
     }
+    
+    public Rectangle GetNextLevelBounds(int width, int height, bool applyScroll = false)
+    {
+        var visibleLevelsCount = Levels.Count(l => l.Type == CurrentLevelType);
+
+        var column = visibleLevelsCount % _buttonsPerRow;
+        var row = visibleLevelsCount / _buttonsPerRow;
+
+        var x = GetGridOffsetX()
+                + column * (_buttonSize + _buttonSpacing);
+
+        var y = _gridOffset.Y
+                + _headerHeight
+                + row * (_buttonSize + _buttonSpacing);
+
+        if (applyScroll)
+            y -= (int)_scroll;
+
+        var centerX = x + _buttonSize / 2;
+        var centerY = y + _buttonSize / 2;
+
+        return new Rectangle(
+            centerX - width / 2,
+            centerY - height / 2,
+            width,
+            height
+        );
+    }
 }
