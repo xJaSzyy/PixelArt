@@ -340,7 +340,7 @@ public class GameScene : IScene
             {
                 _konamiIndex = 0;
 
-                _processorService.BrushRadius++;
+                _processorService.BrushRadius = _processorService.BrushRadius == 0 ? 1 : 0;
             }
         }
         else
