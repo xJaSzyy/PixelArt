@@ -165,14 +165,6 @@ public class MenuScene : IScene
                     }
                 }
             }
-            else if (_mouseService.IsRightMouseButtonClicked(mouse))
-            {
-                foreach (var level in _levelService.Levels.Where(l => l.Button.IsHovered))
-                {
-                    _processorService.SetLevel(level);
-                    _sceneService.SetScene<GameScene2>();
-                }
-            }
         }
         
         foreach (var typeButton in _typeButtons)
