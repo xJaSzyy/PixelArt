@@ -63,7 +63,6 @@ public class GameScene : IScene
         _cameraService = _services.GetRequiredService<CameraService>();
         _backgroundService = _services.GetRequiredService<BackgroundParticleService>();
         
-        _cameraService.SetZoomBounds(.2f, 2f, .05f);
     }
 
     public void LoadContent(ContentManager content)
@@ -292,6 +291,8 @@ public class GameScene : IScene
         
         ColoringIsCompleted = false;
         _colorButtonsService.SelectButton(0);
+
+        ImageToCenter();
     }
 
     private bool IsMouseOverUI()
@@ -311,9 +312,18 @@ public class GameScene : IScene
 
     private void ImageToCenter()
     {
+        var level = _processorService.CurrentLevel;
+
+        const float baseTextureSize = 32f;
+        const float baseZoom = 1f;
+
+        var textureSize = Math.Max(level.Texture.Width, level.Texture.Height);
+        var zoom = baseZoom * baseTextureSize / textureSize;
+
+        _cameraService.SetZoomBounds(zoom * 0.2f, zoom * 1.8f, zoom * 0.05f);
+        
         _cameraService.Zoom = _cameraService.MinZoom;
 
-        var level = _processorService.CurrentLevel;
         var bounds = level.Button.Bounds;
         
         bounds.Size *= level.Texture.Width / 2;
