@@ -43,13 +43,14 @@ public class LevelService
     
     private readonly Dictionary<LevelType, (string Folder, int Count)> _levelSets = new()
     {
+        [LevelType.Animal] = ("Images/Animal", 9),
         [LevelType.App] = ("Images/App", 16),
+        [LevelType.Clothes] = ("Images/Clothes", 16),
         [LevelType.Drink] = ("Images/Drink", 16),
-        [LevelType.Fish] = ("Images/Fish", 8),
+        [LevelType.Fish] = ("Images/Fish", 16),
         [LevelType.Food] = ("Images/Food", 12),
         [LevelType.Sword] = ("Images/Sword", 15)
     };
-
 
     public LevelService(IServiceProvider services)
     {

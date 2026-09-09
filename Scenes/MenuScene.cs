@@ -135,7 +135,6 @@ public class MenuScene : IScene
         }
 
         ResizeAll();
-
         UpdateLevelProgress();
     }
 
@@ -177,7 +176,7 @@ public class MenuScene : IScene
                 
                 foreach (var typeButton in _typeButtons)
                 {
-                    if (typeButton.IsHovered && typeButton.Text != null)
+                    if (typeButton is { IsHovered: true, Text: not null })
                     {
                         _levelService.CurrentLevelType = Enum.Parse<LevelType>(typeButton.Text);
                         _levelService.ResetScroll();
@@ -356,19 +355,14 @@ public class MenuScene : IScene
             .Select(size => (int)MathF.Ceiling(size.Y))
             .ToList();
 
-        var totalWidth = widths.Sum()
-                         + _typeButtonsSpacing * (types.Length - 1);
+        var totalWidth = widths.Sum() + _typeButtonsSpacing * (types.Length - 1);
 
         var x = (_graphicsDevice.Viewport.Width - totalWidth) / 2;
         var y = _headerHeight + (_typeButtonsHeight - heights.Max()) / 2;
 
         for (var i = 0; i < _typeButtons.Count; i++)
         {
-            _typeButtons[i].Bounds = new Rectangle(
-                x,
-                y,
-                widths[i],
-                heights[i]);
+            _typeButtons[i].Bounds = new Rectangle(x, y, widths[i], heights[i]);
 
             x += widths[i] + _typeButtonsSpacing;
         }

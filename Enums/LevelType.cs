@@ -3,9 +3,11 @@ namespace PixelArt.Enums;
 public enum LevelType
 {
     Custom = 0,
-    App = 1,
-    Drink = 2,
-    Fish = 3,
-    Food = 4,
-    Sword = 5
+    Animal = 1,
+    App = 2,
+    Clothes = 3,
+    Drink = 4,
+    Fish = 5,
+    Food = 6,
+    Sword = 7
 }
