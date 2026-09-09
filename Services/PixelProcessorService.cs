@@ -30,7 +30,7 @@ public class PixelProcessorService
     private readonly SoundService _soundService;
     private readonly GraphicsDevice _graphicsDevice;
     
-    private const float _minNumberPixelSize = 6f;
+    private const float _minNumberPixelSize = 14f;
     private const float _replayDuration = 1.25f;
     
     private readonly Color _glowColor = new(171, 171, 171, 200);

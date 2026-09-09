@@ -41,7 +41,7 @@ public class LanguageService
                 ["RU"] = "RU",
                 ["Menu.Pay"] = "Заплатить",
                 ["Menu.NotEnoughCoins"] = "Не хватает монет",
-                ["Menu.Custom"] = "Кастомное",
+                ["Menu.Custom"] = "Свое",
                 ["Menu.Animal"] = "Животные",
                 ["Menu.App"] = "Приложения",
                 ["Menu.Clothes"] = "Одежда",
