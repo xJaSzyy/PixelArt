@@ -54,17 +54,23 @@ public class MenuScene : IScene
 
     private const int _unlockLevelCost = 49;
     private const int _headerHeight = 64;
-    private const int _typeButtonsHeight = 32;
     private const float _headerTextScale = 1.5f;
     private const int _headerProgressBarHeight = 8;
     private const int _headerProgressBarExtraWidth = 48;
     private const int _headerElementsPadding = 8;
     private const int _typeButtonsSpacing = 24;
+    private const int _typeButtonHeight = 32;
+    private const int _typeButtonHorizontalPadding = 8;
+    private const int _typeButtonsRowSpacing = 4;
+    private const int _typeButtonsSidePadding = 16;
+    private int _typeButtonsHeight = 32;
     
     private int _completedLevelsCount;
     private int _totalLevelsCount;
 
     private readonly List<Button> _typeButtons = [];
+    
+    
 
     public MenuScene(IServiceProvider services)
     {
@@ -338,9 +344,11 @@ public class MenuScene : IScene
             textSize.Y + 2
         );
     }
-    
+
     private void ResizeTypeButtons()
     {
+        var viewportWidth = _graphicsDevice.Viewport.Width;
+
         var types = Enum.GetNames<LevelType>();
 
         var sizes = types
@@ -348,23 +356,65 @@ public class MenuScene : IScene
             .ToList();
 
         var widths = sizes
-            .Select(size => (int)MathF.Ceiling(size.X))
+            .Select(size => (int)MathF.Ceiling(size.X) + _typeButtonHorizontalPadding * 2)
             .ToList();
 
-        var heights = sizes
-            .Select(size => (int)MathF.Ceiling(size.Y))
-            .ToList();
+        var rows = new List<List<int>>();
+        var currentRow = new List<int>();
+        var currentWidth = 0;
 
-        var totalWidth = widths.Sum() + _typeButtonsSpacing * (types.Length - 1);
+        var availableWidth = viewportWidth - _typeButtonsSidePadding * 2;
 
-        var x = (_graphicsDevice.Viewport.Width - totalWidth) / 2;
-        var y = _headerHeight + (_typeButtonsHeight - heights.Max()) / 2;
-
-        for (var i = 0; i < _typeButtons.Count; i++)
+        for (var i = 0; i < widths.Count; i++)
         {
-            _typeButtons[i].Bounds = new Rectangle(x, y, widths[i], heights[i]);
+            var requiredWidth = currentRow.Count == 0
+                ? widths[i]
+                : currentWidth + _typeButtonsSpacing + widths[i];
 
-            x += widths[i] + _typeButtonsSpacing;
+            if (currentRow.Count > 0 && requiredWidth > availableWidth)
+            {
+                rows.Add(currentRow);
+
+                currentRow = [];
+                currentWidth = 0;
+            }
+
+            currentRow.Add(i);
+
+            currentWidth = currentRow.Count == 1
+                ? widths[i]
+                : currentWidth + _typeButtonsSpacing + widths[i];
+        }
+
+        if (currentRow.Count > 0)
+        {
+            rows.Add(currentRow);
+        }
+
+        var totalHeight =
+            rows.Count * _typeButtonHeight +
+            (rows.Count - 1) * _typeButtonsRowSpacing;
+
+        _typeButtonsHeight = totalHeight;
+
+        var y = _headerHeight;
+
+        foreach (var row in rows)
+        {
+            var rowWidth =
+                row.Sum(index => widths[index]) +
+                _typeButtonsSpacing * (row.Count - 1);
+
+            var x = (viewportWidth - rowWidth) / 2;
+
+            foreach (var index in row)
+            {
+                _typeButtons[index].Bounds = new Rectangle(x, y, widths[index], _typeButtonHeight);
+
+                x += widths[index] + _typeButtonsSpacing;
+            }
+
+            y += _typeButtonHeight + _typeButtonsRowSpacing;
         }
     }
 
