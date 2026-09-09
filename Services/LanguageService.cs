@@ -37,13 +37,33 @@ public class LanguageService
         {
             ["RU"] = new Dictionary<string, string>
             {
+                ["EN"] = "EN",
+                ["RU"] = "RU",
                 ["Menu.Pay"] = "Заплатить",
                 ["Menu.NotEnoughCoins"] = "Не хватает монет",
+                ["Menu.Custom"] = "Кастомное",
+                ["Menu.Animal"] = "Животные",
+                ["Menu.App"] = "Приложения",
+                ["Menu.Clothes"] = "Одежда",
+                ["Menu.Drink"] = "Напитки",
+                ["Menu.Fish"] = "Рыба",
+                ["Menu.Food"] = "Еда",
+                ["Menu.Sword"] = "Мечи",
             },
             ["EN"] = new Dictionary<string, string>
             {
+                ["EN"] = "EN",
+                ["RU"] = "RU",
                 ["Menu.Pay"] = "Pay",
                 ["Menu.NotEnoughCoins"] = "Not enough coins",
+                ["Menu.Custom"] = "Custom",
+                ["Menu.Animal"] = "Animals",
+                ["Menu.App"] = "Apps",
+                ["Menu.Clothes"] = "Clothes",
+                ["Menu.Drink"] = "Drinks",
+                ["Menu.Fish"] = "Fish",
+                ["Menu.Food"] = "Food",
+                ["Menu.Sword"] = "Swords",
             }
         };
     

@@ -401,7 +401,7 @@ public class PixelProcessorService
 
         var numberLength = colorGroup.Number.ToString().Length;
 
-        var scale = _cameraService.Zoom + _pixelSize.X * (numberLength == 1 ? 0.0045f : 0.003f);
+        var scale = _cameraService.Zoom + _pixelSize.X * (numberLength == 1 ? 0.004f : 0.0025f);
 
         if (pixel.CurrentColor != pixel.GrayColor && pixel.CurrentColor != _highlightColor)
         {

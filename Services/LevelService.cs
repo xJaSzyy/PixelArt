@@ -21,6 +21,7 @@ public class LevelService
     private readonly PixelProcessorService _processorService;
     private readonly ContentManager _contentManager;
     private readonly DrawService _drawService;
+    private readonly LanguageService _languageService;
 
     public List<LevelData> Levels { get; set; } = [];
     public LevelType CurrentLevelType { get; set; } = LevelType.App;
@@ -59,6 +60,7 @@ public class LevelService
         _processorService = _services.GetRequiredService<PixelProcessorService>();
         _contentManager = _services.GetRequiredService<ContentManager>();
         _drawService = _services.GetRequiredService<DrawService>();
+        _languageService = _services.GetRequiredService<LanguageService>();
         
         _lockTexture = _contentManager.Load<Texture2D>("Icons/lock");
         _checkTexture = _contentManager.Load<Texture2D>("Icons/check");
@@ -164,7 +166,7 @@ public class LevelService
         LevelData? savedLevel = null, 
         bool isLocked = false)
     {
-        var texture = ColorQuantizer.Quantize(_graphicsDevice, originalTexture, 64);
+        var texture = ColorQuantizer.Quantize(_graphicsDevice, originalTexture, 32);
         
         var level = new LevelData();
 
@@ -179,7 +181,7 @@ public class LevelService
         level.Texture = Utils.CloneTexture2D(_graphicsDevice, texture);
         level.GrayTexture = Utils.CloneTexture2D(_graphicsDevice, texture);
         level.OriginalTexture = texture;
-        level.Button = new Button(_drawService, level.Texture, Rectangle.Empty);
+        level.Button = new Button(_drawService, _languageService, level.Texture, Rectangle.Empty);
             
         Levels.Add(level);
 

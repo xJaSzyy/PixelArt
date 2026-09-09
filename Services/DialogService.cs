@@ -36,6 +36,7 @@ public class DialogService
         GraphicsDevice graphicsDevice,
         DrawService drawService,
         MouseService mouseService,
+        LanguageService languageService,
         ContentManager content)
     {
         _graphicsDevice = graphicsDevice;
@@ -49,7 +50,7 @@ public class DialogService
 
         pixelTexture.SetData([Color.White]);
 
-        _confirmButton = new Button(_drawService,
+        _confirmButton = new Button(_drawService, languageService,
             content.Load<Texture2D>("Icons/confirm"),
             new Rectangle(
                 0,
@@ -57,7 +58,7 @@ public class DialogService
                 _buttonSize,
                 _buttonSize));
 
-        _cancelButton = new Button(_drawService,
+        _cancelButton = new Button(_drawService, languageService,
             content.Load<Texture2D>("Icons/cancel"),
             new Rectangle(
                 0,

@@ -69,8 +69,6 @@ public class MenuScene : IScene
     private int _totalLevelsCount;
 
     private readonly List<Button> _typeButtons = [];
-    
-    
 
     public MenuScene(IServiceProvider services)
     {
@@ -114,16 +112,18 @@ public class MenuScene : IScene
 
         _languageButton = new Button(
             _drawService,
+            _languageService,
             null,
             Rectangle.Empty)
         {
-            Text = _languageService.CurrentLanguage.ShortName,
+            TextKey = _languageService.CurrentLanguage.ShortName,
             TextColor = Colors.Text,
             TextScale = _headerTextScale
         };
         
         _loadImageButton = new Button(
             _drawService,
+            _languageService,
             content.Load<Texture2D>("Icons/plus"),
             Rectangle.Empty);
         
@@ -131,10 +131,11 @@ public class MenuScene : IScene
         {
             _typeButtons.Add(new Button(
                 _drawService,
+                _languageService,
                 null,
                 Rectangle.Empty)
             {
-                Text = type,
+                TextKey = $"Menu.{type}",
                 TextColor = Colors.Text,
                 TextScale = 1f
             });
@@ -152,9 +153,7 @@ public class MenuScene : IScene
         {
             if (_languageButton.IsHovered)
             {
-                _languageService.ChangeLanguage();
-                ResizeLanguageButton();
-                _dialogService.SetText($"{_languageService.GetText("Menu.Pay")} ${_unlockLevelCost}?");
+                ChangeLanguage();
             }
         }
 
@@ -182,9 +181,9 @@ public class MenuScene : IScene
                 
                 foreach (var typeButton in _typeButtons)
                 {
-                    if (typeButton is { IsHovered: true, Text: not null })
+                    if (typeButton is { IsHovered: true, TextKey: not null })
                     {
-                        _levelService.CurrentLevelType = Enum.Parse<LevelType>(typeButton.Text);
+                        _levelService.CurrentLevelType = Enum.Parse<LevelType>(typeButton.TextKey);
                         _levelService.ResetScroll();
                         UpdateLevelProgress();
                         ResizeAll();
@@ -203,7 +202,7 @@ public class MenuScene : IScene
         {
             var text = _levelService.CurrentLevelType.ToString();
 
-            if (typeButton.Text != null && typeButton.Text == text)
+            if (typeButton.TextKey != null && typeButton.TextKey == text)
             {
                 typeButton.IsSelected = true;
             }
@@ -247,6 +246,13 @@ public class MenuScene : IScene
         }
         
         _mouseService.SetMouse(mouse);
+    }
+
+    private void ChangeLanguage()
+    {
+        _languageService.ChangeLanguage();
+        ResizeLanguageButton();
+        _dialogService.SetText($"{_languageService.GetText("Menu.Pay")} ${_unlockLevelCost}?");
     }
 
     public void Draw(GameTime gameTime)
@@ -332,7 +338,7 @@ public class MenuScene : IScene
     {
         var language = _languageService.CurrentLanguage.ShortName;
         
-        _languageButton.Text = language;
+        _languageButton.TextKey = language;
 
         var stringSize = _drawService.MeasureString(language, _headerTextScale);
         var textSize = new Point((int)MathF.Ceiling(stringSize.X), (int)MathF.Ceiling(stringSize.Y));

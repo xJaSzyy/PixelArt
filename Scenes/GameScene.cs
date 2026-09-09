@@ -28,6 +28,7 @@ public class GameScene : IScene
     private readonly CameraService _cameraService;
     private readonly PixelProcessorService _processorService;
     private readonly BackgroundParticleService _backgroundService;
+    private readonly LanguageService _languageService;
     private ColorButtonsService _colorButtonsService;
 
     private Button _homeButton;
@@ -64,24 +65,24 @@ public class GameScene : IScene
         _popupService = _services.GetRequiredService<PopupTextService>();
         _cameraService = _services.GetRequiredService<CameraService>();
         _backgroundService = _services.GetRequiredService<BackgroundParticleService>();
-        
+        _languageService = _services.GetRequiredService<LanguageService>();
     }
 
     public void LoadContent(ContentManager content)
     {
-        _homeButton = new Button(_drawService,content.Load<Texture2D>("Icons/home"),
+        _homeButton = new Button(_drawService, _languageService, content.Load<Texture2D>("Icons/home"),
             new Rectangle(_graphicsDevice.Viewport.Width - _buttonSize - _buttonSpacing,
                 _buttonSpacing,
                 _buttonSize,
                 _buttonSize));
         
-        _restartButton = new Button(_drawService,content.Load<Texture2D>("Icons/restart"),
+        _restartButton = new Button(_drawService, _languageService, content.Load<Texture2D>("Icons/restart"),
             new Rectangle(_buttonSpacing,
                 _buttonSpacing,
                 _buttonSize,
                 _buttonSize));
         
-        _deleteButton = new Button(_drawService,content.Load<Texture2D>("Icons/delete"),
+        _deleteButton = new Button(_drawService, _languageService, content.Load<Texture2D>("Icons/delete"),
             new Rectangle(_buttonSpacing,
                 _buttonSpacing + _buttonSize + _buttonSpacing,
                 _buttonSize,
