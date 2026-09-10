@@ -37,6 +37,7 @@ public class GameScene : IScene
 
     private const int _buttonSize = 56;
     private const int _buttonSpacing = 12;
+    private const int _moveSpeed = 4;
     
     private int _konamiIndex;
     private KeyboardState _previousKeyboardState;
@@ -127,17 +128,9 @@ public class GameScene : IScene
                 }
             }
         }
-        
-        foreach (var key in keyboard.GetPressedKeys())
-        {
-            if (!_previousKeyboardState.IsKeyDown(key))
-            {
-                CheckKonamiCode(key);
-            }
-        }
 
-        _previousKeyboardState = keyboard;
-
+        HandleMoving(keyboard);
+        HandleKonami(keyboard);
         HandlePainting(mouse, keyboard);
         HandleScroll(mouse, keyboard);
         
@@ -162,6 +155,39 @@ public class GameScene : IScene
         
         _mouseService.SetMouse(mouse);
         _keyboardService.SetState(keyboard);
+    }
+
+    private void HandleMoving(KeyboardState keyboard)
+    {
+        if (keyboard.IsKeyDown(Keys.W) || keyboard.IsKeyDown(Keys.Up))
+        {
+            _cameraService.SetPosition(_cameraService.GetPosition() + new Vector2(0, _moveSpeed));
+        }
+        if (keyboard.IsKeyDown(Keys.A) || keyboard.IsKeyDown(Keys.Left))
+        {
+            _cameraService.SetPosition(_cameraService.GetPosition() + new Vector2(_moveSpeed, 0));
+        }
+        if (keyboard.IsKeyDown(Keys.S) || keyboard.IsKeyDown(Keys.Down))
+        {
+            _cameraService.SetPosition(_cameraService.GetPosition() + new Vector2(0, -_moveSpeed));
+        }
+        if (keyboard.IsKeyDown(Keys.D) || keyboard.IsKeyDown(Keys.Right))
+        {
+            _cameraService.SetPosition(_cameraService.GetPosition() + new Vector2(-_moveSpeed, 0));
+        }
+    }
+
+    private void HandleKonami(KeyboardState keyboard)
+    {
+        foreach (var key in keyboard.GetPressedKeys())
+        {
+            if (!_previousKeyboardState.IsKeyDown(key))
+            {
+                CheckKonamiCode(key);
+            }
+        }
+
+        _previousKeyboardState = keyboard;
     }
 
     private void HandlePainting(MouseState mouse, KeyboardState keyboard)
