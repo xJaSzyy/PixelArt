@@ -37,7 +37,7 @@ public class GameScene : IScene
 
     private const int _buttonSize = 56;
     private const int _buttonSpacing = 12;
-    private const int _moveSpeed = 4;
+    private const int _moveSpeed = 6;
     
     private int _konamiIndex;
     private KeyboardState _previousKeyboardState;
