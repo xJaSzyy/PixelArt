@@ -307,4 +307,9 @@ public class LevelService
             height
         );
     }
+    
+    public void SetHeaderHeight(int headerHeight)
+    {
+        _headerHeight = headerHeight;
+    }
 }

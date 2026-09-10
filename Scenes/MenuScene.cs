@@ -65,6 +65,8 @@ public class MenuScene : IScene
     private const int _typeButtonsSidePadding = 16;
     private int _typeButtonsHeight = 32;
     
+    private int LevelsHeaderHeight => _headerHeight + _typeButtonsHeight;
+    
     private int _completedLevelsCount;
     private int _totalLevelsCount;
 
@@ -96,7 +98,7 @@ public class MenuScene : IScene
         if (_levelService.Levels.Count == 0)
         {
             var saveData = _saveService.Load();
-            _levelService.LoadLevels(saveData.Levels, _headerHeight + _typeButtonsHeight);
+            _levelService.LoadLevels(saveData.Levels, LevelsHeaderHeight);
             _playerService.AddCoins(saveData.Coins);
             _languageService.SetLanguage(saveData.Language);
         }
@@ -331,6 +333,7 @@ public class MenuScene : IScene
     {
         ResizeLanguageButton();
         ResizeTypeButtons();
+        _levelService.SetHeaderHeight(LevelsHeaderHeight);
         _levelService.Resize();
         _loadImageButton.Bounds = _levelService.GetNextLevelBounds(_buttonSize.X, _buttonSize.Y);
     }

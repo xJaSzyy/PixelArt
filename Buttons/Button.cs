@@ -58,7 +58,7 @@ public class Button(DrawService drawService, LanguageService languageService, Te
 
             if (IsSelected)
             {
-                drawService.DrawRectangle(spriteBatch, new Rectangle(new Point(rect.X, rect.Y + rect.Height), new Point(rect.Width, 2)), textColor);
+                drawService.DrawRectangle(spriteBatch, new Rectangle(new Point(rect.X, rect.Y + rect.Height), new Point(rect.Width, 2)), Colors.Yellow);
             }
         }
     }
