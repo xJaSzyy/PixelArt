@@ -26,7 +26,7 @@ public class LevelService
     public List<LevelData> Levels { get; set; } = [];
     public LevelType CurrentLevelType { get; set; } = LevelType.Animal;
     
-    private const int _unlockedLevelsCount = 3;
+    private const int _unlockedLevelsCount = 4;
     
     private const int _buttonSize = 128;
     private const int _iconSize = 40;
@@ -45,12 +45,12 @@ public class LevelService
     private readonly Dictionary<LevelType, (string Folder, int Count)> _levelSets = new()
     {
         [LevelType.Animal] = ("Images/Animal", 9),
-        [LevelType.App] = ("Images/App", 16),
-        [LevelType.Clothes] = ("Images/Clothes", 16),
-        [LevelType.Drink] = ("Images/Drink", 16),
+        [LevelType.App] = ("Images/App", 32),
+        [LevelType.Clothes] = ("Images/Clothes", 32),
+        [LevelType.Drink] = ("Images/Drink", 28),
         [LevelType.Fish] = ("Images/Fish", 16),
-        [LevelType.Food] = ("Images/Food", 12),
-        [LevelType.Sword] = ("Images/Sword", 15)
+        [LevelType.Food] = ("Images/Food", 24),
+        [LevelType.Sword] = ("Images/Sword", 20)
     };
 
     public LevelService(IServiceProvider services)
@@ -205,7 +205,7 @@ public class LevelService
 
         originalTexture.SaveAsPng(stream, originalTexture.Width, originalTexture.Height);
     }
-    
+
     private void LayoutButtons()
     {
         var gridOffsetX = GetGridOffsetX();

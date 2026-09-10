@@ -63,7 +63,7 @@ public class MenuScene : IScene
     private const int _typeButtonHorizontalPadding = 8;
     private const int _typeButtonsRowSpacing = 4;
     private const int _typeButtonsSidePadding = 16;
-    private int _typeButtonsHeight = 32;
+    private int _typeButtonsHeight;
     
     private int LevelsHeaderHeight => _headerHeight + _typeButtonsHeight;
     
