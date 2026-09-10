@@ -129,10 +129,14 @@ public class GameScene : IScene
             }
         }
 
-        HandleMoving(keyboard);
+        if (!_processorService.ReplayLaunched)
+        {
+            HandleMoving(keyboard);
+            HandleScroll(mouse, keyboard);
+        }
+
         HandleKonami(keyboard);
         HandlePainting(mouse, keyboard);
-        HandleScroll(mouse, keyboard);
         
         if (!ColoringIsCompleted)
         {

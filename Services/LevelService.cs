@@ -158,6 +158,8 @@ public class LevelService
             
             AddLevel(originalTexture, savedLevel.Id, savedLevel.Type, savedLevel);
         }
+
+        CurrentLevelType = Levels.FirstOrDefault(x => !x.IsFinished)?.Type ?? LevelType.Custom;
     }
 
     private void AddLevel(Texture2D originalTexture, 
