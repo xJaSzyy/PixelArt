@@ -24,7 +24,7 @@ public class LevelService
     private readonly LanguageService _languageService;
 
     public List<LevelData> Levels { get; set; } = [];
-    public LevelType CurrentLevelType { get; set; } = LevelType.App;
+    public LevelType CurrentLevelType { get; set; } = LevelType.Animal;
     
     private const int _unlockedLevelsCount = 3;
     

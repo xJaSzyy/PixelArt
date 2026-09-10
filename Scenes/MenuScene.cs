@@ -200,9 +200,9 @@ public class MenuScene : IScene
         
         foreach (var typeButton in _typeButtons)
         {
-            var text = _levelService.CurrentLevelType.ToString();
+            var type = _levelService.CurrentLevelType.ToString();
 
-            if (typeButton.TextKey != null && typeButton.TextKey == text)
+            if (typeButton.TextKey != null && typeButton.TextKey == $"Menu.{type}")
             {
                 typeButton.IsSelected = true;
             }
