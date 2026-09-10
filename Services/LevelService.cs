@@ -168,7 +168,8 @@ public class LevelService
         LevelData? savedLevel = null, 
         bool isLocked = false)
     {
-        var texture = ColorQuantizer.Quantize(_graphicsDevice, originalTexture, 32);
+        var squareTexture = ColorQuantizer.CropToSquare(_graphicsDevice, originalTexture);
+        var texture = ColorQuantizer.Quantize(_graphicsDevice, squareTexture, 32);
         
         var level = new LevelData();
 

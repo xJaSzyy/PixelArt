@@ -10,6 +10,40 @@ public static class ColorQuantizer
     private const int _defaultSampleSize = 20_000;
     private const int _defaultIterations = 8;
 
+    public static Texture2D CropToSquare(GraphicsDevice graphicsDevice, Texture2D source)
+    {
+        var size = Math.Min(source.Width, source.Height);
+
+        var x = (source.Width - size) / 2;
+        var y = (source.Height - size) / 2;
+
+        var sourcePixels = new Color[source.Width * source.Height];
+        source.GetData(sourcePixels);
+
+        var croppedPixels = new Color[size * size];
+
+        for (var row = 0; row < size; row++)
+        {
+            Array.Copy(
+                sourcePixels,
+                (y + row) * source.Width + x,
+                croppedPixels,
+                row * size,
+                size);
+        }
+
+        var texture = new Texture2D(
+            graphicsDevice,
+            size,
+            size,
+            false,
+            SurfaceFormat.Color);
+
+        texture.SetData(croppedPixels);
+
+        return texture;
+    }
+    
     public static Texture2D Quantize(GraphicsDevice graphicsDevice, Texture2D source, int colorCount, int sampleSize = _defaultSampleSize, int iterations = _defaultIterations)
     {
         if (colorCount < 2)
