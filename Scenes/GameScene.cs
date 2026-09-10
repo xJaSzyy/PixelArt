@@ -37,7 +37,7 @@ public class GameScene : IScene
 
     private const int _buttonSize = 56;
     private const int _buttonSpacing = 12;
-    private const int _moveSpeed = 6;
+    private const int _moveSpeed = 10;
     
     private int _konamiIndex;
     private KeyboardState _previousKeyboardState;
@@ -159,21 +159,23 @@ public class GameScene : IScene
 
     private void HandleMoving(KeyboardState keyboard)
     {
+        var speed = _moveSpeed * _cameraService.Zoom;
+        
         if (keyboard.IsKeyDown(Keys.W) || keyboard.IsKeyDown(Keys.Up))
         {
-            _cameraService.SetPosition(_cameraService.GetPosition() + new Vector2(0, _moveSpeed));
+            _cameraService.SetPosition(_cameraService.GetPosition() + new Vector2(0, speed));
         }
         if (keyboard.IsKeyDown(Keys.A) || keyboard.IsKeyDown(Keys.Left))
         {
-            _cameraService.SetPosition(_cameraService.GetPosition() + new Vector2(_moveSpeed, 0));
+            _cameraService.SetPosition(_cameraService.GetPosition() + new Vector2(speed, 0));
         }
         if (keyboard.IsKeyDown(Keys.S) || keyboard.IsKeyDown(Keys.Down))
         {
-            _cameraService.SetPosition(_cameraService.GetPosition() + new Vector2(0, -_moveSpeed));
+            _cameraService.SetPosition(_cameraService.GetPosition() + new Vector2(0, -speed));
         }
         if (keyboard.IsKeyDown(Keys.D) || keyboard.IsKeyDown(Keys.Right))
         {
-            _cameraService.SetPosition(_cameraService.GetPosition() + new Vector2(-_moveSpeed, 0));
+            _cameraService.SetPosition(_cameraService.GetPosition() + new Vector2(-speed, 0));
         }
     }
 

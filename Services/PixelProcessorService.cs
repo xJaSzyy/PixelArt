@@ -28,9 +28,8 @@ public class PixelProcessorService
     private readonly ParticleService _particleService;
     private readonly CameraService _cameraService;
     private readonly SoundService _soundService;
-    private readonly GraphicsDevice _graphicsDevice;
-    
-    private const float _minNumberPixelSize = 14f;
+
+    private float _minNumberPixelSize = 14f;
     private const float _replayDuration = 1.25f;
     
     private readonly Color _glowColor = new(171, 171, 171, 200);
@@ -40,12 +39,13 @@ public class PixelProcessorService
         _particleService = particleService;
         _cameraService = cameraService;
         _soundService = soundService;
-        _graphicsDevice = graphicsDevice;
     }
 
     public void SetLevel(LevelData levelData)
     {
         CurrentLevel = levelData;
+        
+        _minNumberPixelSize = CurrentLevel.Texture.Width / 6f;
         
         var size = CurrentLevel.Texture.Width * CurrentLevel.Texture.Height;
         _texturePixels = new Color[size];
@@ -349,7 +349,7 @@ public class PixelProcessorService
 
         var screenPixelWidth = _pixelSize.X * _cameraService.Zoom;
         var screenPixelHeight = _pixelSize.Y * _cameraService.Zoom;
-
+        
         if (screenPixelWidth < _minNumberPixelSize || screenPixelHeight < _minNumberPixelSize)
         {
             return;
@@ -391,13 +391,15 @@ public class PixelProcessorService
         {
             return;
         }
-
+        
+        var multiplier = 2.25f - (32f / CurrentLevel.Texture.Width) * 0.25f;
+        
         var color = Color.Lerp(
             Color.Transparent,
             Colors.IsDark(pixel.CurrentColor)
                 ? Color.White
                 : Color.Black,
-            Utils.Remap(_cameraService.Zoom, _cameraService.MinZoom, _cameraService.MinZoom * 2f, 0f, 1f));
+            Utils.Remap(_cameraService.Zoom, _cameraService.MinZoom, _cameraService.MinZoom * multiplier, 0f, 1f));
 
         var numberLength = colorGroup.Number.ToString().Length;
 
