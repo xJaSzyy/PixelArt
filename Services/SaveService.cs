@@ -33,7 +33,16 @@ public class SaveService
     {
         if (!File.Exists(_path))
         {
-            return new SaveData();
+            return new SaveData
+            {
+                Coins = 0,
+                Levels = [],
+                Language = new Language
+                {
+                    Name = "English",
+                    ShortName = "EN"
+                }
+            };
         }
 
         using var file = File.OpenRead(_path);

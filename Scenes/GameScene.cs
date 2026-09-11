@@ -6,6 +6,7 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using PixelArt.Buttons;
+using PixelArt.Enums;
 using PixelArt.Interfaces;
 using PixelArt.Models;
 using PixelArt.Services;
@@ -21,18 +22,36 @@ public class GameScene : IScene
     private readonly GraphicsDevice _graphicsDevice;
     private readonly SpriteBatch _spriteBatch;
     private readonly MouseService _mouseService;
+    private readonly KeyboardService _keyboardService;
     private readonly DrawService _drawService;
     private readonly PopupTextService _popupService;
     private readonly CameraService _cameraService;
     private readonly PixelProcessorService _processorService;
     private readonly BackgroundParticleService _backgroundService;
+    private readonly LanguageService _languageService;
     private ColorButtonsService _colorButtonsService;
 
     private Button _homeButton;
     private Button _restartButton;
+    private Button _deleteButton;
 
     private const int _buttonSize = 56;
     private const int _buttonSpacing = 12;
+    private const int _moveSpeed = 10;
+    
+    private int _konamiIndex;
+    private KeyboardState _previousKeyboardState;
+    private readonly Keys[] _konamiCode =
+    [
+        Keys.Up,
+        Keys.Up,
+        Keys.Down,
+        Keys.Down,
+        Keys.Left,
+        Keys.Right,
+        Keys.Left,
+        Keys.Right
+    ];
     
     public GameScene(IServiceProvider services)
     {
@@ -42,23 +61,31 @@ public class GameScene : IScene
         _graphicsDevice = _services.GetRequiredService<GraphicsDevice>();
         _spriteBatch = new SpriteBatch(_graphicsDevice);
         _mouseService = _services.GetRequiredService<MouseService>();
+        _keyboardService = _services.GetRequiredService<KeyboardService>();
         _drawService = _services.GetRequiredService<DrawService>();
         _popupService = _services.GetRequiredService<PopupTextService>();
         _cameraService = _services.GetRequiredService<CameraService>();
         _backgroundService = _services.GetRequiredService<BackgroundParticleService>();
+        _languageService = _services.GetRequiredService<LanguageService>();
     }
 
     public void LoadContent(ContentManager content)
     {
-        _homeButton = new Button(_drawService,content.Load<Texture2D>("Icons/home"),
+        _homeButton = new Button(_drawService, _languageService, content.Load<Texture2D>("Icons/home"),
             new Rectangle(_graphicsDevice.Viewport.Width - _buttonSize - _buttonSpacing,
                 _buttonSpacing,
                 _buttonSize,
                 _buttonSize));
         
-        _restartButton = new Button(_drawService,content.Load<Texture2D>("Icons/restart"),
+        _restartButton = new Button(_drawService, _languageService, content.Load<Texture2D>("Icons/restart"),
             new Rectangle(_buttonSpacing,
                 _buttonSpacing,
+                _buttonSize,
+                _buttonSize));
+        
+        _deleteButton = new Button(_drawService, _languageService, content.Load<Texture2D>("Icons/delete"),
+            new Rectangle(_buttonSpacing,
+                _buttonSpacing + _buttonSize + _buttonSpacing,
                 _buttonSize,
                 _buttonSize));
 
@@ -76,7 +103,7 @@ public class GameScene : IScene
         var mouse = Mouse.GetState();
         var keyboard = Keyboard.GetState();
 
-        var spacePressed = keyboard.IsKeyDown(Keys.Space);
+        var spacePressed = _keyboardService.IsKeyPressed(keyboard, Keys.Space);
         
         if (_mouseService.IsLeftMouseButtonClicked(mouse) || spacePressed)
         {
@@ -94,11 +121,22 @@ public class GameScene : IScene
                 {
                     Restart();
                 }
+                else if (_deleteButton.IsHovered && _processorService.CurrentLevel.Type == LevelType.Custom)
+                {
+                    _services.GetRequiredService<LevelService>().Levels.Remove(_processorService.CurrentLevel);
+                    _services.GetRequiredService<SceneService>().SetScene<MenuScene>();
+                }
             }
         }
 
+        if (!_processorService.ReplayLaunched)
+        {
+            HandleMoving(keyboard);
+            HandleScroll(mouse, keyboard);
+        }
+
+        HandleKonami(keyboard);
         HandlePainting(mouse, keyboard);
-        HandleScroll(mouse, keyboard);
         
         if (!ColoringIsCompleted)
         {
@@ -113,13 +151,54 @@ public class GameScene : IScene
         _restartButton.Update(mouse);
         _popupService.Update(gameTime);
         _backgroundService.Update(gameTime);
+
+        if (_processorService.CurrentLevel.Type == LevelType.Custom)
+        {
+            _deleteButton.Update(mouse);
+        }
         
         _mouseService.SetMouse(mouse);
+        _keyboardService.SetState(keyboard);
+    }
+
+    private void HandleMoving(KeyboardState keyboard)
+    {
+        var speed = _moveSpeed * _cameraService.Zoom;
+        
+        if (keyboard.IsKeyDown(Keys.W) || keyboard.IsKeyDown(Keys.Up))
+        {
+            _cameraService.SetPosition(_cameraService.GetPosition() + new Vector2(0, speed));
+        }
+        if (keyboard.IsKeyDown(Keys.A) || keyboard.IsKeyDown(Keys.Left))
+        {
+            _cameraService.SetPosition(_cameraService.GetPosition() + new Vector2(speed, 0));
+        }
+        if (keyboard.IsKeyDown(Keys.S) || keyboard.IsKeyDown(Keys.Down))
+        {
+            _cameraService.SetPosition(_cameraService.GetPosition() + new Vector2(0, -speed));
+        }
+        if (keyboard.IsKeyDown(Keys.D) || keyboard.IsKeyDown(Keys.Right))
+        {
+            _cameraService.SetPosition(_cameraService.GetPosition() + new Vector2(-speed, 0));
+        }
+    }
+
+    private void HandleKonami(KeyboardState keyboard)
+    {
+        foreach (var key in keyboard.GetPressedKeys())
+        {
+            if (!_previousKeyboardState.IsKeyDown(key))
+            {
+                CheckKonamiCode(key);
+            }
+        }
+
+        _previousKeyboardState = keyboard;
     }
 
     private void HandlePainting(MouseState mouse, KeyboardState keyboard)
     {
-        if ((_mouseService.IsLeftMouseButtonPressed(mouse) || keyboard.IsKeyDown(Keys.Space)) && 
+        if ((_mouseService.IsLeftMouseButtonPressed(mouse) || _keyboardService.IsKeyPressed(keyboard, Keys.Space)) && 
             !IsMouseOverUI() && 
             Utils.Remap(_cameraService.Zoom, _cameraService.MinZoom, _cameraService.MinZoom * 2, 0f, 1f) > 0.01f)
         {
@@ -150,7 +229,7 @@ public class GameScene : IScene
         {
             var scrollDelta = _mouseService.GetScrollDelta(mouse);
             
-            if (keyboard.IsKeyDown(Keys.LeftControl))
+            if (_keyboardService.IsKeyPressed(keyboard, Keys.LeftControl))
             {
                 _cameraService.ChangeZoom(mouse, scrollDelta);
             }
@@ -220,6 +299,11 @@ public class GameScene : IScene
         {
             _homeButton.Draw(_spriteBatch, Colors.Text);
             _restartButton.Draw(_spriteBatch, Colors.Text);
+            
+            if (_processorService.CurrentLevel.Type == LevelType.Custom)
+            {
+                _deleteButton.Draw(_spriteBatch, Colors.Text);
+            }
         }
         
         _popupService.Draw(_spriteBatch);
@@ -244,13 +328,15 @@ public class GameScene : IScene
         var saveService = _services.GetRequiredService<SaveService>();
         var levelService = _services.GetRequiredService<LevelService>();
         var playerService = _services.GetRequiredService<PlayerService>();
+        var languageService = _services.GetRequiredService<LanguageService>();
 
         _processorService.ClearHighlight();
         
         saveService.Save(new SaveData
         {
             Coins = playerService.Coins,
-            Levels = levelService.Levels
+            Levels = levelService.Levels,
+            Language = languageService.CurrentLanguage
         });
     }
     
@@ -260,6 +346,8 @@ public class GameScene : IScene
         
         ColoringIsCompleted = false;
         _colorButtonsService.SelectButton(0);
+
+        ImageToCenter();
     }
 
     private bool IsMouseOverUI()
@@ -269,7 +357,7 @@ public class GameScene : IScene
             return true;
         }
 
-        if (_homeButton.IsHovered || _restartButton.IsHovered)
+        if (_homeButton.IsHovered || _restartButton.IsHovered || _deleteButton.IsHovered)
         {
             return true;
         }
@@ -279,9 +367,18 @@ public class GameScene : IScene
 
     private void ImageToCenter()
     {
+        var level = _processorService.CurrentLevel;
+
+        const float baseTextureSize = 32f;
+        const float baseZoom = 1f;
+
+        var textureSize = Math.Max(level.Texture.Width, level.Texture.Height);
+        var zoom = baseZoom * baseTextureSize / textureSize;
+
+        _cameraService.SetZoomBounds(zoom * 0.2f, zoom * 1.8f, zoom * 0.05f);
+        
         _cameraService.Zoom = _cameraService.MinZoom;
 
-        var level = _processorService.CurrentLevel;
         var bounds = level.Button.Bounds;
         
         bounds.Size *= level.Texture.Width / 2;
@@ -296,5 +393,24 @@ public class GameScene : IScene
             bounds.X + _graphicsDevice.Viewport.Width * 0.5f - imageBounds.Width * 0.5f,
             bounds.X + _graphicsDevice.Viewport.Height * 0.5f - imageBounds.Height * 0.5f
         ));
+    }
+    
+    private void CheckKonamiCode(Keys key)
+    {
+        if (key == _konamiCode[_konamiIndex])
+        {
+            _konamiIndex++;
+
+            if (_konamiIndex == _konamiCode.Length)
+            {
+                _konamiIndex = 0;
+
+                _processorService.BrushRadius = _processorService.BrushRadius == 0 ? 1 : 0;
+            }
+        }
+        else
+        {
+            _konamiIndex = 0;
+        }
     }
 }

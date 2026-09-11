@@ -12,154 +12,236 @@ public class PixelProcessorService
 {
     public LevelData CurrentLevel { get; private set; }
     public bool ReplayLaunched { get; private set; }
-    
+    public int BrushRadius { get; set; }
+
     private Vector2 _pixelSize;
-    
     private int _historyIndex;
-    private const float _replayDuration = 1.25f;
     private float _pixelsAccumulator;
-    
     private Point? _lastPaintPixel;
     private Color[] _texturePixels;
+    private PixelData[] _pixelLookup;
     private readonly Color _highlightColor = new(72, 72, 72);
     private readonly HashSet<int> _highlightedPixels = [];
-    private Dictionary<int, PixelData> _pixelsByIndex;
+    private bool _textureDirty;
+    private readonly Dictionary<Color, PixelColorGroup> _groupsByColor = [];
     
     private readonly ParticleService _particleService;
     private readonly CameraService _cameraService;
     private readonly SoundService _soundService;
 
-    public PixelProcessorService(ParticleService particleService, CameraService cameraService, SoundService soundService)
+    private float _minNumberPixelSize = 14f;
+    private const float _replayDuration = 1.25f;
+    
+    private readonly Color _glowColor = new(171, 171, 171, 200);
+    
+    public PixelProcessorService(ParticleService particleService, CameraService cameraService, SoundService soundService, GraphicsDevice graphicsDevice)
     {
         _particleService = particleService;
         _cameraService = cameraService;
         _soundService = soundService;
     }
-    
+
     public void SetLevel(LevelData levelData)
+    {
+        CurrentLevel = levelData;
+        
+        _minNumberPixelSize = CurrentLevel.Texture.Width / 6f;
+        
+        var size = CurrentLevel.Texture.Width * CurrentLevel.Texture.Height;
+        _texturePixels = new Color[size];
+        CurrentLevel.Texture.GetData(_texturePixels);
+
+        _pixelLookup = new PixelData[size];
+
+        foreach (var pixel in CurrentLevel.Pixels)
         {
-            CurrentLevel = levelData;
-            
-            _pixelsByIndex = CurrentLevel.Pixels
-                .ToDictionary(x => x.Index);
-            
-            _texturePixels = new Color[CurrentLevel.Texture.Width * CurrentLevel.Texture.Height];
-            CurrentLevel.Texture.GetData(_texturePixels);
+            if (pixel.Index >= 0 && pixel.Index < _pixelLookup.Length)
+            {
+                _pixelLookup[pixel.Index] = pixel;
+            }
         }
-    
+
+        _groupsByColor.Clear();
+
+        foreach (var group in CurrentLevel.ColorGroups)
+        {
+            _groupsByColor[group.OriginalColor] = group;
+        }
+
+        _highlightedPixels.Clear();
+        _lastPaintPixel = null;
+        _textureDirty = false;
+    }
+
     public void ProcessImage()
+    {
+        if (CurrentLevel.Pixels.Count == 0)
         {
-            if (CurrentLevel.ColorGroups.Count == 0 && CurrentLevel.Pixels.Count == 0)
-            {
-                for (var i = 0; i < _texturePixels.Length; i++)
-                {
-                    var original = _texturePixels[i];
-    
-                    if (original.A != 255)
-                    {
-                        continue;
-                    }
-    
-                    if (CurrentLevel.ColorGroups.All(x => x.OriginalColor != original))
-                    {
-                        CurrentLevel.ColorGroups.Add(new PixelColorGroup
-                        {
-                            Number = 0,
-                            OriginalColor = original,
-                            Pixels = []
-                        });
-                    }
-    
-                    var point = new Point(
-                        i % CurrentLevel.Texture.Width,
-                        i / CurrentLevel.Texture.Width
-                    );
-    
-                    var pixel = new PixelData
-                    {
-                        Index = i,
-                        TexturePositionX = point.X,
-                        TexturePositionY = point.Y,
-                        OriginalColor = original,
-                        CurrentColor = Color.White
-                    };
-    
-                    CurrentLevel.Pixels.Add(pixel);
-                    CurrentLevel.ColorGroups.First(x => x.OriginalColor == original).Pixels.Add(pixel);
-                }
-                
-                var sortedGroups = CurrentLevel.ColorGroups
-                    .OrderByDescending(x => x.Number)
-                    .ToList();
-            
-                var total = sortedGroups.Count;
-    
-                for (var i = 0; i < total; i++)
-                {
-                    var gray = GenerateGrayValue(i, total);
-    
-                    var previewColor = new Color(gray,
-                        gray,
-                        gray);
-    
-                    var group = sortedGroups[i];
-    
-                    group.Number = i + 1;
-    
-                    foreach (var pixel in group.Pixels)
-                    {
-                        pixel.CurrentColor = previewColor;
-                        pixel.GrayColor = previewColor;
-    
-                        var index = pixel.TexturePositionY * CurrentLevel.Texture.Width + pixel.TexturePositionX;
-                        _texturePixels[index] = previewColor;
-                    }
-                }
-            }
-            else
-            {
-                CurrentLevel.ColorGroups.ForEach(x => x.Pixels.Clear());
-                foreach (var pixel in CurrentLevel.Pixels)
-                {
-                    var index = pixel.TexturePositionY * CurrentLevel.Texture.Width + pixel.TexturePositionX;
-                    _texturePixels[index] = pixel.CurrentColor;
-                    CurrentLevel.ColorGroups.First(x => x.OriginalColor == pixel.OriginalColor).Pixels.Add(pixel);
-                }
-            }
-    
-            UpdateTexture();
+            ProcessNewImage();
         }
-    
+        else
+        {
+            RebuildExistingImage();
+        }
+
+        _textureDirty = true;
+        UpdateTexture();
+    }
+
+    private void ProcessNewImage()
+    {
+        CurrentLevel.ColorGroups.Clear();
+        CurrentLevel.Pixels.Clear();
+
+        _groupsByColor.Clear();
+
+        var width = CurrentLevel.Texture.Width;
+        var height = CurrentLevel.Texture.Height;
+
+        _pixelLookup = new PixelData[width * height];
+
+        for (var i = 0; i < _texturePixels.Length; i++)
+        {
+            var original = _texturePixels[i];
+
+            if (original.A != 255)
+            {
+                continue;
+            }
+
+            if (!_groupsByColor.TryGetValue(original, out var group))
+            {
+                group = new PixelColorGroup
+                {
+                    Number = 0,
+                    OriginalColor = original,
+                    Pixels = []
+                };
+
+                _groupsByColor.Add(original, group);
+                CurrentLevel.ColorGroups.Add(group);
+            }
+
+            var x = i % width;
+            var y = i / width;
+
+            var pixel = new PixelData
+            {
+                Index = i,
+
+                TexturePositionX = x,
+                TexturePositionY = y,
+
+                OriginalColor = original,
+
+                CurrentColor = Color.White
+            };
+
+            CurrentLevel.Pixels.Add(pixel);
+
+            _pixelLookup[i] = pixel;
+
+            group.Pixels.Add(pixel);
+        }
+
+        var total = CurrentLevel.ColorGroups.Count;
+
+        CurrentLevel.ColorGroups = CurrentLevel.ColorGroups
+            .OrderByDescending(x =>
+                0.2126 * x.OriginalColor.R +
+                0.7152 * x.OriginalColor.G +
+                0.0722 * x.OriginalColor.B).ToList();
+
+        for (var i = 0; i < total; i++)
+        {
+            var group = CurrentLevel.ColorGroups[i];
+
+            var grayColor = Utils.GenerateGrayColor(i, total);
+
+            group.Number = i + 1;
+
+            foreach (var pixel in group.Pixels)
+            {
+                pixel.CurrentColor = grayColor;
+                pixel.GrayColor = grayColor;
+
+                _texturePixels[pixel.Index] = grayColor;
+            }
+        }
+        
+        CurrentLevel.GrayTexture.SetData(_texturePixels);
+    }
+
+    private void RebuildExistingImage()
+    {
+        _groupsByColor.Clear();
+
+        foreach (var group in CurrentLevel.ColorGroups)
+        {
+            group.Pixels.Clear();
+            _groupsByColor[group.OriginalColor] = group;
+        }
+
+        foreach (var pixel in CurrentLevel.Pixels)
+        {
+            _pixelLookup[pixel.Index] = pixel;
+            _texturePixels[pixel.Index] = pixel.CurrentColor;
+
+            if (_groupsByColor.TryGetValue(pixel.OriginalColor, out var group))
+            {
+                group.Pixels.Add(pixel);
+            }
+        }
+
+        var size = CurrentLevel.Texture.Width * CurrentLevel.Texture.Height;
+        var texturePixels = new Color[size];
+        
+        foreach (var pixel in CurrentLevel.Pixels)
+        {
+            texturePixels[pixel.Index] = pixel.GrayColor;
+        }
+        
+        CurrentLevel.GrayTexture.SetData(texturePixels);
+    }
+
     public void Update(GameTime gameTime)
     {
         _particleService.Update(gameTime);
-        
+
         if (!ReplayLaunched)
         {
             return;
         }
 
-        if (CurrentLevel.History.Count == 0)
+        var historyCount = CurrentLevel.History.Count;
+
+        if (historyCount == 0)
         {
             ReplayLaunched = false;
             return;
         }
 
-        var pixelsPerSecond = CurrentLevel.History.Count / _replayDuration;
+        var pixelsPerSecond = historyCount / _replayDuration;
 
         _pixelsAccumulator += pixelsPerSecond * (float)gameTime.ElapsedGameTime.TotalSeconds;
 
         var changed = false;
 
-        while (_pixelsAccumulator >= 1f && _historyIndex < CurrentLevel.History.Count)
+        while (_pixelsAccumulator >= 1f && _historyIndex < historyCount)
         {
             var pixelIndex = CurrentLevel.History[_historyIndex++];
-            var pixel = CurrentLevel.Pixels.FirstOrDefault(x => x.Index == pixelIndex);
-            if (pixel != null)
+
+            if (pixelIndex >= 0 && pixelIndex < _pixelLookup.Length)
             {
-                pixel.CurrentColor = pixel.OriginalColor;
-                _texturePixels[pixelIndex] = pixel.OriginalColor;
-                changed = true;
+                var pixel = _pixelLookup[pixelIndex];
+
+                if (pixel != null)
+                {
+                    pixel.CurrentColor = pixel.OriginalColor;
+                    _texturePixels[pixelIndex] = pixel.OriginalColor;
+
+                    changed = true;
+                }
             }
 
             _pixelsAccumulator -= 1f;
@@ -167,73 +249,175 @@ public class PixelProcessorService
 
         if (changed)
         {
-            UpdateTexture();
+            _textureDirty = true;
         }
 
-        if (_historyIndex >= CurrentLevel.History.Count)
+        if (_historyIndex >= historyCount)
         {
             ReplayLaunched = false;
         }
+
+        UpdateTexture();
     }
-    
+
     public void Draw(SpriteBatch spriteBatch, DrawService drawService)
     {
         UpdateTexture();
-        
+
         var drawBounds = GetImageBounds();
+
+        DrawGlow(spriteBatch, drawBounds);
 
         spriteBatch.Draw(
             CurrentLevel.Texture,
             drawBounds,
-            Color.White
-        );
-        
-        DrawPixelNumbers(drawBounds, spriteBatch, drawService);
-        
+            Color.White);
+
+        DrawPixelNumbers(
+            drawBounds,
+            spriteBatch,
+            drawService);
+
         _particleService.Draw(spriteBatch);
     }
     
+    private void DrawGlow(SpriteBatch spriteBatch, Rectangle bounds)
+    {
+        const float glowSize = 0.5f;
+        const float step = 0.25f;
+
+        var position = new Vector2(bounds.X, bounds.Y);
+        var scale = new Vector2((float)bounds.Width / CurrentLevel.GrayTexture.Width,
+            (float)bounds.Height / CurrentLevel.GrayTexture.Height);
+
+        for (var i = glowSize; i > 0f; i -= step)
+        {
+            var offset = i * 2f;
+
+            spriteBatch.Draw(
+                CurrentLevel.GrayTexture,
+                position + new Vector2(-offset, 0),
+                null,
+                _glowColor,
+                0f,
+                Vector2.Zero,
+                scale,
+                SpriteEffects.None,
+                0f);
+
+            spriteBatch.Draw(
+                CurrentLevel.GrayTexture,
+                position + new Vector2(offset, 0),
+                null,
+                _glowColor,
+                0f,
+                Vector2.Zero,
+                scale,
+                SpriteEffects.None,
+                0f);
+
+            spriteBatch.Draw(
+                CurrentLevel.GrayTexture,
+                position + new Vector2(0, -offset),
+                null,
+                _glowColor,
+                0f,
+                Vector2.Zero,
+                scale,
+                SpriteEffects.None,
+                0f);
+
+            spriteBatch.Draw(
+                CurrentLevel.GrayTexture,
+                position + new Vector2(0, offset),
+                null,
+                _glowColor,
+                0f,
+                Vector2.Zero,
+                scale,
+                SpriteEffects.None,
+                0f);
+        }
+    }
+
     private void DrawPixelNumbers(Rectangle bounds, SpriteBatch spriteBatch, DrawService drawService)
     {
-        foreach (var colorGroup in CurrentLevel.ColorGroups)
+        if (CurrentLevel.Pixels.Count == 0)
         {
-            foreach (var pixel in colorGroup.Pixels.Where(pixel => !pixel.IsFinished))
+            return;
+        }
+
+        var screenPixelWidth = _pixelSize.X * _cameraService.Zoom;
+        var screenPixelHeight = _pixelSize.Y * _cameraService.Zoom;
+        
+        if (screenPixelWidth < _minNumberPixelSize || screenPixelHeight < _minNumberPixelSize)
+        {
+            return;
+        }
+
+        var width = CurrentLevel.Texture.Width;
+        var height = CurrentLevel.Texture.Height;
+
+        var minX = Math.Max(0, (int)(-bounds.X / screenPixelWidth));
+        var minY = Math.Max(0, (int)(-bounds.Y / screenPixelHeight));
+        var maxX = Math.Min(width - 1, (int)((GetGraphicsWidth() - bounds.X) / screenPixelWidth) + 1);
+        var maxY = Math.Min(height - 1, (int)((GetGraphicsHeight() - bounds.Y) / screenPixelHeight) + 1);
+
+        minX = Math.Max(minX, (int)((_cameraService.GetPosition().X - bounds.X) / screenPixelWidth));
+
+        for (var y = minY; y <= maxY; y++)
+        {
+            var rowStart = y * width;
+
+            for (var x = minX; x <= maxX; x++)
             {
-                var color = Color.Lerp(
-                    Color.Transparent,
-                    Colors.IsDark(pixel.CurrentColor) ? Color.White : Color.Black,
-                    Utils.Remap(_cameraService.Zoom, _cameraService.MinZoom, _cameraService.MinZoom * 2f, 0f, 1f)
-                );
-                var scale = _cameraService.Zoom + _pixelSize.X * (colorGroup.Number.ToString().Length == 1 ? 0.0045f : 0.003f);
-                
-                drawService.DrawString(
-                    spriteBatch,
-                    colorGroup.Number.ToString(),
-                    pixel.GetScreenPosition(bounds, CurrentLevel.Texture.Width, CurrentLevel.Texture.Height),
-                    color,
-                    scale
-                );
+                var index = rowStart + x;
+
+                var pixel = _pixelLookup[index];
+
+                if (pixel == null || pixel.IsFinished)
+                {
+                    continue;
+                }
+
+                DrawPixelNumber(pixel, bounds, spriteBatch, drawService);
             }
         }
     }
-    
-    private static byte GenerateGrayValue(int index, int total)
+
+    private void DrawPixelNumber(PixelData pixel, Rectangle bounds, SpriteBatch spriteBatch, DrawService drawService)
     {
-        if (total <= 1)
+        if (!_groupsByColor.TryGetValue(pixel.OriginalColor, out var colorGroup))
         {
-            return 220;
+            return;
         }
         
-        const int min = 150;
-        const int max = 230;
+        var multiplier = 2.25f - (32f / CurrentLevel.Texture.Width) * 0.25f;
         
-        var value = max -
-                    index * (max - min) /
-                    (total - 1);
-        
-        return (byte)value;
+        var color = Color.Lerp(
+            Color.Transparent,
+            Colors.IsDark(pixel.CurrentColor)
+                ? Color.White
+                : Color.Black,
+            Utils.Remap(_cameraService.Zoom, _cameraService.MinZoom, _cameraService.MinZoom * multiplier, 0f, 1f));
+
+        var numberLength = colorGroup.Number.ToString().Length;
+
+        var scale = _cameraService.Zoom + _pixelSize.X * (numberLength == 1 ? 0.004f : 0.0025f);
+
+        if (pixel.CurrentColor != pixel.GrayColor && pixel.CurrentColor != _highlightColor)
+        {
+            color *= .6f;
+        }
+
+        drawService.DrawString(
+            spriteBatch, 
+            colorGroup.Number.ToString(), 
+            pixel.GetScreenPosition(bounds, CurrentLevel.Texture.Width, CurrentLevel.Texture.Height), 
+            color, 
+            scale);
     }
-    
+
     public void PaintAtMousePosition(MouseState mouse, Color color)
     {
         var bounds = GetImageBounds();
@@ -244,114 +428,117 @@ public class PixelProcessorService
             return;
         }
 
-        var x = (int)((mouse.X - bounds.X) / (_pixelSize.X * _cameraService.Zoom));
-        var y = (int)((mouse.Y - bounds.Y) / (_pixelSize.Y * _cameraService.Zoom));
+        var screenPixelWidth = _pixelSize.X * _cameraService.Zoom;
+        var screenPixelHeight = _pixelSize.Y * _cameraService.Zoom;
+
+        var x = (int)((mouse.X - bounds.X) / screenPixelWidth);
+        var y = (int)((mouse.Y - bounds.Y) / screenPixelHeight);
+
+        if (x < 0 || x >= CurrentLevel.Texture.Width ||
+            y < 0 || y >= CurrentLevel.Texture.Height)
+        {
+            _lastPaintPixel = null;
+            return;
+        }
 
         var currentPixel = new Point(x, y);
 
         if (_lastPaintPixel.HasValue)
         {
-            PaintLine(_lastPaintPixel.Value, currentPixel, color);
+            foreach (var point in Utils.GetLine(_lastPaintPixel.Value, currentPixel))
+            {
+                PaintBrush(point, color);
+            }
         }
         else
         {
-            SetPixel(y * CurrentLevel.Texture.Width + x, color);
+            PaintBrush(currentPixel, color);
         }
 
         _lastPaintPixel = currentPixel;
+
+        _textureDirty = true;
     }
     
-    private void PaintLine(Point start, Point end, Color color)
+
+    private void PaintBrush(Point center, Color color)
     {
-        var x0 = start.X;
-        var y0 = start.Y;
+        var width = CurrentLevel.Texture.Width;
+        var height = CurrentLevel.Texture.Height;
 
-        var x1 = end.X;
-        var y1 = end.Y;
+        var radiusSquared = BrushRadius * BrushRadius;
 
-        var dx = Math.Abs(x1 - x0);
-        var dy = Math.Abs(y1 - y0);
-
-        var sx = x0 < x1 ? 1 : -1;
-        var sy = y0 < y1 ? 1 : -1;
-
-        var err = dx - dy;
-
-        while (true)
+        for (var dy = -BrushRadius; dy <= BrushRadius; dy++)
         {
-            if (x0 >= 0 && x0 < CurrentLevel.Texture.Width &&
-                y0 >= 0 && y0 < CurrentLevel.Texture.Height)
+            for (var dx = -BrushRadius; dx <= BrushRadius; dx++)
             {
-                SetPixel(y0 * CurrentLevel.Texture.Width + x0, color);
-            }
+                if (dx * dx + dy * dy > radiusSquared)
+                {
+                    continue;
+                }
 
-            if (x0 == x1 && y0 == y1)
-            {
-                break;
-            }
+                var x = center.X + dx;
+                var y = center.Y + dy;
 
-            var e2 = 2 * err;
+                if (x < 0 || x >= width || y < 0 || y >= height)
+                {
+                    continue;
+                }
 
-            if (e2 > -dy)
-            {
-                err -= dy;
-                x0 += sx;
-            }
-
-            if (e2 < dx)
-            {
-                err += dx;
-                y0 += sy;
+                SetPixel(y * width + x, color);
             }
         }
     }
-    
+
     public Rectangle GetImageBounds()
     {
-        var width = (int)(CurrentLevel.Texture.Width * _pixelSize.X * _cameraService.Zoom);
-        var height = (int)(CurrentLevel.Texture.Height * _pixelSize.Y * _cameraService.Zoom);
+        var zoom = _cameraService.Zoom;
+
+        var width = (int)(CurrentLevel.Texture.Width * _pixelSize.X * zoom);
+        var height = (int)(CurrentLevel.Texture.Height * _pixelSize.Y * zoom);
 
         var cameraPosition = _cameraService.GetPosition();
 
-        return new Rectangle(
-            (int)cameraPosition.X,
-            (int)cameraPosition.Y,
-            width,
-            height
-        );
+        return new Rectangle((int)cameraPosition.X, (int)cameraPosition.Y, width, height);
     }
 
     private void SetPixel(int index, Color color)
     {
-        var pixel = CurrentLevel.Pixels.FirstOrDefault(x => x.Index == index);
-        
-        if (pixel == null)
+        if (index < 0 || index >= _pixelLookup.Length)
         {
             return;
         }
 
-        if (pixel.IsFinished)
+        var pixel = _pixelLookup[index];
+
+        if (pixel == null || pixel.IsFinished)
         {
             return;
         }
-        
-        pixel.CurrentColor = color;
-        _texturePixels[index] = color;
-        
+
         if (color == pixel.OriginalColor)
         {
             CurrentLevel.History.Add(index);
-            
-            var l = Colors.IsDark(color) ? 40 : -40;
+
+            var brightnessOffset = Colors.IsDark(color) ? 40 : -40;
+
             var particleColor = new Color(
-                Math.Min(color.R + l, 255),
-                Math.Min(color.G + l, 255),
-                Math.Min(color.B + l, 255)
-            );
+                Math.Clamp(color.R + brightnessOffset, 0, 255),
+                Math.Clamp(color.G + brightnessOffset, 0, 255),
+                Math.Clamp(color.B + brightnessOffset, 0, 255));
 
             _particleService.Spawn(pixel.GetWorldPosition(_pixelSize.X, _pixelSize.Y), particleColor, 5);
             _soundService.PlayPaintingSound();
         }
+        else
+        {
+            color = Color.Lerp(color, pixel.GrayColor, 0.6f);
+        }
+
+        pixel.CurrentColor = color;
+        _texturePixels[index] = color;
+
+        _textureDirty = true;
     }
 
     public void SetPixelSize(float pixelWidth, float pixelHeight)
@@ -367,24 +554,30 @@ public class PixelProcessorService
             _texturePixels[pixel.Index] = pixel.GrayColor;
         }
 
+        _textureDirty = true;
+
         UpdateTexture();
 
         _historyIndex = 0;
         _pixelsAccumulator = 0;
+
         ReplayLaunched = true;
     }
-    
+
     public void Restart()
     {
         foreach (var pixel in CurrentLevel.Pixels)
         {
-            var index = pixel.TexturePositionY * CurrentLevel.Texture.Width + pixel.TexturePositionX;
             pixel.CurrentColor = pixel.GrayColor;
-            _texturePixels[index] = pixel.GrayColor;
+            _texturePixels[pixel.Index] = pixel.GrayColor;
         }
-        
+
         CurrentLevel.IsFinished = false;
         CurrentLevel.History.Clear();
+
+        _highlightedPixels.Clear();
+
+        _textureDirty = true;
 
         UpdateTexture();
     }
@@ -393,15 +586,12 @@ public class PixelProcessorService
     {
         _lastPaintPixel = null;
     }
-    
+
     public void HighlightPixels(Color color)
     {
         ClearHighlight();
 
-        var selectedGroup = CurrentLevel.ColorGroups
-            .FirstOrDefault(x => x.OriginalColor == color);
-
-        if (selectedGroup == null)
+        if (!_groupsByColor.TryGetValue(color, out var selectedGroup))
         {
             return;
         }
@@ -413,13 +603,22 @@ public class PixelProcessorService
 
             _highlightedPixels.Add(pixel.Index);
         }
+
+        _textureDirty = true;
     }
 
     public void ClearHighlight()
     {
         foreach (var index in _highlightedPixels)
         {
-            if (!_pixelsByIndex.TryGetValue(index, out var pixel) || pixel.IsFinished)
+            if (index < 0 || index >= _pixelLookup.Length)
+            {
+                continue;
+            }
+
+            var pixel = _pixelLookup[index];
+
+            if (pixel == null || pixel.IsFinished)
             {
                 continue;
             }
@@ -427,12 +626,31 @@ public class PixelProcessorService
             pixel.CurrentColor = pixel.GrayColor;
             _texturePixels[index] = pixel.GrayColor;
         }
-        
+
         _highlightedPixels.Clear();
+
+        _textureDirty = true;
     }
 
     public void UpdateTexture()
     {
+        if (!_textureDirty)
+        {
+            return;
+        }
+
         CurrentLevel.Texture.SetData(_texturePixels);
+
+        _textureDirty = false;
+    }
+
+    private int GetGraphicsWidth()
+    {
+        return CurrentLevel.Texture.GraphicsDevice.Viewport.Width;
+    }
+
+    private int GetGraphicsHeight()
+    {
+        return CurrentLevel.Texture.GraphicsDevice.Viewport.Height;
     }
 }

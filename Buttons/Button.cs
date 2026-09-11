@@ -7,19 +7,19 @@ using PixelArt.Services;
 
 namespace PixelArt.Buttons;
 
-public class Button(DrawService drawService, Texture2D? texture, Rectangle bounds)
+public class Button(DrawService drawService, LanguageService languageService, Texture2D? texture, Rectangle bounds)
 {
     private Texture2D? Texture { get; set; } = texture;
     public Rectangle Bounds { get; set; } = bounds;
     public bool IsHovered { get; private set; }
-    public string? Text { get; set; }
+    public bool IsSelected { get; set; }
+    public string? TextKey { get; set; }
     public float TextScale { get; set; } = 1f;
-    public SpriteFont? Font { get; set; }
     public Color TextColor { get; set; } = Color.White;
 
-    public void Update(MouseState mouse)
+    public void Update(MouseState mouse, bool canHover = true)
     {
-        IsHovered = Bounds.Contains(mouse.Position);
+        IsHovered = Bounds.Contains(mouse.Position) && canHover;
     }
 
     public void Draw(SpriteBatch spriteBatch, Color? color = null)
@@ -43,7 +43,7 @@ public class Button(DrawService drawService, Texture2D? texture, Rectangle bound
             spriteBatch.Draw(Texture, rect, buttonColor);
         }
 
-        if (Text != null && Font != null)
+        if (TextKey != null)
         {
             var rect = Bounds;
             var textColor = TextColor;
@@ -54,7 +54,12 @@ public class Button(DrawService drawService, Texture2D? texture, Rectangle bound
                 textColor = Lighten(textColor);
             }
             
-            drawService.DrawString(spriteBatch, Text, rect.Center.ToVector2(), textColor, TextScale);
+            drawService.DrawString(spriteBatch, languageService.GetText(TextKey), rect.Center.ToVector2(), textColor, TextScale);
+
+            if (IsSelected)
+            {
+                drawService.DrawRectangle(spriteBatch, new Rectangle(new Point(rect.X, rect.Y + rect.Height), new Point(rect.Width, 2)), Colors.Yellow);
+            }
         }
     }
 

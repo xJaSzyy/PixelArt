@@ -143,7 +143,7 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
 
         SelectButton(nextIndex);
         ResetScroll();
-        for (int i = 0; i < nextIndex; i++)
+        for (var i = 0; i < nextIndex; i++)
         {
             ScrollButtonsRight();
         }

@@ -17,6 +17,11 @@ public class MouseService(GraphicsDevice graphicsDevice)
         return mouse.LeftButton == ButtonState.Pressed && IsMouseInsideWindow(mouse);
     }
     
+    public bool IsLeftMouseButtonReleased(MouseState mouse)
+    {
+        return mouse.LeftButton == ButtonState.Released && _prevMouse.LeftButton != ButtonState.Released && IsMouseInsideWindow(mouse);
+    }
+    
     public bool IsRightMouseButtonClicked(MouseState mouse)
     {
         return mouse.RightButton == ButtonState.Pressed && _prevMouse.RightButton == ButtonState.Released && IsMouseInsideWindow(mouse);
