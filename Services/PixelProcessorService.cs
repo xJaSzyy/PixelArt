@@ -104,7 +104,7 @@ public class PixelProcessorService
         {
             var original = _texturePixels[i];
 
-            if (original.A != 255)
+            if (_texturePixels[i].A != 255)
             {
                 continue;
             }
@@ -113,7 +113,6 @@ public class PixelProcessorService
             {
                 group = new PixelColorGroup
                 {
-                    Number = 0,
                     OriginalColor = new ColorData(original),
                     Pixels = []
                 };
@@ -137,20 +136,14 @@ public class PixelProcessorService
         }
 
         var total = CurrentLevel.ColorGroups.Count;
-
-        CurrentLevel.ColorGroups = CurrentLevel.ColorGroups
-            .OrderByDescending(x =>
-                0.2126 * x.OriginalColor.R +
-                0.7152 * x.OriginalColor.G +
-                0.0722 * x.OriginalColor.B).ToList();
+        
+        SortAndNumberColorGroups();
 
         for (var i = 0; i < total; i++)
         {
             var group = CurrentLevel.ColorGroups[i];
 
             var grayColor = Utils.GenerateGrayColor(i, total);
-
-            group.Number = i + 1;
 
             foreach (var pixel in group.Pixels)
             {
@@ -168,22 +161,27 @@ public class PixelProcessorService
     {
         _groupsByColor.Clear();
 
-        foreach (var group in CurrentLevel.ColorGroups)
-        {
-            group.Pixels.Clear();
-            _groupsByColor[group.OriginalColor.ToColor()] = group;
-        }
-
         foreach (var pixel in CurrentLevel.Pixels)
         {
             _pixelLookup[pixel.Index] = pixel;
             _texturePixels[pixel.Index] = pixel.CurrentColor.ToColor();
 
-            if (_groupsByColor.TryGetValue(pixel.OriginalColor.ToColor(), out var group))
+            if (!_groupsByColor.TryGetValue(pixel.OriginalColor.ToColor(), out var group))
             {
-                group.Pixels.Add(pixel);
+                group = new PixelColorGroup
+                {
+                    OriginalColor = pixel.OriginalColor,
+                    Pixels = []
+                };
+
+                _groupsByColor.Add(pixel.OriginalColor.ToColor(), group);
+                CurrentLevel.ColorGroups.Add(group);
             }
+            
+            group.Pixels.Add(pixel);
         }
+        
+        SortAndNumberColorGroups();
 
         var size = CurrentLevel.Texture.Width * CurrentLevel.Texture.Height;
         var texturePixels = new Color[size];
@@ -194,6 +192,20 @@ public class PixelProcessorService
         }
         
         CurrentLevel.GrayTexture.SetData(texturePixels);
+    }
+    
+    private void SortAndNumberColorGroups()
+    {
+        CurrentLevel.ColorGroups = CurrentLevel.ColorGroups
+            .OrderByDescending(x =>
+                0.2126 * x.OriginalColor.R +
+                0.7152 * x.OriginalColor.G +
+                0.0722 * x.OriginalColor.B).ToList();
+        
+        for (var i = 0; i < CurrentLevel.ColorGroups.Count; i++)
+        {
+            CurrentLevel.ColorGroups[i].Number = CurrentLevel.ColorGroups.Count - i;
+        }
     }
 
     public void Update(GameTime gameTime)
