@@ -102,6 +102,10 @@ public class PixelProcessorService
             new Vector3(2f, 2f, 4f),
             Vector3.Zero,
             Vector3.Up);
+        
+        world = Matrix.Identity;
+        _rotationX = 0f;
+        _rotationY = 0f;
     }
     
     private Matrix world;
@@ -250,10 +254,6 @@ public class PixelProcessorService
 
         UpdateCubeRotation(mouse);
         
-        world =
-            Matrix.CreateRotationX(_rotationX) *
-            Matrix.CreateRotationY(_rotationY);
-        
         if (!ReplayLaunched)
         {
             return;
@@ -319,13 +319,16 @@ public class PixelProcessorService
 
             var delta = mouse.Position - _previousMousePosition;
 
-            _rotationY += delta.X * RotationSpeed;
-            _rotationX += delta.Y * RotationSpeed;
+            if (delta != Point.Zero)
+            {
+                // Горизонталь — вокруг экранной вертикали (мировой Y)
+                // Вертикаль — вокруг экранной горизонтали (оси X камеры)
+                var yaw = Matrix.CreateRotationY(delta.X * RotationSpeed);
+                var pitch = Matrix.CreateRotationX(delta.Y * RotationSpeed);
 
-            _rotationX = MathHelper.Clamp(
-                _rotationX,
-                -MathHelper.PiOver2 + 0.01f,
-                MathHelper.PiOver2 - 0.01f);
+                // Применяем к текущей матрице мира: сначала yaw, потом pitch в экранных осях
+                world = world * yaw * pitch;
+            }
 
             _previousMousePosition = mouse.Position;
         }
@@ -333,10 +336,6 @@ public class PixelProcessorService
         {
             _isDragging = false;
         }
-
-        world =
-            Matrix.CreateRotationX(_rotationX) *
-            Matrix.CreateRotationY(_rotationY);
     }
     
     private Ray CreateMouseRay(Point mousePosition)
