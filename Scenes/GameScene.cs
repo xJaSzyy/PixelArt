@@ -272,6 +272,7 @@ public class GameScene : IScene
             if (_keyboardService.IsKeyPressed(keyboard, Keys.LeftControl))
             {
                 _cameraService.ChangeZoom(mouse, scrollDelta);
+                _processorService.Zoom(scrollDelta * 0.002f);
             }
             else
             {

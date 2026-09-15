@@ -248,10 +248,96 @@ public class PixelProcessorService
         }
     }
 
+    private bool TryGetPixelFromCube(MouseState mouse, out int pixelIndex, out Point pixelCoord)
+    {
+        pixelIndex = -1;
+        pixelCoord = default;
+
+        if (!TryGetCubeIntersection(mouse.Position, out var localPoint, out _))
+        {
+            return false;
+        }
+
+        var face = GetCubeFace(localPoint);
+        var uv = GetFaceUv(face, localPoint);
+
+        var width = CurrentLevel.Texture.Width;
+        var height = CurrentLevel.Texture.Height;
+
+        var x = Math.Clamp((int)(uv.X * width), 0, width - 1);
+        var y = Math.Clamp((int)(uv.Y * height), 0, height - 1);
+
+        pixelCoord = new Point(x, y);
+        pixelIndex = y * width + x;
+
+        return true;
+    }
+    
+    private readonly Dictionary<CubeFace, Point> _lastPaintByFace = new();
+
+    public void PaintAtCube(MouseState mouse, Color color)
+    {
+        if (mouse.LeftButton != ButtonState.Pressed)
+        {
+            _lastPaintByFace.Clear();
+            return;
+        }
+
+        if (!TryGetCubeIntersection(mouse.Position, out var localPoint, out _))
+        {
+            _lastPaintByFace.Clear();
+            return;
+        }
+
+        var face = GetCubeFace(localPoint);
+        var uv = GetFaceUv(face, localPoint);
+
+        var width = CurrentLevel.Texture.Width;
+        var height = CurrentLevel.Texture.Height;
+
+        var x = Math.Clamp((int)(uv.X * width), 0, width - 1);
+        var y = Math.Clamp((int)(uv.Y * height), 0, height - 1);
+        var current = new Point(x, y);
+
+        if (_lastPaintByFace.TryGetValue(face, out var last))
+        {
+            foreach (var point in Utils.GetLine(last, current))
+            {
+                PaintBrush(point, color);
+            }
+        }
+        else
+        {
+            PaintBrush(current, color);
+        }
+
+        _lastPaintByFace[face] = current;
+        _textureDirty = true;
+    }
+    
+    private float _cameraDistance = 5f;
+    private readonly Vector3 _cameraDirection = Vector3.Normalize(new Vector3(2f, 2f, 4f));
+
+    private void UpdateView()
+    {
+        view = Matrix.CreateLookAt(
+            _cameraDirection * _cameraDistance,
+            Vector3.Zero,
+            Vector3.Up);
+    }
+
+    public void Zoom(float delta)
+    {
+        _cameraDistance = MathHelper.Clamp(_cameraDistance - delta, 2f, 15f);
+        UpdateView();
+    }
+    
     public void Update(GameTime gameTime, MouseState mouse)
     {
         _particleService.Update(gameTime);
 
+        UpdateHover(mouse);
+        
         UpdateCubeRotation(mouse);
         
         if (!ReplayLaunched)
@@ -475,27 +561,37 @@ public class PixelProcessorService
         };
     }
     
-    public void PaintAtCube(
-        MouseState mouse,
-        Color color)
+    private int _hoveredPixelIndex = -1;
+    private readonly Color _hoverColor = new(255, 255, 0); // жёлтый
+
+    public void UpdateHover(MouseState mouse)
     {
-        if (mouse.LeftButton != ButtonState.Pressed)
+        // сброс предыдущего
+        if (_hoveredPixelIndex >= 0 && _hoveredPixelIndex < _pixelLookup.Length)
         {
-            return;
+            var prev = _pixelLookup[_hoveredPixelIndex];
+            if (prev != null && !prev.IsFinished && !_highlightedPixels.Contains(_hoveredPixelIndex))
+            {
+                _texturePixels[_hoveredPixelIndex] = prev.CurrentColor.ToColor();
+            }
         }
 
-        if (!TryGetCubeIntersection(
-                mouse.Position,
-                out var localPoint,
-                out _))
+        _hoveredPixelIndex = -1;
+
+        if (TryGetPixelFromCube(mouse, out var index, out _))
         {
-            return;
+            var pixel = _pixelLookup[index];
+            if (pixel != null && !pixel.IsFinished)
+            {
+                _hoveredPixelIndex = index;
+                _texturePixels[index] = _hoverColor;
+                _textureDirty = true;
+            }
         }
-
-        var face = GetCubeFace(localPoint);
-        var uv = GetFaceUv(face, localPoint);
-
-        PaintOnFace(face, uv, color);
+        else
+        {
+            _textureDirty = true;
+        }
     }
     
     private void PaintOnFace(
