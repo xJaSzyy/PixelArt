@@ -372,12 +372,12 @@ public class GameScene : IScene
                 arrowTexture,
                 arrowPosition,
                 null,
-                Colors.Text,
+                Colors.Yellow,
                 0f,
                 new Vector2(
                     arrowTexture.Width / 2f,
                     arrowTexture.Height / 2f),
-                32f / arrowTexture.Width,
+                64f / arrowTexture.Width,
                 SpriteEffects.None,
                 0f);
         }
