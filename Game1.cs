@@ -24,6 +24,7 @@ public class Game1 : Game
         
         graphics.PreferredBackBufferWidth = 640;
         graphics.PreferredBackBufferHeight = 640;
+        graphics.PreferredDepthStencilFormat = DepthFormat.Depth24Stencil8;
         graphics.ApplyChanges();
     }
 

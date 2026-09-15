@@ -24,7 +24,8 @@ public class PixelProcessorService
     private readonly HashSet<int> _highlightedPixels = [];
     private bool _textureDirty;
     private readonly Dictionary<Color, PixelColorGroup> _groupsByColor = [];
-    
+
+    private readonly GraphicsDevice _graphicsDevice;
     private readonly ParticleService _particleService;
     private readonly CameraService _cameraService;
     private readonly SoundService _soundService;
@@ -33,9 +34,19 @@ public class PixelProcessorService
     private const float _replayDuration = 1.25f;
     
     private readonly Color _glowColor = new(171, 171, 171, 200);
+
+    private TexturedCube cube;
+    private float _rotationX;
+    private float _rotationY;
+
+    private bool _isDragging;
+    private Point _previousMousePosition;
+
+    private const float RotationSpeed = 0.01f;
     
-    public PixelProcessorService(ParticleService particleService, CameraService cameraService, SoundService soundService, GraphicsDevice graphicsDevice)
+    public PixelProcessorService(GraphicsDevice graphicsDevice, ParticleService particleService, CameraService cameraService, SoundService soundService)
     {
+        _graphicsDevice = graphicsDevice;
         _particleService = particleService;
         _cameraService = cameraService;
         _soundService = soundService;
@@ -71,7 +82,32 @@ public class PixelProcessorService
         _highlightedPixels.Clear();
         _lastPaintPixel = null;
         _textureDirty = false;
+        
+        cube = new TexturedCube(
+            _graphicsDevice,
+            CurrentLevel.Texture,
+            CurrentLevel.Texture,
+            CurrentLevel.Texture,
+            CurrentLevel.Texture,
+            CurrentLevel.Texture,
+            CurrentLevel.Texture);
+        
+        projection = Matrix.CreatePerspectiveFieldOfView(
+            MathHelper.ToRadians(45f),
+            _graphicsDevice.Viewport.AspectRatio,
+            0.1f,
+            100f);
+
+        view = Matrix.CreateLookAt(
+            new Vector3(2f, 2f, 4f),
+            Vector3.Zero,
+            Vector3.Up);
     }
+    
+    private Matrix world;
+    private Matrix view;
+    private Matrix projection;
+    private float rotation;
 
     public void ProcessImage()
     {
@@ -208,10 +244,16 @@ public class PixelProcessorService
         }
     }
 
-    public void Update(GameTime gameTime)
+    public void Update(GameTime gameTime, MouseState mouse)
     {
         _particleService.Update(gameTime);
 
+        UpdateCubeRotation(mouse);
+        
+        world =
+            Matrix.CreateRotationX(_rotationX) *
+            Matrix.CreateRotationY(_rotationY);
+        
         if (!ReplayLaunched)
         {
             return;
@@ -264,23 +306,244 @@ public class PixelProcessorService
         UpdateTexture();
     }
 
+    public void UpdateCubeRotation(MouseState mouse)
+    {
+        if (mouse.RightButton == ButtonState.Pressed)
+        {
+            if (!_isDragging)
+            {
+                _isDragging = true;
+                _previousMousePosition = mouse.Position;
+                return;
+            }
+
+            var delta = mouse.Position - _previousMousePosition;
+
+            _rotationY += delta.X * RotationSpeed;
+            _rotationX += delta.Y * RotationSpeed;
+
+            _rotationX = MathHelper.Clamp(
+                _rotationX,
+                -MathHelper.PiOver2 + 0.01f,
+                MathHelper.PiOver2 - 0.01f);
+
+            _previousMousePosition = mouse.Position;
+        }
+        else
+        {
+            _isDragging = false;
+        }
+
+        world =
+            Matrix.CreateRotationX(_rotationX) *
+            Matrix.CreateRotationY(_rotationY);
+    }
+    
+    private Ray CreateMouseRay(Point mousePosition)
+    {
+        var viewport = _graphicsDevice.Viewport;
+
+        var nearSource = new Vector3(
+            mousePosition.X,
+            mousePosition.Y,
+            0f);
+
+        var farSource = new Vector3(
+            mousePosition.X,
+            mousePosition.Y,
+            1f);
+
+        var nearPoint = viewport.Unproject(
+            nearSource,
+            projection,
+            view,
+            Matrix.Identity);
+
+        var farPoint = viewport.Unproject(
+            farSource,
+            projection,
+            view,
+            Matrix.Identity);
+
+        var direction = farPoint - nearPoint;
+        direction.Normalize();
+
+        return new Ray(nearPoint, direction);
+    }
+    
+    private static readonly BoundingBox LocalCubeBounds =
+        new BoundingBox(
+            new Vector3(-0.5f),
+            new Vector3(0.5f));
+    
+    private bool TryGetCubeIntersection(
+        Point mousePosition,
+        out Vector3 localPoint,
+        out float distance)
+    {
+        localPoint = default;
+        distance = 0f;
+
+        var ray = CreateMouseRay(mousePosition);
+
+        Matrix.Invert(
+            ref world,
+            out var inverseWorld);
+        
+        var localRay = new Ray(
+            Vector3.Transform(ray.Position, inverseWorld),
+            Vector3.TransformNormal(ray.Direction, inverseWorld));
+
+        localRay.Direction.Normalize();
+
+        var intersection = localRay.Intersects(LocalCubeBounds);
+
+        if (!intersection.HasValue)
+        {
+            return false;
+        }
+
+        distance = intersection.Value;
+        localPoint = localRay.Position + localRay.Direction * distance;
+
+        return true;
+    }
+    
+    private CubeFace GetCubeFace(Vector3 point)
+    {
+        var absX = MathF.Abs(point.X);
+        var absY = MathF.Abs(point.Y);
+        var absZ = MathF.Abs(point.Z);
+
+        if (absX >= absY && absX >= absZ)
+        {
+            return point.X > 0
+                ? CubeFace.Right
+                : CubeFace.Left;
+        }
+
+        if (absY >= absX && absY >= absZ)
+        {
+            return point.Y > 0
+                ? CubeFace.Top
+                : CubeFace.Bottom;
+        }
+
+        return point.Z > 0
+            ? CubeFace.Front
+            : CubeFace.Back;
+    }
+    
+    private enum CubeFace
+    {
+        Front,
+        Back,
+        Left,
+        Right,
+        Top,
+        Bottom
+    }
+    
+    private Vector2 GetFaceUv(CubeFace face, Vector3 point)
+    {
+        return face switch
+        {
+            CubeFace.Front => new Vector2(
+                point.X + 0.5f,
+                0.5f - point.Y),
+
+            CubeFace.Back => new Vector2(
+                0.5f - point.X,
+                0.5f - point.Y),
+
+            CubeFace.Left => new Vector2(
+                0.5f - point.Z,
+                0.5f - point.Y),
+
+            CubeFace.Right => new Vector2(
+                point.Z + 0.5f,
+                0.5f - point.Y),
+
+            CubeFace.Top => new Vector2(
+                point.X + 0.5f,
+                point.Z + 0.5f),
+
+            CubeFace.Bottom => new Vector2(
+                point.X + 0.5f,
+                0.5f - point.Z),
+
+            _ => Vector2.Zero
+        };
+    }
+    
+    public void PaintAtCube(
+        MouseState mouse,
+        Color color)
+    {
+        if (mouse.LeftButton != ButtonState.Pressed)
+        {
+            return;
+        }
+
+        if (!TryGetCubeIntersection(
+                mouse.Position,
+                out var localPoint,
+                out _))
+        {
+            return;
+        }
+
+        var face = GetCubeFace(localPoint);
+        var uv = GetFaceUv(face, localPoint);
+
+        PaintOnFace(face, uv, color);
+    }
+    
+    private void PaintOnFace(
+        CubeFace face,
+        Vector2 uv,
+        Color color)
+    {
+        if (face != CubeFace.Front)
+        {
+            return;
+        }
+
+        var width = CurrentLevel.Texture.Width;
+        var height = CurrentLevel.Texture.Height;
+
+        var x = Math.Clamp(
+            (int)(uv.X * width),
+            0,
+            width - 1);
+
+        var y = Math.Clamp(
+            (int)(uv.Y * height),
+            0,
+            height - 1);
+
+        PaintBrush(new Point(x, y), color);
+    }
+
     public void Draw(SpriteBatch spriteBatch, DrawService drawService)
     {
         UpdateTexture();
 
         var drawBounds = GetImageBounds();
 
-        DrawGlow(spriteBatch, drawBounds);
+        //DrawGlow(spriteBatch, drawBounds);
 
-        spriteBatch.Draw(
+        cube.Draw(world, view, projection);
+        
+        /*spriteBatch.Draw(
             CurrentLevel.Texture,
             drawBounds,
-            Color.White);
+            Color.White);*/
 
-        DrawPixelNumbers(
+        /*DrawPixelNumbers(
             drawBounds,
             spriteBatch,
-            drawService);
+            drawService);*/
 
         _particleService.Draw(spriteBatch);
     }

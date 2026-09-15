@@ -61,6 +61,7 @@ public class GameScene : IScene
         Keys.Right
     ];
     
+    
     public GameScene(IServiceProvider services)
     {
         _services = services;
@@ -159,7 +160,7 @@ public class GameScene : IScene
             HandleColoringCompleted();
         }
 
-        _processorService.Update(gameTime);
+        _processorService.Update(gameTime, mouse);
         _homeButton.Update(mouse);
         _restartButton.Update(mouse);
         _popupService.Update(gameTime);
