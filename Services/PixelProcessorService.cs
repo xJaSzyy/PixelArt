@@ -277,12 +277,6 @@ public class PixelProcessorService
 
     public void PaintAtCube(MouseState mouse, Color color)
     {
-        if (mouse.LeftButton != ButtonState.Pressed)
-        {
-            _lastPaintByFace.Clear();
-            return;
-        }
-
         if (!TryGetCubeIntersection(mouse.Position, out var localPoint, out _))
         {
             _lastPaintByFace.Clear();
@@ -336,8 +330,6 @@ public class PixelProcessorService
     {
         _particleService.Update(gameTime);
 
-        UpdateHover(mouse);
-        
         UpdateCubeRotation(mouse);
         
         if (!ReplayLaunched)
@@ -542,11 +534,11 @@ public class PixelProcessorService
                 0.5f - point.Y),
 
             CubeFace.Left => new Vector2(
-                0.5f - point.Z,
+                point.Z + 0.5f,
                 0.5f - point.Y),
 
             CubeFace.Right => new Vector2(
-                point.Z + 0.5f,
+                0.5f - point.Z, 
                 0.5f - point.Y),
 
             CubeFace.Top => new Vector2(
@@ -559,65 +551,6 @@ public class PixelProcessorService
 
             _ => Vector2.Zero
         };
-    }
-    
-    private int _hoveredPixelIndex = -1;
-    private readonly Color _hoverColor = new(255, 255, 0); // жёлтый
-
-    public void UpdateHover(MouseState mouse)
-    {
-        // сброс предыдущего
-        if (_hoveredPixelIndex >= 0 && _hoveredPixelIndex < _pixelLookup.Length)
-        {
-            var prev = _pixelLookup[_hoveredPixelIndex];
-            if (prev != null && !prev.IsFinished && !_highlightedPixels.Contains(_hoveredPixelIndex))
-            {
-                _texturePixels[_hoveredPixelIndex] = prev.CurrentColor.ToColor();
-            }
-        }
-
-        _hoveredPixelIndex = -1;
-
-        if (TryGetPixelFromCube(mouse, out var index, out _))
-        {
-            var pixel = _pixelLookup[index];
-            if (pixel != null && !pixel.IsFinished)
-            {
-                _hoveredPixelIndex = index;
-                _texturePixels[index] = _hoverColor;
-                _textureDirty = true;
-            }
-        }
-        else
-        {
-            _textureDirty = true;
-        }
-    }
-    
-    private void PaintOnFace(
-        CubeFace face,
-        Vector2 uv,
-        Color color)
-    {
-        if (face != CubeFace.Front)
-        {
-            return;
-        }
-
-        var width = CurrentLevel.Texture.Width;
-        var height = CurrentLevel.Texture.Height;
-
-        var x = Math.Clamp(
-            (int)(uv.X * width),
-            0,
-            width - 1);
-
-        var y = Math.Clamp(
-            (int)(uv.Y * height),
-            0,
-            height - 1);
-
-        PaintBrush(new Point(x, y), color);
     }
 
     public void Draw(SpriteBatch spriteBatch, DrawService drawService)
@@ -948,6 +881,7 @@ public class PixelProcessorService
     public void ResetPainting()
     {
         _lastPaintPixel = null;
+        _lastPaintByFace.Clear();
     }
 
     public void HighlightPixels(Color color)

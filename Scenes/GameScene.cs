@@ -247,7 +247,7 @@ public class GameScene : IScene
 
             if (selectedButton != null)
             {
-                _processorService.PaintAtMousePosition(mouse, selectedButton.Color);
+                _processorService.PaintAtCube(mouse, selectedButton.Color);
                 
                 var colorGroup = _processorService.CurrentLevel.ColorGroups
                     .FirstOrDefault(x => x.OriginalColor.ToColor() == selectedButton.Color && x.IsFinished);
@@ -328,7 +328,7 @@ public class GameScene : IScene
             samplerState: SamplerState.PointClamp
         );
 
-        _backgroundService.Draw(_spriteBatch);
+        //_backgroundService.Draw(_spriteBatch);
         _processorService.Draw(_spriteBatch, _drawService);
 
         if (!ColoringIsCompleted)
