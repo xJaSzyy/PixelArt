@@ -210,7 +210,8 @@ public class GameScene : IScene
             {
                 _processorService.PaintAtMousePosition(mouse, selectedButton.Color);
                 
-                var colorGroup = _processorService.CurrentLevel.ColorGroups.FirstOrDefault(x => x.OriginalColor == selectedButton.Color && x.IsFinished);
+                var colorGroup = _processorService.CurrentLevel.ColorGroups
+                    .FirstOrDefault(x => x.OriginalColor.ToColor() == selectedButton.Color && x.IsFinished);
                 if (colorGroup != null)
                 {
                     _colorButtonsService.SelectNextButton();

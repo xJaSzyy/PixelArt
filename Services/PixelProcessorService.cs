@@ -65,7 +65,7 @@ public class PixelProcessorService
 
         foreach (var group in CurrentLevel.ColorGroups)
         {
-            _groupsByColor[group.OriginalColor] = group;
+            _groupsByColor[group.OriginalColor.ToColor()] = group;
         }
 
         _highlightedPixels.Clear();
@@ -104,7 +104,7 @@ public class PixelProcessorService
         {
             var original = _texturePixels[i];
 
-            if (original.A != 255)
+            if (_texturePixels[i].A != 255)
             {
                 continue;
             }
@@ -113,8 +113,7 @@ public class PixelProcessorService
             {
                 group = new PixelColorGroup
                 {
-                    Number = 0,
-                    OriginalColor = original,
+                    OriginalColor = new ColorData(original),
                     Pixels = []
                 };
 
@@ -122,19 +121,11 @@ public class PixelProcessorService
                 CurrentLevel.ColorGroups.Add(group);
             }
 
-            var x = i % width;
-            var y = i / width;
-
             var pixel = new PixelData
             {
                 Index = i,
-
-                TexturePositionX = x,
-                TexturePositionY = y,
-
-                OriginalColor = original,
-
-                CurrentColor = Color.White
+                OriginalColor = new ColorData(original),
+                CurrentColor = new ColorData(Color.White)
             };
 
             CurrentLevel.Pixels.Add(pixel);
@@ -145,12 +136,8 @@ public class PixelProcessorService
         }
 
         var total = CurrentLevel.ColorGroups.Count;
-
-        CurrentLevel.ColorGroups = CurrentLevel.ColorGroups
-            .OrderByDescending(x =>
-                0.2126 * x.OriginalColor.R +
-                0.7152 * x.OriginalColor.G +
-                0.0722 * x.OriginalColor.B).ToList();
+        
+        SortAndNumberColorGroups();
 
         for (var i = 0; i < total; i++)
         {
@@ -158,12 +145,10 @@ public class PixelProcessorService
 
             var grayColor = Utils.GenerateGrayColor(i, total);
 
-            group.Number = i + 1;
-
             foreach (var pixel in group.Pixels)
             {
-                pixel.CurrentColor = grayColor;
-                pixel.GrayColor = grayColor;
+                pixel.CurrentColor = new ColorData(grayColor);
+                pixel.GrayColor = new ColorData(grayColor);
 
                 _texturePixels[pixel.Index] = grayColor;
             }
@@ -176,32 +161,51 @@ public class PixelProcessorService
     {
         _groupsByColor.Clear();
 
-        foreach (var group in CurrentLevel.ColorGroups)
-        {
-            group.Pixels.Clear();
-            _groupsByColor[group.OriginalColor] = group;
-        }
-
         foreach (var pixel in CurrentLevel.Pixels)
         {
             _pixelLookup[pixel.Index] = pixel;
-            _texturePixels[pixel.Index] = pixel.CurrentColor;
+            _texturePixels[pixel.Index] = pixel.CurrentColor.ToColor();
 
-            if (_groupsByColor.TryGetValue(pixel.OriginalColor, out var group))
+            if (!_groupsByColor.TryGetValue(pixel.OriginalColor.ToColor(), out var group))
             {
-                group.Pixels.Add(pixel);
+                group = new PixelColorGroup
+                {
+                    OriginalColor = pixel.OriginalColor,
+                    Pixels = []
+                };
+
+                _groupsByColor.Add(pixel.OriginalColor.ToColor(), group);
+                CurrentLevel.ColorGroups.Add(group);
             }
+            
+            group.Pixels.Add(pixel);
         }
+        
+        SortAndNumberColorGroups();
 
         var size = CurrentLevel.Texture.Width * CurrentLevel.Texture.Height;
         var texturePixels = new Color[size];
         
         foreach (var pixel in CurrentLevel.Pixels)
         {
-            texturePixels[pixel.Index] = pixel.GrayColor;
+            texturePixels[pixel.Index] = pixel.GrayColor.ToColor();
         }
         
         CurrentLevel.GrayTexture.SetData(texturePixels);
+    }
+    
+    private void SortAndNumberColorGroups()
+    {
+        CurrentLevel.ColorGroups = CurrentLevel.ColorGroups
+            .OrderByDescending(x =>
+                0.2126 * x.OriginalColor.R +
+                0.7152 * x.OriginalColor.G +
+                0.0722 * x.OriginalColor.B).ToList();
+        
+        for (var i = 0; i < CurrentLevel.ColorGroups.Count; i++)
+        {
+            CurrentLevel.ColorGroups[i].Number = CurrentLevel.ColorGroups.Count - i;
+        }
     }
 
     public void Update(GameTime gameTime)
@@ -238,7 +242,7 @@ public class PixelProcessorService
                 if (pixel != null)
                 {
                     pixel.CurrentColor = pixel.OriginalColor;
-                    _texturePixels[pixelIndex] = pixel.OriginalColor;
+                    _texturePixels[pixelIndex] = pixel.OriginalColor.ToColor();
 
                     changed = true;
                 }
@@ -387,7 +391,7 @@ public class PixelProcessorService
 
     private void DrawPixelNumber(PixelData pixel, Rectangle bounds, SpriteBatch spriteBatch, DrawService drawService)
     {
-        if (!_groupsByColor.TryGetValue(pixel.OriginalColor, out var colorGroup))
+        if (!_groupsByColor.TryGetValue(pixel.OriginalColor.ToColor(), out var colorGroup))
         {
             return;
         }
@@ -396,7 +400,7 @@ public class PixelProcessorService
         
         var color = Color.Lerp(
             Color.Transparent,
-            Colors.IsDark(pixel.CurrentColor)
+            Colors.IsDark(pixel.CurrentColor.ToColor())
                 ? Color.White
                 : Color.Black,
             Utils.Remap(_cameraService.Zoom, _cameraService.MinZoom, _cameraService.MinZoom * multiplier, 0f, 1f));
@@ -405,7 +409,7 @@ public class PixelProcessorService
 
         var scale = _cameraService.Zoom + _pixelSize.X * (numberLength == 1 ? 0.004f : 0.0025f);
 
-        if (pixel.CurrentColor != pixel.GrayColor && pixel.CurrentColor != _highlightColor)
+        if (pixel.CurrentColor != pixel.GrayColor && pixel.CurrentColor.ToColor() != _highlightColor)
         {
             color *= .6f;
         }
@@ -516,7 +520,7 @@ public class PixelProcessorService
             return;
         }
 
-        if (color == pixel.OriginalColor)
+        if (color == pixel.OriginalColor.ToColor())
         {
             CurrentLevel.History.Add(index);
 
@@ -527,15 +531,15 @@ public class PixelProcessorService
                 Math.Clamp(color.G + brightnessOffset, 0, 255),
                 Math.Clamp(color.B + brightnessOffset, 0, 255));
 
-            _particleService.Spawn(pixel.GetWorldPosition(_pixelSize.X, _pixelSize.Y), particleColor, 5);
+            _particleService.Spawn(pixel.GetWorldPosition(_pixelSize.X, _pixelSize.Y, CurrentLevel.Texture.Width), particleColor, 5);
             _soundService.PlayPaintingSound();
         }
         else
         {
-            color = Color.Lerp(color, pixel.GrayColor, 0.6f);
+            color = Color.Lerp(color, pixel.GrayColor.ToColor(), 0.6f);
         }
 
-        pixel.CurrentColor = color;
+        pixel.CurrentColor = new ColorData(color);
         _texturePixels[index] = color;
 
         _textureDirty = true;
@@ -551,7 +555,7 @@ public class PixelProcessorService
         foreach (var pixel in CurrentLevel.Pixels)
         {
             pixel.CurrentColor = pixel.GrayColor;
-            _texturePixels[pixel.Index] = pixel.GrayColor;
+            _texturePixels[pixel.Index] = pixel.GrayColor.ToColor();
         }
 
         _textureDirty = true;
@@ -569,7 +573,7 @@ public class PixelProcessorService
         foreach (var pixel in CurrentLevel.Pixels)
         {
             pixel.CurrentColor = pixel.GrayColor;
-            _texturePixels[pixel.Index] = pixel.GrayColor;
+            _texturePixels[pixel.Index] = pixel.GrayColor.ToColor();
         }
 
         CurrentLevel.IsFinished = false;
@@ -598,7 +602,7 @@ public class PixelProcessorService
 
         foreach (var pixel in selectedGroup.Pixels.Where(pixel => !pixel.IsFinished))
         {
-            pixel.CurrentColor = _highlightColor;
+            pixel.CurrentColor = new ColorData(_highlightColor);
             _texturePixels[pixel.Index] = _highlightColor;
 
             _highlightedPixels.Add(pixel.Index);
@@ -624,7 +628,7 @@ public class PixelProcessorService
             }
 
             pixel.CurrentColor = pixel.GrayColor;
-            _texturePixels[index] = pixel.GrayColor;
+            _texturePixels[index] = pixel.GrayColor.ToColor();
         }
 
         _highlightedPixels.Clear();

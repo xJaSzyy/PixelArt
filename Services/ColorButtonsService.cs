@@ -25,7 +25,7 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
         foreach (var group in processorService.CurrentLevel.ColorGroups.OrderBy(x => x.Number))
         {
             _colorButtons.Add(new ColorButton(
-                group.OriginalColor,
+                group.OriginalColor.ToColor(),
                 group.Number,
                 Rectangle.Empty));
         }
@@ -58,7 +58,7 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
         {
             colorButton.Draw(spriteBatch, _pixelTexture);
 
-            var colorGroup = colorGroups.First(x => x.OriginalColor == colorButton.Color);
+            var colorGroup = colorGroups.First(x => x.OriginalColor.ToColor() == colorButton.Color);
             var groupIsFinished = colorGroup.IsFinished;
 
             var text = groupIsFinished ? "x" : colorButton.Number.ToString();
@@ -111,7 +111,8 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
             return;
         }
         
-        var colorGroup = processorService.CurrentLevel.ColorGroups.First(x => x.OriginalColor == _colorButtons[clickedButtonIndex].Color);
+        var colorGroup = processorService.CurrentLevel.ColorGroups
+            .First(x => x.OriginalColor.ToColor() == _colorButtons[clickedButtonIndex].Color);
         if (!colorGroup.IsFinished)
         {
             SelectButton(clickedButtonIndex);

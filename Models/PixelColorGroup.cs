@@ -1,16 +1,16 @@
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.Xna.Framework;
+using System.Text.Json.Serialization;
 
 namespace PixelArt.Models;
 
 public class PixelColorGroup
 {
     public int Number { get; set; }
-    public Color OriginalColor { get; set; }
-    public List<PixelData> Pixels { get; set; } = [];
+    public ColorData OriginalColor { get; set; }
+    [JsonIgnore] public List<PixelData> Pixels { get; set; } = [];
     
-    public float Progress
+    [JsonIgnore] public float Progress
     {
         get
         {
@@ -23,5 +23,5 @@ public class PixelColorGroup
         }
     }
 
-    public bool IsFinished => Progress >= 1f;
+    [JsonIgnore] public bool IsFinished => Progress >= 1f;
 }
