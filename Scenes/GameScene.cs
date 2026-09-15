@@ -34,13 +34,18 @@ public class GameScene : IScene
     private Button _homeButton;
     private Button _restartButton;
     private Button _deleteButton;
+    
+    private readonly Texture2D[] _arrowTextures = new Texture2D[8];
+    private int? _arrowTargetPixel;
+    private const float _arrowTargetSwitchThreshold = 0.55f;
 
     private const int _buttonSize = 56;
     private const int _buttonSpacing = 12;
     private const int _moveSpeed = 10;
     
-    private int _konamiIndex;
     private KeyboardState _previousKeyboardState;
+    
+    private int _konamiIndex;
     private readonly Keys[] _konamiCode =
     [
         Keys.Up,
@@ -88,6 +93,11 @@ public class GameScene : IScene
                 _buttonSpacing + _buttonSize + _buttonSpacing,
                 _buttonSize,
                 _buttonSize));
+
+        for (var i = 0; i < _arrowTextures.Length; i++)
+        {
+            _arrowTextures[i] = content.Load<Texture2D>($"Icons/arrow{i+1}");
+        }
 
         var pixelTexture = new Texture2D(_graphicsDevice, 1, 1);
         pixelTexture.SetData([Color.White]);
@@ -283,7 +293,7 @@ public class GameScene : IScene
     public void Draw(GameTime gameTime)
     {
         _graphicsDevice.Clear(Colors.Background);
-        
+
         _spriteBatch.Begin(
             samplerState: SamplerState.PointClamp
         );
@@ -300,16 +310,81 @@ public class GameScene : IScene
         {
             _homeButton.Draw(_spriteBatch, Colors.Text);
             _restartButton.Draw(_spriteBatch, Colors.Text);
-            
+
             if (_processorService.CurrentLevel.Type == LevelType.Custom)
             {
                 _deleteButton.Draw(_spriteBatch, Colors.Text);
             }
         }
-        
+
+        DrawArrow();
+
         _popupService.Draw(_spriteBatch);
 
         _spriteBatch.End();
+    }
+
+    private void DrawArrow()
+    {
+        var screenCenter = new Vector2(_graphicsDevice.Viewport.Width / 2f, _graphicsDevice.Viewport.Height / 2f);
+
+        if (!_processorService.HasHighlightedPixelOnScreen())
+        {
+            if (_arrowTargetPixel.HasValue && _processorService.TryGetHighlightedPixelScreenPosition(_arrowTargetPixel.Value, out var currentTargetPosition))
+            {
+            }
+            else
+            {
+                _arrowTargetPixel = null;
+
+                if (!_processorService.TryGetNearestHighlightedPixel(screenCenter, out var nearestIndex, out currentTargetPosition))
+                {
+                    return;
+                }
+
+                _arrowTargetPixel = nearestIndex;
+            }
+
+            if (_processorService.TryGetNearestHighlightedPixel(screenCenter, out var newNearestIndex, out var newNearestPosition))
+            {
+                var currentDistanceSquared = Vector2.DistanceSquared(screenCenter, currentTargetPosition);
+                var newDistanceSquared = Vector2.DistanceSquared(screenCenter, newNearestPosition);
+
+                const float thresholdSquared = _arrowTargetSwitchThreshold * _arrowTargetSwitchThreshold;
+
+                if (newNearestIndex != _arrowTargetPixel.Value && newDistanceSquared < currentDistanceSquared * thresholdSquared)
+                {
+                    _arrowTargetPixel = newNearestIndex;
+                    currentTargetPosition = newNearestPosition;
+                }
+            }
+
+            var direction = currentTargetPosition - screenCenter;
+            var angle = MathF.Atan2(direction.Y, direction.X);
+            var directionIndex = (int)MathF.Round(angle / (MathF.PI / 4f));
+            directionIndex = (directionIndex + 8) % 8;
+
+            var arrowTexture = _arrowTextures[directionIndex];
+
+            var arrowPosition = GetArrowPosition(screenCenter, currentTargetPosition);
+
+            _spriteBatch.Draw(
+                arrowTexture,
+                arrowPosition,
+                null,
+                Colors.Text,
+                0f,
+                new Vector2(
+                    arrowTexture.Width / 2f,
+                    arrowTexture.Height / 2f),
+                32f / arrowTexture.Width,
+                SpriteEffects.None,
+                0f);
+        }
+        else
+        {
+            _arrowTargetPixel = null;
+        }
     }
     
     public void OnClientSizeChanged(object sender, EventArgs e)
@@ -413,5 +488,52 @@ public class GameScene : IScene
         {
             _konamiIndex = 0;
         }
+    }
+    
+    private Vector2 GetArrowPosition(Vector2 screenCenter, Vector2 targetPosition)
+    {
+        var direction = targetPosition - screenCenter;
+
+        if (direction == Vector2.Zero)
+        {
+            return screenCenter;
+        }
+
+        direction.Normalize();
+
+        const float arrowSize = 32f;
+        const float padding = 8f;
+
+        var left = arrowSize + padding;
+        var right = _graphicsDevice.Viewport.Width - padding;
+        var top = arrowSize + padding;
+        var bottom = _graphicsDevice.Viewport.Height - padding;
+
+        var tX = float.MaxValue;
+        var tY = float.MaxValue;
+
+        if (direction.X > 0)
+        {
+            tX = (right - screenCenter.X) / direction.X;
+        }
+        else if (direction.X < 0)
+        {
+            tX = (left - screenCenter.X) / direction.X;
+        }
+
+        if (direction.Y > 0)
+        {
+            tY = (bottom - screenCenter.Y) / direction.Y;
+        }
+        else if (direction.Y < 0)
+        {
+            tY = (top - screenCenter.Y) / direction.Y;
+        }
+
+        var t = MathF.Min(tX, tY);
+
+        var position = screenCenter + direction * t;
+
+        return position - new Vector2(arrowSize / 2f);
     }
 }

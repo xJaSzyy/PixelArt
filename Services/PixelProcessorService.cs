@@ -533,6 +533,8 @@ public class PixelProcessorService
 
             _particleService.Spawn(pixel.GetWorldPosition(_pixelSize.X, _pixelSize.Y, CurrentLevel.Texture.Width), particleColor, 5);
             _soundService.PlayPaintingSound();
+
+            _highlightedPixels.Remove(index);
         }
         else
         {
@@ -656,5 +658,104 @@ public class PixelProcessorService
     private int GetGraphicsHeight()
     {
         return CurrentLevel.Texture.GraphicsDevice.Viewport.Height;
+    }
+    
+    public bool HasHighlightedPixelOnScreen()
+    {
+        if (_highlightedPixels.Count == 0)
+        {
+            return false;
+        }
+
+        var bounds = GetImageBounds();
+
+        var pixelWidth = _pixelSize.X * _cameraService.Zoom;
+        var pixelHeight = _pixelSize.Y * _cameraService.Zoom;
+
+        var width = CurrentLevel.Texture.Width;
+
+        foreach (var index in _highlightedPixels)
+        {
+            var x = index % width;
+            var y = index / width;
+
+            var pixelLeft = bounds.X + x * pixelWidth;
+            var pixelTop = bounds.Y + y * pixelHeight;
+            var pixelRight = pixelLeft + pixelWidth;
+            var pixelBottom = pixelTop + pixelHeight;
+
+            if (pixelRight >= 0 && pixelLeft < GetGraphicsWidth() &&
+                pixelBottom >= 0 && pixelTop < GetGraphicsHeight())
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+    
+    public bool TryGetHighlightedPixelScreenPosition(int index, out Vector2 position)
+    {
+        position = default;
+
+        if (index < 0 || index >= _pixelLookup.Length)
+        {
+            return false;
+        }
+
+        var pixel = _pixelLookup[index];
+
+        if (pixel == null || pixel.IsFinished)
+        {
+            return false;
+        }
+
+        var bounds = GetImageBounds();
+
+        var pixelWidth = _pixelSize.X * _cameraService.Zoom;
+        var pixelHeight = _pixelSize.Y * _cameraService.Zoom;
+
+        var width = CurrentLevel.Texture.Width;
+
+        var x = index % width;
+        var y = index / width;
+
+        position = new Vector2(
+            bounds.X + (x + 0.5f) * pixelWidth,
+            bounds.Y + (y + 0.5f) * pixelHeight);
+
+        return true;
+    }
+    
+    public bool TryGetNearestHighlightedPixel(Vector2 fromPosition, out int index, out Vector2 position)
+    {
+        index = -1;
+        position = default;
+
+        if (_highlightedPixels.Count == 0)
+        {
+            return false;
+        }
+
+        var minDistanceSquared = float.MaxValue;
+
+        foreach (var pixelIndex in _highlightedPixels)
+        {
+            if (!TryGetHighlightedPixelScreenPosition(pixelIndex, out var pixelPosition))
+            {
+                continue;
+            }
+
+            var distanceSquared = Vector2.DistanceSquared(fromPosition, pixelPosition);
+
+            if (distanceSquared < minDistanceSquared)
+            {
+                minDistanceSquared = distanceSquared;
+                index = pixelIndex;
+                position = pixelPosition;
+            }
+        }
+
+        return index >= 0;
     }
 }
