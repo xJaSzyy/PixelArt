@@ -464,7 +464,6 @@ public class PixelProcessorService
         _textureDirty = true;
     }
     
-
     private void PaintBrush(Point center, Color color)
     {
         var width = CurrentLevel.Texture.Width;

@@ -41,7 +41,10 @@ public class GameScene : IScene
 
     private const int _buttonSize = 56;
     private const int _buttonSpacing = 12;
-    private const int _moveSpeed = 10;
+    private const int _minMoveSpeed = 10;
+    private const int _maxMoveSpeed = 22;
+
+    private int _moveSpeed = 10;
     
     private KeyboardState _previousKeyboardState;
     
@@ -141,7 +144,7 @@ public class GameScene : IScene
 
         if (!_processorService.ReplayLaunched)
         {
-            HandleMoving(keyboard);
+            HandleMoving(mouse, keyboard);
             HandleScroll(mouse, keyboard);
         }
 
@@ -171,26 +174,51 @@ public class GameScene : IScene
         _keyboardService.SetState(keyboard);
     }
 
-    private void HandleMoving(KeyboardState keyboard)
+    private void HandleMoving(MouseState mouse, KeyboardState keyboard)
     {
-        var speed = _moveSpeed * _cameraService.Zoom;
-        
+        var movement = Vector2.Zero;
+
         if (keyboard.IsKeyDown(Keys.W) || keyboard.IsKeyDown(Keys.Up))
         {
-            _cameraService.SetPosition(_cameraService.GetPosition() + new Vector2(0, speed));
+            movement.Y += 1;
         }
-        if (keyboard.IsKeyDown(Keys.A) || keyboard.IsKeyDown(Keys.Left))
-        {
-            _cameraService.SetPosition(_cameraService.GetPosition() + new Vector2(speed, 0));
-        }
+
         if (keyboard.IsKeyDown(Keys.S) || keyboard.IsKeyDown(Keys.Down))
         {
-            _cameraService.SetPosition(_cameraService.GetPosition() + new Vector2(0, -speed));
+            movement.Y -= 1;
         }
+
+        if (keyboard.IsKeyDown(Keys.A) || keyboard.IsKeyDown(Keys.Left))
+        {
+            movement.X += 1;
+        }
+
         if (keyboard.IsKeyDown(Keys.D) || keyboard.IsKeyDown(Keys.Right))
         {
-            _cameraService.SetPosition(_cameraService.GetPosition() + new Vector2(-speed, 0));
+            movement.X -= 1;
         }
+
+        if (movement == Vector2.Zero)
+        {
+            return;
+        }
+
+        movement.Normalize();
+
+        if (_mouseService.IsScroll(mouse))
+        {
+            var scrollDelta = _mouseService.GetScrollDelta(mouse);
+
+            _moveSpeed += scrollDelta > 0 ? 1 : -1;
+
+            _moveSpeed = MathHelper.Clamp(_moveSpeed, _minMoveSpeed, _maxMoveSpeed);
+        }
+        
+        var speed = _moveSpeed * _cameraService.Zoom;
+        
+
+        _cameraService.SetPosition(
+            _cameraService.GetPosition() + movement * speed);
     }
 
     private void HandleKonami(KeyboardState keyboard)
@@ -377,7 +405,7 @@ public class GameScene : IScene
                 new Vector2(
                     arrowTexture.Width / 2f,
                     arrowTexture.Height / 2f),
-                64f / arrowTexture.Width,
+                80f / arrowTexture.Width,
                 SpriteEffects.None,
                 0f);
         }
@@ -501,7 +529,7 @@ public class GameScene : IScene
 
         direction.Normalize();
 
-        const float arrowSize = 32f;
+        const float arrowSize = 64f;
         const float padding = 8f;
 
         var left = arrowSize + padding;

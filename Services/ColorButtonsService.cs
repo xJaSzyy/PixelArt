@@ -22,15 +22,21 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
 
     private void CreateColorButtons()
     {
+        var selected = false;
+        
         foreach (var group in processorService.CurrentLevel.ColorGroups.OrderBy(x => x.Number))
         {
             _colorButtons.Add(new ColorButton(
                 group.OriginalColor.ToColor(),
                 group.Number,
                 Rectangle.Empty));
-        }
 
-        SelectButton(0);
+            if (!selected && !group.IsFinished)
+            {
+                SelectButton(group.Number - 1);
+                selected = true;
+            }
+        }
     }
 
     public void LoadContent(Texture2D pixelTexture)
