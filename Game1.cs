@@ -51,6 +51,7 @@ public class Game1 : Game
         collection.AddSingleton<LanguageService>();
         collection.AddSingleton<KeyboardService>();
         collection.AddSingleton<ImageLoaderService>();
+        collection.AddSingleton<PixelTextureService>();
         
         collection.AddTransient<MenuScene>();
         collection.AddTransient<GameScene>();
