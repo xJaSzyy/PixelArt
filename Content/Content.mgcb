@@ -224,7 +224,7 @@
 /processorParam:TextureFormat=Color
 /build:Icons/unlock.png
 
-#begin Images/3D/RubicksCube/1.png
+#begin Images/3D/1/1.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -234,9 +234,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Images/3D/RubicksCube/1.png
+/build:Images/3D/1/1.png
 
-#begin Images/3D/RubicksCube/2.png
+#begin Images/3D/1/2.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -246,9 +246,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Images/3D/RubicksCube/2.png
+/build:Images/3D/1/2.png
 
-#begin Images/3D/RubicksCube/3.png
+#begin Images/3D/1/3.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -258,9 +258,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Images/3D/RubicksCube/3.png
+/build:Images/3D/1/3.png
 
-#begin Images/3D/RubicksCube/4.png
+#begin Images/3D/1/4.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -270,9 +270,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Images/3D/RubicksCube/4.png
+/build:Images/3D/1/4.png
 
-#begin Images/3D/RubicksCube/5.png
+#begin Images/3D/1/5.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -282,9 +282,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Images/3D/RubicksCube/5.png
+/build:Images/3D/1/5.png
 
-#begin Images/3D/RubicksCube/6.png
+#begin Images/3D/1/6.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -294,7 +294,7 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Images/3D/RubicksCube/6.png
+/build:Images/3D/1/6.png
 
 #begin Images/Animal/1.png
 /importer:TextureImporter
@@ -1987,6 +1987,18 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Images/Food/9.png
+
+#begin Images/preview.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Images/preview.png
 
 #begin Images/Sword/1.png
 /importer:TextureImporter

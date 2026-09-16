@@ -4,6 +4,7 @@ using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using PixelArt.Enums;
 using PixelArt.Models;
 
 namespace PixelArt.Services;
@@ -19,6 +20,12 @@ public class PixelProcessorService
     private float _pixelsAccumulator;
     private Point? _lastPaintPixel;
     private Color[] _texturePixels;
+    
+    private Color[][] _cubeTexturePixels;
+    private PixelData[][] _cubePixelLookup;
+    //private readonly Dictionary<int, Point?> _lastPaintByFace = new();  
+    private readonly Dictionary<CubeFace, Point> _lastPaintByFace = new();
+    
     private PixelData[] _pixelLookup;
     private readonly Color _highlightColor = new(72, 72, 72);
     private readonly HashSet<int> _highlightedPixels = [];
@@ -83,14 +90,28 @@ public class PixelProcessorService
         _lastPaintPixel = null;
         _textureDirty = false;
         
-        cube = new TexturedCube(
-            _graphicsDevice,
-            CurrentLevel.Texture,
-            CurrentLevel.Texture,
-            CurrentLevel.Texture,
-            CurrentLevel.Texture,
-            CurrentLevel.Texture,
-            CurrentLevel.Texture);
+        if (CurrentLevel.Type == LevelType.ThreeD)
+        {
+            cube = new TexturedCube(
+                _graphicsDevice,
+                CurrentLevel.CubeTextures[0],
+                CurrentLevel.CubeTextures[1],
+                CurrentLevel.CubeTextures[2],
+                CurrentLevel.CubeTextures[3],
+                CurrentLevel.CubeTextures[4],
+                CurrentLevel.CubeTextures[5]);
+        }
+        else
+        {
+            cube = new TexturedCube(
+                _graphicsDevice,
+                CurrentLevel.Texture,
+                CurrentLevel.Texture,
+                CurrentLevel.Texture,
+                CurrentLevel.Texture,
+                CurrentLevel.Texture,
+                CurrentLevel.Texture);
+        }
         
         projection = Matrix.CreatePerspectiveFieldOfView(
             MathHelper.ToRadians(45f),
@@ -106,6 +127,179 @@ public class PixelProcessorService
         world = Matrix.Identity;
         _rotationX = 0f;
         _rotationY = 0f;
+        
+        if (CurrentLevel.Type == LevelType.ThreeD)
+        {
+            InitializeCubeData();
+        }
+    }
+    
+    private void InitializeCubeData()
+    {
+        const int faceCount = 6;
+
+        _cubeTexturePixels = new Color[faceCount][];
+        _cubePixelLookup = new PixelData[faceCount][];
+
+        for (var face = 0; face < faceCount; face++)
+        {
+            var texture = CurrentLevel.CubeTextures[face];
+
+            var size = texture.Width * texture.Height;
+
+            _cubeTexturePixels[face] = new Color[size];
+            _cubePixelLookup[face] = new PixelData[size];
+
+            texture.GetData(_cubeTexturePixels[face]);
+        }
+    }
+    
+    public void Process3DImage()
+    {
+        if (CurrentLevel.Type != LevelType.ThreeD)
+        {
+            return;
+        }
+
+        if (CurrentLevel.Pixels.Count == 0)
+        {
+            ProcessNew3DImage();
+        }
+        else
+        {
+            RebuildExisting3DImage();
+        }
+
+        _textureDirty = true;
+    }
+    
+    private void ProcessNew3DImage()
+    {
+        CurrentLevel.ColorGroups.Clear();
+        CurrentLevel.Pixels.Clear();
+
+        _groupsByColor.Clear();
+
+        for (var face = 0; face < 6; face++)
+        {
+            var texture = CurrentLevel.CubeTextures[face];
+            var pixels = _cubeTexturePixels[face];
+
+            for (var i = 0; i < pixels.Length; i++)
+            {
+                var original = pixels[i];
+
+                if (original.A != 255)
+                {
+                    continue;
+                }
+
+                if (!_groupsByColor.TryGetValue(original, out var group))
+                {
+                    group = new PixelColorGroup
+                    {
+                        OriginalColor = new ColorData(original),
+                        Pixels = []
+                    };
+
+                    _groupsByColor.Add(original, group);
+                    CurrentLevel.ColorGroups.Add(group);
+                }
+
+                var pixel = new PixelData
+                {
+                    Index = i,
+                    Face = face,
+                    OriginalColor = new ColorData(original),
+                    CurrentColor = new ColorData(Color.White)
+                };
+
+                CurrentLevel.Pixels.Add(pixel);
+
+                _cubePixelLookup[face][i] = pixel;
+
+                group.Pixels.Add(pixel);
+            }
+        }
+
+        var total = CurrentLevel.ColorGroups.Count;
+
+        SortAndNumberColorGroups();
+
+        for (var i = 0; i < total; i++)
+        {
+            var group = CurrentLevel.ColorGroups[i];
+
+            var grayColor = Utils.GenerateGrayColor(i, total);
+
+            foreach (var pixel in group.Pixels)
+            {
+                pixel.CurrentColor = new ColorData(grayColor);
+                pixel.GrayColor = new ColorData(grayColor);
+
+                _cubeTexturePixels[pixel.Face][pixel.Index] = grayColor;
+            }
+        }
+
+        for (var face = 0; face < 6; face++)
+        {
+            CurrentLevel.CubeTextures[face].SetData(
+                _cubeTexturePixels[face]);
+        }
+    }
+    
+    private void RebuildExisting3DImage()
+    {
+        _groupsByColor.Clear();
+
+        for (var face = 0; face < 6; face++)
+        {
+            Array.Clear(_cubePixelLookup[face], 0, _cubePixelLookup[face].Length);
+
+            var pixels = _cubeTexturePixels[face];
+
+            for (var i = 0; i < pixels.Length; i++)
+            {
+                pixels[i] = Color.Transparent;
+            }
+        }
+
+        CurrentLevel.ColorGroups.Clear();
+
+        foreach (var pixel in CurrentLevel.Pixels)
+        {
+            _cubePixelLookup[pixel.Face][pixel.Index] = pixel;
+
+            _cubeTexturePixels[pixel.Face][pixel.Index] =
+                pixel.CurrentColor.ToColor();
+
+            if (!_groupsByColor.TryGetValue(
+                    pixel.OriginalColor.ToColor(),
+                    out var group))
+            {
+                group = new PixelColorGroup
+                {
+                    OriginalColor = pixel.OriginalColor,
+                    Pixels = []
+                };
+
+                _groupsByColor.Add(
+                    pixel.OriginalColor.ToColor(),
+                    group);
+
+                CurrentLevel.ColorGroups.Add(group);
+            }
+
+            group.Pixels.Add(pixel);
+        }
+
+        SortAndNumberColorGroups();
+
+        for (var face = 0; face < 6; face++)
+        {
+            CurrentLevel.CubeTextures[face].SetData(
+                _cubeTexturePixels[face]);
+        }
     }
     
     private Matrix world;
@@ -115,6 +309,12 @@ public class PixelProcessorService
 
     public void ProcessImage()
     {
+        if (CurrentLevel.Type == LevelType.ThreeD)
+        {
+            Process3DImage();
+            return;
+        }
+
         if (CurrentLevel.Pixels.Count == 0)
         {
             ProcessNewImage();
@@ -273,11 +473,17 @@ public class PixelProcessorService
         return true;
     }
     
-    private readonly Dictionary<CubeFace, Point> _lastPaintByFace = new();
-
     public void PaintAtCube(MouseState mouse, Color color)
     {
-        if (!TryGetCubeIntersection(mouse.Position, out var localPoint, out _))
+        if (CurrentLevel.Type != LevelType.ThreeD)
+        {
+            return;
+        }
+
+        if (!TryGetCubeIntersection(
+                mouse.Position,
+                out var localPoint,
+                out _))
         {
             _lastPaintByFace.Clear();
             return;
@@ -286,27 +492,157 @@ public class PixelProcessorService
         var face = GetCubeFace(localPoint);
         var uv = GetFaceUv(face, localPoint);
 
-        var width = CurrentLevel.Texture.Width;
-        var height = CurrentLevel.Texture.Height;
+        var width = CurrentLevel.CubeTextures[(int)face].Width;
+        var height = CurrentLevel.CubeTextures[(int)face].Height;
 
-        var x = Math.Clamp((int)(uv.X * width), 0, width - 1);
-        var y = Math.Clamp((int)(uv.Y * height), 0, height - 1);
+        var x = Math.Clamp(
+            (int)(uv.X * width),
+            0,
+            width - 1);
+
+        var y = Math.Clamp(
+            (int)(uv.Y * height),
+            0,
+            height - 1);
+
         var current = new Point(x, y);
 
         if (_lastPaintByFace.TryGetValue(face, out var last))
         {
             foreach (var point in Utils.GetLine(last, current))
             {
-                PaintBrush(point, color);
+                PaintBrush3D(face, point, color);
             }
         }
         else
         {
-            PaintBrush(current, color);
+            PaintBrush3D(face, current, color);
         }
 
         _lastPaintByFace[face] = current;
+
         _textureDirty = true;
+    }
+    
+    private void PaintBrush3D(
+        CubeFace face,
+        Point center,
+        Color color)
+    {
+        var faceIndex = (int)face;
+
+        var texture = CurrentLevel.CubeTextures[faceIndex];
+
+        var width = texture.Width;
+        var height = texture.Height;
+
+        var radiusSquared = BrushRadius * BrushRadius;
+
+        for (var dy = -BrushRadius; dy <= BrushRadius; dy++)
+        {
+            for (var dx = -BrushRadius; dx <= BrushRadius; dx++)
+            {
+                if (dx * dx + dy * dy > radiusSquared)
+                {
+                    continue;
+                }
+
+                var x = center.X + dx;
+                var y = center.Y + dy;
+
+                if (x < 0 || x >= width ||
+                    y < 0 || y >= height)
+                {
+                    continue;
+                }
+
+                var index = y * width + x;
+
+                SetPixel3D(faceIndex, index, color);
+            }
+        }
+    }
+    
+    private void SetPixel3D(
+        int face,
+        int index,
+        Color color)
+    {
+        if (face < 0 || face >= 6)
+        {
+            return;
+        }
+
+        var lookup = _cubePixelLookup[face];
+
+        if (index < 0 || index >= lookup.Length)
+        {
+            return;
+        }
+
+        var pixel = lookup[index];
+
+        if (pixel == null || pixel.IsFinished)
+        {
+            return;
+        }
+
+        if (color == pixel.OriginalColor.ToColor())
+        {
+            CurrentLevel.History.Add(
+                GetHistoryIndex(face, index));
+
+            var brightnessOffset =
+                Colors.IsDark(color) ? 40 : -40;
+
+            var particleColor = new Color(
+                Math.Clamp(color.R + brightnessOffset, 0, 255),
+                Math.Clamp(color.G + brightnessOffset, 0, 255),
+                Math.Clamp(color.B + brightnessOffset, 0, 255));
+
+            var localPosition = GetPixelWorldPosition(
+                face,
+                pixel);
+
+            /*_particleService.Spawn(
+                localPosition,
+                particleColor,
+                5);*/
+
+            _soundService.PlayPaintingSound();
+
+            _highlightedPixels.Remove(
+                GetHistoryIndex(face, index));
+        }
+        else
+        {
+            color = Color.Lerp(
+                color,
+                pixel.GrayColor.ToColor(),
+                0.6f);
+        }
+
+        pixel.CurrentColor = new ColorData(color);
+
+        _cubeTexturePixels[face][index] = color;
+
+        _textureDirty = true;
+    }
+    
+    private const int HistoryFaceMultiplier = 1_000_000;
+
+    private static int GetHistoryIndex(int face, int pixelIndex)
+    {
+        return face * HistoryFaceMultiplier + pixelIndex;
+    }
+
+    private static void DecodeHistoryIndex(
+        int historyIndex,
+        out int face,
+        out int pixelIndex)
+    {
+        face = historyIndex / HistoryFaceMultiplier;
+        pixelIndex = historyIndex % HistoryFaceMultiplier;
     }
     
     private float _cameraDistance = 5f;
@@ -352,20 +688,57 @@ public class PixelProcessorService
 
         var changed = false;
 
-        while (_pixelsAccumulator >= 1f && _historyIndex < historyCount)
+        while (_pixelsAccumulator >= 1f &&
+               _historyIndex < historyCount)
         {
-            var pixelIndex = CurrentLevel.History[_historyIndex++];
+            var historyValue =
+                CurrentLevel.History[_historyIndex++];
 
-            if (pixelIndex >= 0 && pixelIndex < _pixelLookup.Length)
+            if (CurrentLevel.Type == LevelType.ThreeD)
             {
-                var pixel = _pixelLookup[pixelIndex];
+                DecodeHistoryIndex(
+                    historyValue,
+                    out var face,
+                    out var pixelIndex);
 
-                if (pixel != null)
+                if (face >= 0 && face < 6 &&
+                    pixelIndex >= 0 &&
+                    pixelIndex < _cubePixelLookup[face].Length)
                 {
-                    pixel.CurrentColor = pixel.OriginalColor;
-                    _texturePixels[pixelIndex] = pixel.OriginalColor.ToColor();
+                    var pixel =
+                        _cubePixelLookup[face][pixelIndex];
 
-                    changed = true;
+                    if (pixel != null)
+                    {
+                        pixel.CurrentColor =
+                            pixel.OriginalColor;
+
+                        _cubeTexturePixels[face][pixelIndex] =
+                            pixel.OriginalColor.ToColor();
+
+                        changed = true;
+                    }
+                }
+            }
+            else
+            {
+                var pixelIndex = historyValue;
+
+                if (pixelIndex >= 0 &&
+                    pixelIndex < _pixelLookup.Length)
+                {
+                    var pixel = _pixelLookup[pixelIndex];
+
+                    if (pixel != null)
+                    {
+                        pixel.CurrentColor =
+                            pixel.OriginalColor;
+
+                        _texturePixels[pixelIndex] =
+                            pixel.OriginalColor.ToColor();
+
+                        changed = true;
+                    }
                 }
             }
 
@@ -554,27 +927,30 @@ public class PixelProcessorService
         };
     }
 
-    public void Draw(SpriteBatch spriteBatch, DrawService drawService)
+    public void Draw(
+        SpriteBatch spriteBatch,
+        DrawService drawService)
     {
         UpdateTexture();
 
-        var drawBounds = GetImageBounds();
+        cube.Draw(
+            world,
+            view,
+            projection);
 
-        //DrawGlow(spriteBatch, drawBounds);
-
-        cube.Draw(world, view, projection);
-        
-        /*spriteBatch.Draw(
-            CurrentLevel.Texture,
-            drawBounds,
-            Color.White);*/
-
-        /*DrawPixelNumbers(
-            drawBounds,
-            spriteBatch,
-            drawService);*/
-        
-        DrawPixelNumbers3D(spriteBatch, drawService);
+        if (CurrentLevel.Type == LevelType.ThreeD)
+        {
+            DrawPixelNumbers3D(
+                spriteBatch,
+                drawService);
+        }
+        else
+        {
+            DrawPixelNumbers(
+                GetImageBounds(),
+                spriteBatch,
+                drawService);
+        }
 
         _particleService.Draw(spriteBatch);
     }
@@ -847,10 +1223,17 @@ public class PixelProcessorService
 
     public void Replay()
     {
+        if (CurrentLevel.Type == LevelType.ThreeD)
+        {
+            Replay3D();
+            return;
+        }
+
         foreach (var pixel in CurrentLevel.Pixels)
         {
             pixel.CurrentColor = pixel.GrayColor;
-            _texturePixels[pixel.Index] = pixel.GrayColor.ToColor();
+            _texturePixels[pixel.Index] =
+                pixel.GrayColor.ToColor();
         }
 
         _textureDirty = true;
@@ -862,13 +1245,86 @@ public class PixelProcessorService
 
         ReplayLaunched = true;
     }
-
-    public void Restart()
+    
+    private void Replay3D()
     {
         foreach (var pixel in CurrentLevel.Pixels)
         {
             pixel.CurrentColor = pixel.GrayColor;
-            _texturePixels[pixel.Index] = pixel.GrayColor.ToColor();
+
+            _cubeTexturePixels[pixel.Face][pixel.Index] =
+                pixel.GrayColor.ToColor();
+        }
+
+        _textureDirty = true;
+
+        UpdateTexture();
+
+        _historyIndex = 0;
+        _pixelsAccumulator = 0;
+
+        ReplayLaunched = true;
+    }
+    
+    private void Restart3D()
+    {
+        foreach (var pixel in CurrentLevel.Pixels)
+        {
+            pixel.CurrentColor = pixel.GrayColor;
+
+            _cubeTexturePixels[pixel.Face][pixel.Index] =
+                pixel.GrayColor.ToColor();
+        }
+
+        CurrentLevel.IsFinished = false;
+        CurrentLevel.History.Clear();
+
+        _highlightedPixels.Clear();
+
+        _textureDirty = true;
+
+        UpdateTexture();
+    }
+    
+    private Vector3 GetPixelWorldPosition(
+        int faceIndex,
+        PixelData pixel)
+    {
+        var face = (CubeFace)faceIndex;
+
+        var texture =
+            CurrentLevel.CubeTextures[faceIndex];
+
+        var width = texture.Width;
+        var height = texture.Height;
+
+        var px = pixel.Index % width;
+        var py = pixel.Index / width;
+
+        var u = (px + 0.5f) / width;
+        var v = (py + 0.5f) / height;
+
+        var local = GetLocalPointOnFace(
+            face,
+            u,
+            v);
+
+        return Vector3.Transform(local, world);
+    }
+
+    public void Restart()
+    {
+        if (CurrentLevel.Type == LevelType.ThreeD)
+        {
+            Restart3D();
+            return;
+        }
+
+        foreach (var pixel in CurrentLevel.Pixels)
+        {
+            pixel.CurrentColor = pixel.GrayColor;
+            _texturePixels[pixel.Index] =
+                pixel.GrayColor.ToColor();
         }
 
         CurrentLevel.IsFinished = false;
@@ -927,89 +1383,144 @@ public class PixelProcessorService
         };
     }
 
-    private void DrawPixelNumbers3D(SpriteBatch spriteBatch, DrawService drawService)
+    private void DrawPixelNumbers3D(
+    SpriteBatch spriteBatch,
+    DrawService drawService)
+{
+    if (CurrentLevel.Type != LevelType.ThreeD ||
+        CurrentLevel.Pixels.Count == 0)
     {
-        if (CurrentLevel.Pixels.Count == 0)
+        return;
+    }
+
+    var viewport = _graphicsDevice.Viewport;
+
+    Matrix.Invert(
+        ref view,
+        out var invView);
+
+    var cameraPos = invView.Translation;
+
+    foreach (var pixel in CurrentLevel.Pixels)
+    {
+        if (pixel.IsFinished)
         {
-            return;
+            continue;
         }
 
-        var width = CurrentLevel.Texture.Width;
-        var height = CurrentLevel.Texture.Height;
+        var face = (CubeFace)pixel.Face;
 
-        var viewport = _graphicsDevice.Viewport;
+        var texture =
+            CurrentLevel.CubeTextures[pixel.Face];
 
-        foreach (var pixel in CurrentLevel.Pixels)
+        var width = texture.Width;
+        var height = texture.Height;
+
+        var px = pixel.Index % width;
+        var py = pixel.Index / width;
+
+        var u = (px + 0.5f) / width;
+        var v = (py + 0.5f) / height;
+
+        var local = GetLocalPointOnFace(
+            face,
+            u,
+            v);
+
+        var worldPos =
+            Vector3.Transform(local, world);
+
+        var normal =
+            Vector3.TransformNormal(
+                GetFaceNormal(face),
+                world);
+
+        normal.Normalize();
+
+        var toCamera =
+            cameraPos - worldPos;
+
+        toCamera.Normalize();
+
+        if (Vector3.Dot(normal, toCamera) <= 0f)
         {
-            if (pixel.IsFinished) continue;
+            continue;
+        }
 
-            var px = pixel.Index % width;
-            var py = pixel.Index / width;
+        var screen = viewport.Project(
+            worldPos,
+            projection,
+            view,
+            Matrix.Identity);
 
-            var u = (px + 0.5f) / width;
-            var v = (py + 0.5f) / height;
+        if (screen.Z < 0f ||
+            screen.Z > 1f)
+        {
+            continue;
+        }
 
-            var local = GetLocalPointOnFace(CubeFace.Front, u, v);
+        if (!_groupsByColor.TryGetValue(
+                pixel.OriginalColor.ToColor(),
+                out var colorGroup))
+        {
+            continue;
+        }
 
-            var worldPos = Vector3.Transform(local, world);
+        var zoomProgress = Utils.Remap(
+            _cameraService.Zoom,
+            _cameraService.MinZoom,
+            _cameraService.MinZoom * 2.25f,
+            0f,
+            1f);
 
-            var normal = Vector3.TransformNormal(Vector3.UnitZ, world);
-            normal.Normalize();
+        if (zoomProgress <= 0.01f)
+        {
+            continue;
+        }
 
-            Matrix.Invert(ref view, out var invView);
-            var cameraPos = invView.Translation;
-            var toCamera = cameraPos - worldPos;
-            toCamera.Normalize();
-
-            if (Vector3.Dot(normal, toCamera) <= 0f)
-            {
-                continue;
-            }
-
-            var screen = viewport.Project(worldPos, projection, view, Matrix.Identity);
-
-            if (screen.Z < 0f || screen.Z > 1f)
-            {
-                continue;
-            }
-
-            if (!_groupsByColor.TryGetValue(pixel.OriginalColor.ToColor(), out var colorGroup))
-            {
-                continue;
-            }
-
-            var zoomProgress = Utils.Remap(
-                _cameraService.Zoom,
-                _cameraService.MinZoom,
-                _cameraService.MinZoom * 2.25f,
-                0f,
-                1f);
-            
-            if (zoomProgress <= 0.01f)
-            {
-                continue;
-            }
-
-            var baseColor = Colors.IsDark(pixel.CurrentColor.ToColor())
+        var baseColor =
+            Colors.IsDark(pixel.CurrentColor.ToColor())
                 ? Color.White
                 : Color.Black;
 
-            var color = Color.Lerp(Color.Transparent, baseColor, zoomProgress);
+        var color = Color.Lerp(
+            Color.Transparent,
+            baseColor,
+            zoomProgress);
 
-            if (pixel.CurrentColor != pixel.GrayColor && pixel.CurrentColor.ToColor() != _highlightColor)
-            {
-                color *= 0.6f;
-            }
-
-            var textScale = MathHelper.Lerp(0.5f, 0.7f, zoomProgress);
-
-            drawService.DrawString(
-                spriteBatch,
-                colorGroup.Number.ToString(),
-                new Vector2(screen.X, screen.Y),
-                color,
-                textScale);
+        if (pixel.CurrentColor != pixel.GrayColor &&
+            pixel.CurrentColor.ToColor() != _highlightColor)
+        {
+            color *= 0.6f;
         }
+
+        var textScale =
+            MathHelper.Lerp(
+                0.5f,
+                0.7f,
+                zoomProgress);
+
+        drawService.DrawString(
+            spriteBatch,
+            colorGroup.Number.ToString(),
+            new Vector2(screen.X, screen.Y),
+            color,
+            textScale);
+    }
+}
+    
+    private Vector3 GetFaceNormal(CubeFace face)
+    {
+        return face switch
+        {
+            CubeFace.Front => Vector3.UnitZ,
+            CubeFace.Back => -Vector3.UnitZ,
+            CubeFace.Left => -Vector3.UnitX,
+            CubeFace.Right => Vector3.UnitX,
+            CubeFace.Top => Vector3.UnitY,
+            CubeFace.Bottom => -Vector3.UnitY,
+            _ => Vector3.UnitZ
+        };
     }
 
     public void ClearHighlight()
@@ -1044,7 +1555,18 @@ public class PixelProcessorService
             return;
         }
 
-        CurrentLevel.Texture.SetData(_texturePixels);
+        if (CurrentLevel.Type == LevelType.ThreeD)
+        {
+            for (var face = 0; face < 6; face++)
+            {
+                CurrentLevel.CubeTextures[face].SetData(
+                    _cubeTexturePixels[face]);
+            }
+        }
+        else
+        {
+            CurrentLevel.Texture.SetData(_texturePixels);
+        }
 
         _textureDirty = false;
     }

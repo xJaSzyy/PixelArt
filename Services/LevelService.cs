@@ -52,6 +52,8 @@ public class LevelService
         [LevelType.Food] = ("Images/Food", 24),
         [LevelType.Sword] = ("Images/Sword", 20)
     };
+    
+    private const int _threeDLevelsCount = 1;
 
     public LevelService(IServiceProvider services)
     {
@@ -151,6 +153,8 @@ public class LevelService
                 AddLevel(originalTexture, i, type, savedLevel, isLocked);
             }
         }
+        
+        Load3DLevels(savedLevels);
 
         foreach (var savedLevel in savedLevels.Where(x => x.Type == LevelType.Custom))
         {
@@ -160,6 +164,68 @@ public class LevelService
         }
 
         CurrentLevelType = Levels.FirstOrDefault(x => !x.IsFinished)?.Type ?? LevelType.Custom;
+    }
+    
+    private void Load3DLevels(List<LevelData> savedLevels)
+    {
+        for (var i = 0; i < _threeDLevelsCount; i++)
+        {
+            var levelId = i;
+
+            var faceTextures = new Texture2D[6];
+
+            for (var face = 0; face < 6; face++)
+            {
+                faceTextures[face] = _contentManager.Load<Texture2D>(
+                    $"Images/3D/{levelId + 1}/{face + 1}");
+            }
+
+            var savedLevel = savedLevels.FirstOrDefault(
+                x => x.Id == levelId &&
+                     x.Type == LevelType.ThreeD);
+
+            Add3DLevel(
+                faceTextures,
+                levelId,
+                savedLevel);
+        }
+    }
+    
+    private void Add3DLevel(
+        Texture2D[] faceTextures,
+        int levelId,
+        LevelData? savedLevel = null)
+    {
+        var level = savedLevel ?? new LevelData();
+
+        level.Id = levelId;
+        level.Type = LevelType.ThreeD;
+        level.IsLocked = false;
+
+        level.CubeTextures = faceTextures;
+
+        // Основная текстура пока используется процессором
+        // как источник данных для одной грани.
+        level.Texture = Utils.CloneTexture2D(
+            _graphicsDevice,
+            faceTextures[0]);
+
+        level.GrayTexture = Utils.CloneTexture2D(
+            _graphicsDevice,
+            faceTextures[0]);
+
+        level.OriginalTexture = faceTextures[0];
+
+        level.Button = new Button(
+            _drawService,
+            _languageService,
+            level.Texture,
+            Rectangle.Empty);
+
+        Levels.Add(level);
+
+        _processorService.SetLevel(level);
+        _processorService.ProcessImage();
     }
 
     private void AddLevel(Texture2D originalTexture, 

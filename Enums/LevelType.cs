@@ -9,5 +9,6 @@ public enum LevelType
     Drink = 4,
     Fish = 5,
     Food = 6,
-    Sword = 7
+    Sword = 7,
+    ThreeD = 8
 }

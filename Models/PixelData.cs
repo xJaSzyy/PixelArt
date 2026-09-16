@@ -10,6 +10,8 @@ public class PixelData
     public ColorData OriginalColor { get; set; }
     public ColorData GrayColor { get; set; }
     public ColorData CurrentColor { get; set; }
+    
+    public int Face { get; set; }
 
     [JsonIgnore] public bool IsFinished =>
         OriginalColor.R == CurrentColor.R 
