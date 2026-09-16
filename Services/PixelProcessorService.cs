@@ -757,4 +757,9 @@ public class PixelProcessorService
 
         return index >= 0;
     }
+
+    public bool ContainsHighlightedPixel(int index)
+    {
+        return _highlightedPixels.Contains(index);
+    }
 }

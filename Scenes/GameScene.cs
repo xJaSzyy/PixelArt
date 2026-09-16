@@ -360,6 +360,11 @@ public class GameScene : IScene
         {
             if (_arrowTargetPixel.HasValue && _processorService.TryGetHighlightedPixelScreenPosition(_arrowTargetPixel.Value, out var currentTargetPosition))
             {
+                if (!_processorService.ContainsHighlightedPixel(_arrowTargetPixel.Value))
+                {
+                    _arrowTargetPixel = null;
+                    return;
+                }
             }
             else
             {
