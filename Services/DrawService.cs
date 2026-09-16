@@ -22,12 +22,7 @@ public class DrawService
         return _font.MeasureString(text) * scale;
     }
 
-    public void DrawString(
-        SpriteBatch spriteBatch,
-        string text,
-        Vector2 position,
-        Color color,
-        float scale = 1f)
+    public void DrawString(SpriteBatch spriteBatch, string text, Vector2 position, Color color, float scale = 1f)
     {
         var origin = MeasureString(text) / 2f;
 
@@ -44,14 +39,7 @@ public class DrawService
         );
     }
 
-    public void DrawStringWithBackground(
-        SpriteBatch spriteBatch,
-        string text,
-        Vector2 position,
-        Color textColor,
-        Color backgroundColor,
-        float scale = 1f,
-        int padding = 8)
+    public void DrawStringWithBackground(SpriteBatch spriteBatch, string text, Vector2 position, Color textColor, Color backgroundColor, float scale = 1f, int padding = 8)
     {
         var size = MeasureString(text) * scale;
 
@@ -81,14 +69,7 @@ public class DrawService
         );
     }
 
-    public void DrawProgressBar(
-        SpriteBatch spriteBatch,
-        Rectangle bounds,
-        float progress,
-        Color borderColor,
-        Color emptyColor,
-        Color fillColor,
-        int borderThickness = 1)
+    public void DrawProgressBar(SpriteBatch spriteBatch, Rectangle bounds, float progress, Color borderColor, Color emptyColor, Color fillColor, int borderThickness = 1)
     {
         spriteBatch.Draw(
             _pixelTexture,
@@ -123,15 +104,9 @@ public class DrawService
         spriteBatch.Draw(_pixelTexture, bounds, color);
     }
 
-    public void DrawRoundedRectangle(
-        SpriteBatch spriteBatch,
-        Rectangle bounds,
-        Color color,
-        int radius)
+    public void DrawRoundedRectangle(SpriteBatch spriteBatch, Rectangle bounds, Color color, int radius)
     {
-        radius = Math.Min(
-            radius,
-            Math.Min(bounds.Width, bounds.Height) / 2);
+        radius = Math.Min(radius, Math.Min(bounds.Width, bounds.Height) / 2);
 
         spriteBatch.Draw(
             _pixelTexture,
@@ -184,11 +159,7 @@ public class DrawService
         DrawCircle(spriteBatch, new Vector2(bounds.Right - radius - 1, bounds.Bottom - radius - 1), radius, color);
     }
 
-    private void DrawCircle(
-        SpriteBatch spriteBatch,
-        Vector2 center,
-        int radius,
-        Color color)
+    private void DrawCircle(SpriteBatch spriteBatch, Vector2 center, int radius, Color color)
     {
         for (var y = -radius; y <= radius; y++)
         {
@@ -204,8 +175,4 @@ public class DrawService
                 color);
         }
     }
-
-    public SpriteFont GetFont() => _font;
-    
-    public Texture2D GetPixelTexture() => _pixelTexture;
 }
