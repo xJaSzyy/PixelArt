@@ -1,15 +1,13 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace PixelArt.Services;
+namespace PixelArt.Services.Pixel;
 
 public sealed class PixelTextureService
 {
     private Texture2D _texture;
     private Color[] _pixels = [];
     private bool _dirty;
-
-    public int Size => _pixels.Length;
 
     public void SetTexture(Texture2D texture)
     {
@@ -19,11 +17,6 @@ public sealed class PixelTextureService
         texture.GetData(_pixels);
 
         _dirty = false;
-    }
-
-    public Color GetPixel(int index)
-    {
-        return _pixels[index];
     }
 
     public void SetPixel(int index, Color color)

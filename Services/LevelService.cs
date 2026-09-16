@@ -11,6 +11,8 @@ using Microsoft.Xna.Framework.Input;
 using PixelArt.Buttons;
 using PixelArt.Enums;
 using PixelArt.Models;
+using PixelArt.Services.Common;
+using PixelArt.Services.Pixel;
 
 namespace PixelArt.Services;
 

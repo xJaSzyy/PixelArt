@@ -3,7 +3,7 @@ using System.Linq;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
 
-namespace PixelArt.Services;
+namespace PixelArt.Services.Common;
 
 public class SoundService
 {

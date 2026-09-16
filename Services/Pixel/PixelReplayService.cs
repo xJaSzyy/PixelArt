@@ -1,7 +1,7 @@
 using System;
 using PixelArt.Models;
 
-namespace PixelArt.Services;
+namespace PixelArt.Services.Pixel;
 
 public sealed class PixelReplayService
 {

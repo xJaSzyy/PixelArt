@@ -1,10 +1,9 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework;
 using PixelArt.Models;
 
-namespace PixelArt.Services;
+namespace PixelArt.Services.Pixel;
 
 public sealed class PixelDataService
 {

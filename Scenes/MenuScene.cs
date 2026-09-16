@@ -13,6 +13,9 @@ using PixelArt.Enums;
 using PixelArt.Interfaces;
 using PixelArt.Models;
 using PixelArt.Services;
+using PixelArt.Services.Common;
+using PixelArt.Services.Particles;
+using PixelArt.Services.Pixel;
 using Point = Microsoft.Xna.Framework.Point;
 using Rectangle = Microsoft.Xna.Framework.Rectangle;
 

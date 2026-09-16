@@ -1,7 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace PixelArt.Services;
+namespace PixelArt.Services.Common;
 
 public class PopupTextService(DrawService drawService)
 {

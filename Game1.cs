@@ -4,6 +4,9 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using PixelArt.Scenes;
 using PixelArt.Services;
+using PixelArt.Services.Common;
+using PixelArt.Services.Particles;
+using PixelArt.Services.Pixel;
 
 namespace PixelArt;
 

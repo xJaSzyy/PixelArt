@@ -1,7 +1,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
-namespace PixelArt.Services;
+namespace PixelArt.Services.Common;
 
 public class MouseService(GraphicsDevice graphicsDevice)
 {

@@ -4,8 +4,10 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using PixelArt.Models;
+using PixelArt.Services.Common;
+using PixelArt.Services.Particles;
 
-namespace PixelArt.Services;
+namespace PixelArt.Services.Pixel;
 
 public class PixelProcessorService
 {

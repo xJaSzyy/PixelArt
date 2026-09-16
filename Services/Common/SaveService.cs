@@ -4,7 +4,7 @@ using System.IO.Compression;
 using System.Text.Json;
 using PixelArt.Models;
 
-namespace PixelArt.Services;
+namespace PixelArt.Services.Common;
 
 public class SaveService
 {

@@ -4,7 +4,7 @@ using System.Globalization;
 using System.Linq;
 using PixelArt.Models;
 
-namespace PixelArt.Services;
+namespace PixelArt.Services.Common;
 
 public class LanguageService
 {
