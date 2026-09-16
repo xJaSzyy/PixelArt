@@ -27,6 +27,7 @@ public class GameScene : IScene
     private readonly PopupTextService _popupService;
     private readonly CameraService _cameraService;
     private readonly PixelProcessorService _processorService;
+    private readonly PixelReplayService _pixelReplayService;
     private readonly BackgroundParticleService _backgroundService;
     private readonly LanguageService _languageService;
     private ColorButtonsService _colorButtonsService;
@@ -75,6 +76,7 @@ public class GameScene : IScene
         _cameraService = _services.GetRequiredService<CameraService>();
         _backgroundService = _services.GetRequiredService<BackgroundParticleService>();
         _languageService = _services.GetRequiredService<LanguageService>();
+        _pixelReplayService = _services.GetRequiredService<PixelReplayService>();
     }
 
     public void LoadContent(ContentManager content)
@@ -122,7 +124,7 @@ public class GameScene : IScene
         {
             _colorButtonsService.UpdateSelectedButton();
 
-            if (!_processorService.ReplayLaunched && !spacePressed)
+            if (!_pixelReplayService.IsRunning && !spacePressed)
             {
                 if (_homeButton.IsHovered)
                 {
@@ -142,7 +144,7 @@ public class GameScene : IScene
             }
         }
 
-        if (!_processorService.ReplayLaunched)
+        if (!_pixelReplayService.IsRunning)
         {
             HandleMoving(mouse, keyboard);
             HandleScroll(mouse, keyboard);
@@ -334,7 +336,7 @@ public class GameScene : IScene
             _colorButtonsService.Draw(_drawService);
         }
 
-        if (!_processorService.ReplayLaunched)
+        if (!_pixelReplayService.IsRunning)
         {
             _homeButton.Draw(_spriteBatch, Colors.Text);
             _restartButton.Draw(_spriteBatch, Colors.Text);

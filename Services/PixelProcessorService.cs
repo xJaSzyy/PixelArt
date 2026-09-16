@@ -11,12 +11,9 @@ namespace PixelArt.Services;
 public class PixelProcessorService
 {
     public LevelData CurrentLevel { get; private set; }
-    public bool ReplayLaunched { get; private set; }
     public int BrushRadius { get; set; }
 
     private Vector2 _pixelSize;
-    private int _historyIndex;
-    private float _pixelsAccumulator;
     private Point? _lastPaintPixel;
     
     private readonly Color _highlightColor = new(72, 72, 72);
@@ -27,19 +24,22 @@ public class PixelProcessorService
     private readonly SoundService _soundService;
     private readonly PixelTextureService _textureService;
     private readonly PixelDataService _pixelDataService;
+    private readonly PixelReplayService _replayService;
 
     private float _minNumberPixelSize = 12f;
-    private const float _replayDuration = 1.25f;
     
     private readonly Color _glowColor = new(171, 171, 171, 200);
     
-    public PixelProcessorService(ParticleService particleService, CameraService cameraService, SoundService soundService, PixelTextureService textureService, PixelDataService pixelDataService)
+    public PixelProcessorService(ParticleService particleService, CameraService cameraService, 
+        SoundService soundService, PixelTextureService textureService, 
+        PixelDataService pixelDataService, PixelReplayService replayService)
     {
         _particleService = particleService;
         _cameraService = cameraService;
         _soundService = soundService;
         _textureService = textureService;
         _pixelDataService = pixelDataService;
+        _replayService = replayService;
     }
 
     public void SetLevel(LevelData levelData)
@@ -129,44 +129,23 @@ public class PixelProcessorService
     {
         _particleService.Update(gameTime);
 
-        if (!ReplayLaunched)
-        {
-            return;
-        }
-
-        var historyCount = CurrentLevel.History.Count;
-
-        if (historyCount == 0)
-        {
-            ReplayLaunched = false;
-            return;
-        }
-
-        var pixelsPerSecond = historyCount / _replayDuration;
-
-        _pixelsAccumulator += pixelsPerSecond * (float)gameTime.ElapsedGameTime.TotalSeconds;
-
-        while (_pixelsAccumulator >= 1f && _historyIndex < historyCount)
-        {
-            var pixelIndex = CurrentLevel.History[_historyIndex++];
-
-            var pixel = _pixelDataService.GetPixel(pixelIndex);
-
-            if (pixel != null)
-            {
-                pixel.CurrentColor = pixel.OriginalColor;
-                _textureService.SetPixel(pixelIndex, pixel.OriginalColor.ToColor());
-            }
-
-            _pixelsAccumulator -= 1f;
-        }
-
-        if (_historyIndex >= historyCount)
-        {
-            ReplayLaunched = false;
-        }
+        _replayService.Update(CurrentLevel, (float)gameTime.ElapsedGameTime.TotalSeconds, ReplayPixel);
 
         UpdateTexture();
+    }
+    
+    private void ReplayPixel(int pixelIndex)
+    {
+        var pixel = _pixelDataService.GetPixel(pixelIndex);
+
+        if (pixel == null)
+        {
+            return;
+        }
+
+        pixel.CurrentColor = pixel.OriginalColor;
+
+        _textureService.SetPixel(pixelIndex, pixel.OriginalColor.ToColor());
     }
 
     public void Draw(SpriteBatch spriteBatch, DrawService drawService)
@@ -452,15 +431,14 @@ public class PixelProcessorService
         foreach (var pixel in CurrentLevel.Pixels)
         {
             pixel.CurrentColor = pixel.GrayColor;
-            _textureService.SetPixel(pixel.Index, pixel.GrayColor.ToColor());
+
+            _textureService.SetPixel(
+                pixel.Index,
+                pixel.GrayColor.ToColor());
         }
 
+        _replayService.Start();
         UpdateTexture();
-
-        _historyIndex = 0;
-        _pixelsAccumulator = 0;
-
-        ReplayLaunched = true;
     }
 
     public void Restart()
