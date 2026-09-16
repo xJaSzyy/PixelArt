@@ -61,7 +61,6 @@ public class GameScene : IScene
         Keys.Right
     ];
     
-    
     public GameScene(IServiceProvider services)
     {
         _services = services;
@@ -272,7 +271,7 @@ public class GameScene : IScene
             if (_keyboardService.IsKeyPressed(keyboard, Keys.LeftControl))
             {
                 _cameraService.ChangeZoom(mouse, scrollDelta);
-                _processorService.Zoom(scrollDelta * 0.002f);
+                _processorService.Zoom(scrollDelta);
             }
             else
             {
@@ -347,7 +346,7 @@ public class GameScene : IScene
             }
         }
 
-        DrawArrow();
+        //DrawArrow();
 
         _popupService.Draw(_spriteBatch);
 

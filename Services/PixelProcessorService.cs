@@ -42,7 +42,7 @@ public class PixelProcessorService
     private bool _isDragging;
     private Point _previousMousePosition;
 
-    private const float RotationSpeed = 0.01f;
+    private const float _rotationSpeed = 0.01f;
     
     public PixelProcessorService(GraphicsDevice graphicsDevice, ParticleService particleService, CameraService cameraService, SoundService soundService)
     {
@@ -322,7 +322,8 @@ public class PixelProcessorService
 
     public void Zoom(float delta)
     {
-        _cameraDistance = MathHelper.Clamp(_cameraDistance - delta, 2f, 15f);
+        const float step = .05f;
+        _cameraDistance = MathHelper.Clamp(_cameraDistance - (delta > 0 ? step : -step), 1f, 2.5f);
         UpdateView();
     }
     
@@ -401,8 +402,8 @@ public class PixelProcessorService
             {
                 // Горизонталь — вокруг экранной вертикали (мировой Y)
                 // Вертикаль — вокруг экранной горизонтали (оси X камеры)
-                var yaw = Matrix.CreateRotationY(delta.X * RotationSpeed);
-                var pitch = Matrix.CreateRotationX(delta.Y * RotationSpeed);
+                var yaw = Matrix.CreateRotationY(delta.X * _rotationSpeed);
+                var pitch = Matrix.CreateRotationX(delta.Y * _rotationSpeed);
 
                 // Применяем к текущей матрице мира: сначала yaw, потом pitch в экранных осях
                 world = world * yaw * pitch;
@@ -572,6 +573,8 @@ public class PixelProcessorService
             drawBounds,
             spriteBatch,
             drawService);*/
+        
+        DrawPixelNumbers3D(spriteBatch, drawService);
 
         _particleService.Draw(spriteBatch);
     }
@@ -902,6 +905,111 @@ public class PixelProcessorService
         }
 
         _textureDirty = true;
+    }
+    
+    private Vector3 GetLocalPointOnFace(CubeFace face, float u, float v)
+    {
+        // u,v в [0..1], где (0,0) — topLeft грани, (1,1) — bottomRight
+        // Восстанавливаем координаты в [-0.5..0.5] для каждой оси
+        var x = u - 0.5f;   // -0.5 .. 0.5
+        var y = 0.5f - v;   //  0.5 .. -0.5 (верх = +0.5)
+        var z = u - 0.5f;
+
+        return face switch
+        {
+            CubeFace.Front  => new Vector3(x, y,  0.5f),
+            CubeFace.Back   => new Vector3(-x, y, -0.5f),
+            CubeFace.Left   => new Vector3(-0.5f, y,  x),  // с учётом правки: u растёт с Z
+            CubeFace.Right  => new Vector3( 0.5f, y, -x),  // с учётом правки
+            CubeFace.Top    => new Vector3(x,  0.5f,  v - 0.5f), // v: 0 сверху (z=-0.5) → 1 снизу (z=+0.5)
+            CubeFace.Bottom => new Vector3(x, -0.5f,  v - 0.5f),
+            _ => Vector3.Zero
+        };
+    }
+
+    private void DrawPixelNumbers3D(SpriteBatch spriteBatch, DrawService drawService)
+    {
+        if (CurrentLevel.Pixels.Count == 0)
+        {
+            return;
+        }
+
+        var width = CurrentLevel.Texture.Width;
+        var height = CurrentLevel.Texture.Height;
+
+        var viewport = _graphicsDevice.Viewport;
+
+        foreach (var pixel in CurrentLevel.Pixels)
+        {
+            if (pixel.IsFinished) continue;
+
+            var px = pixel.Index % width;
+            var py = pixel.Index / width;
+
+            var u = (px + 0.5f) / width;
+            var v = (py + 0.5f) / height;
+
+            var local = GetLocalPointOnFace(CubeFace.Front, u, v);
+
+            var worldPos = Vector3.Transform(local, world);
+
+            var normal = Vector3.TransformNormal(Vector3.UnitZ, world);
+            normal.Normalize();
+
+            Matrix.Invert(ref view, out var invView);
+            var cameraPos = invView.Translation;
+            var toCamera = cameraPos - worldPos;
+            toCamera.Normalize();
+
+            if (Vector3.Dot(normal, toCamera) <= 0f)
+            {
+                continue;
+            }
+
+            var screen = viewport.Project(worldPos, projection, view, Matrix.Identity);
+
+            if (screen.Z < 0f || screen.Z > 1f)
+            {
+                continue;
+            }
+
+            if (!_groupsByColor.TryGetValue(pixel.OriginalColor.ToColor(), out var colorGroup))
+            {
+                continue;
+            }
+
+            var zoomProgress = Utils.Remap(
+                _cameraService.Zoom,
+                _cameraService.MinZoom,
+                _cameraService.MinZoom * 2.25f,
+                0f,
+                1f);
+            
+            if (zoomProgress <= 0.01f)
+            {
+                continue;
+            }
+
+            var baseColor = Colors.IsDark(pixel.CurrentColor.ToColor())
+                ? Color.White
+                : Color.Black;
+
+            var color = Color.Lerp(Color.Transparent, baseColor, zoomProgress);
+
+            if (pixel.CurrentColor != pixel.GrayColor && pixel.CurrentColor.ToColor() != _highlightColor)
+            {
+                color *= 0.6f;
+            }
+
+            var textScale = MathHelper.Lerp(0.5f, 0.7f, zoomProgress);
+
+            drawService.DrawString(
+                spriteBatch,
+                colorGroup.Number.ToString(),
+                new Vector2(screen.X, screen.Y),
+                color,
+                textScale);
+        }
     }
 
     public void ClearHighlight()
