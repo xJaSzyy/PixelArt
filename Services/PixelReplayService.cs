@@ -10,7 +10,7 @@ public sealed class PixelReplayService
     private int _historyIndex;
     private float _pixelsAccumulator;
 
-    private const float _replayDuration = 1.5f;
+    public float ReplayDuration { get; } = 1.5f;
 
     public void Update(LevelData level, float deltaTime, Action<int> onPixel)
     {
@@ -27,7 +27,7 @@ public sealed class PixelReplayService
             return;
         }
 
-        var pixelsPerSecond = historyCount / _replayDuration;
+        var pixelsPerSecond = historyCount / ReplayDuration;
 
         _pixelsAccumulator += pixelsPerSecond * deltaTime;
 

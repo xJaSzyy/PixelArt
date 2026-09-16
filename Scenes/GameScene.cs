@@ -303,14 +303,14 @@ public class GameScene : IScene
                 _services.GetRequiredService<PlayerService>().AddCoins(coinsToAdd);
 
                 var popupText = $"+${coinsToAdd}";
-                    
+
                 _popupService.ShowDelayed(
                     popupText,
                     new Vector2(
                         _graphicsDevice.Viewport.Width / 2f,
                         _drawService.MeasureString(popupText).Y * 2.5f
                     ),
-                    1.25f,
+                    _pixelReplayService.ReplayDuration,
                     1.5f,
                     Colors.Green,
                     2f);
@@ -324,9 +324,7 @@ public class GameScene : IScene
     {
         _graphicsDevice.Clear(Colors.Background);
 
-        _spriteBatch.Begin(
-            samplerState: SamplerState.PointClamp
-        );
+        _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
         _backgroundService.Draw(_spriteBatch);
         _processorService.Draw(_spriteBatch, _drawService);
