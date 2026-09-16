@@ -202,6 +202,7 @@ public class GameScene : IScene
 
         if (movement == Vector2.Zero)
         {
+            isMoving = false;
             return;
         }
 
@@ -214,13 +215,13 @@ public class GameScene : IScene
             _moveSpeed += scrollDelta > 0 ? 1 : -1;
 
             _moveSpeed = MathHelper.Clamp(_moveSpeed, _minMoveSpeed, _maxMoveSpeed);
+
+            isMoving = true;
         }
         
         var speed = _moveSpeed * _cameraService.Zoom;
         
-
-        _cameraService.SetPosition(
-            _cameraService.GetPosition() + movement * speed);
+        _cameraService.SetPosition(_cameraService.GetPosition() + movement * speed);
     }
 
     private void HandleKonami(KeyboardState keyboard)
@@ -276,17 +277,22 @@ public class GameScene : IScene
             }
             else
             {
-                if (scrollDelta > 0)
+                if (!isMoving)
                 {
-                    _colorButtonsService.ScrollButtonsLeft();
-                }
-                else
-                {
-                    _colorButtonsService.ScrollButtonsRight();
+                    if (scrollDelta > 0)
+                    {
+                        _colorButtonsService.ScrollButtonsLeft();
+                    }
+                    else
+                    {
+                        _colorButtonsService.ScrollButtonsRight();
+                    }
                 }
             }
         }
     }
+
+    private bool isMoving = false;
     
     private void HandleColoringCompleted()
     {
