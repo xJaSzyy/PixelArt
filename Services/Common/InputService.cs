@@ -3,10 +3,13 @@ using Microsoft.Xna.Framework.Input;
 
 namespace PixelArt.Services.Common;
 
-public class MouseService(GraphicsDevice graphicsDevice)
+public class InputService(GraphicsDevice graphicsDevice)
 {
     private MouseState _prevMouse;
-    
+    private KeyboardState _prevKeyboard;
+
+    #region Mouse
+
     public bool IsLeftMouseButtonClicked(MouseState mouse)
     {
         return mouse.LeftButton == ButtonState.Pressed && _prevMouse.LeftButton == ButtonState.Released && IsMouseInsideWindow(mouse);
@@ -26,11 +29,6 @@ public class MouseService(GraphicsDevice graphicsDevice)
     {
         return mouse.RightButton == ButtonState.Pressed && _prevMouse.RightButton == ButtonState.Released && IsMouseInsideWindow(mouse);
     }
-
-    public void SetMouse(MouseState mouse)
-    {
-        _prevMouse = mouse;
-    }
     
     public bool IsScroll(MouseState mouse)
     {
@@ -46,5 +44,27 @@ public class MouseService(GraphicsDevice graphicsDevice)
     {
         return mouse.X >= 0 && mouse.Y >= 0 &&
                mouse.X < graphicsDevice.Viewport.Width && mouse.Y < graphicsDevice.Viewport.Height;
+    }
+
+    #endregion
+    
+    #region Keyboard 
+    
+    public bool IsKeyPressed(KeyboardState state, Keys key)
+    {
+        return state.IsKeyDown(key);
+    }
+    
+    public bool IsKeyUpOnce(KeyboardState state, Keys key)
+    {
+        return state.IsKeyUp(key) && _prevKeyboard.IsKeyDown(key);
+    }
+    
+    #endregion
+    
+    public void SetState(MouseState mouse, KeyboardState keyboard)
+    {
+        _prevMouse = mouse;
+        _prevKeyboard = keyboard;
     }
 }

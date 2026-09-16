@@ -11,7 +11,7 @@ public class DialogService
 {
     private readonly GraphicsDevice _graphicsDevice;
     private readonly DrawService _drawService;
-    private readonly MouseService _mouseService;
+    private readonly InputService _inputService;
 
     public bool IsDialogOpen { get; private set; }
 
@@ -35,13 +35,13 @@ public class DialogService
     public DialogService(
         GraphicsDevice graphicsDevice,
         DrawService drawService,
-        MouseService mouseService,
+        InputService inputService,
         LanguageService languageService,
         ContentManager content)
     {
         _graphicsDevice = graphicsDevice;
         _drawService = drawService;
-        _mouseService = mouseService;
+        _inputService = inputService;
 
         var pixelTexture = new Texture2D(
             _graphicsDevice,
@@ -67,7 +67,7 @@ public class DialogService
                 _buttonSize));
     }
 
-    public void Update(MouseState mouse, GameTime gameTime)
+    public void Update(GameTime gameTime, MouseState mouse, KeyboardState keyboard)
     {
         if (!IsDialogOpen)
         {
@@ -88,7 +88,7 @@ public class DialogService
                 IsDialogOpen = false;
 
                 _onConfirm = null;
-                _mouseService.SetMouse(mouse);
+                _inputService.SetState(mouse, keyboard);
 
                 return;
             }
@@ -106,7 +106,7 @@ public class DialogService
         _confirmButton.Update(mouse);
         _cancelButton.Update(mouse);
         
-        if (!_isClosing && _mouseService.IsLeftMouseButtonClicked(mouse))
+        if (!_isClosing && _inputService.IsLeftMouseButtonClicked(mouse))
         {
             if (_confirmButton.IsHovered)
             {
@@ -118,7 +118,7 @@ public class DialogService
             }
         }
 
-        _mouseService.SetMouse(mouse);
+        _inputService.SetState(mouse, keyboard);
     }
 
     public void Draw(SpriteBatch spriteBatch)

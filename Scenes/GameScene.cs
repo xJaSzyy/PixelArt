@@ -24,8 +24,7 @@ public class GameScene : IScene
     
     private readonly GraphicsDevice _graphicsDevice;
     private readonly SpriteBatch _spriteBatch;
-    private readonly MouseService _mouseService;
-    private readonly KeyboardService _keyboardService;
+    private readonly InputService _inputService;
     private readonly DrawService _drawService;
     private readonly PopupTextService _popupService;
     private readonly CameraService _cameraService;
@@ -72,8 +71,7 @@ public class GameScene : IScene
         _processorService = _services.GetRequiredService<PixelProcessorService>();
         _graphicsDevice = _services.GetRequiredService<GraphicsDevice>();
         _spriteBatch = new SpriteBatch(_graphicsDevice);
-        _mouseService = _services.GetRequiredService<MouseService>();
-        _keyboardService = _services.GetRequiredService<KeyboardService>();
+        _inputService = _services.GetRequiredService<InputService>();
         _drawService = _services.GetRequiredService<DrawService>();
         _popupService = _services.GetRequiredService<PopupTextService>();
         _cameraService = _services.GetRequiredService<CameraService>();
@@ -121,9 +119,9 @@ public class GameScene : IScene
         var mouse = Mouse.GetState();
         var keyboard = Keyboard.GetState();
 
-        var spacePressed = _keyboardService.IsKeyPressed(keyboard, Keys.Space);
+        var spacePressed = _inputService.IsKeyPressed(keyboard, Keys.Space);
         
-        if (_mouseService.IsLeftMouseButtonClicked(mouse) || spacePressed)
+        if (_inputService.IsLeftMouseButtonClicked(mouse) || spacePressed)
         {
             _colorButtonsService.UpdateSelectedButton();
 
@@ -175,8 +173,7 @@ public class GameScene : IScene
             _deleteButton.Update(mouse);
         }
         
-        _mouseService.SetMouse(mouse);
-        _keyboardService.SetState(keyboard);
+        _inputService.SetState(mouse, keyboard);
     }
 
     private void HandleMoving(MouseState mouse, KeyboardState keyboard)
@@ -210,9 +207,9 @@ public class GameScene : IScene
 
         movement.Normalize();
 
-        if (_mouseService.IsScroll(mouse))
+        if (_inputService.IsScroll(mouse))
         {
-            var scrollDelta = _mouseService.GetScrollDelta(mouse);
+            var scrollDelta = _inputService.GetScrollDelta(mouse);
 
             _moveSpeed += scrollDelta > 0 ? 1 : -1;
 
@@ -241,7 +238,7 @@ public class GameScene : IScene
 
     private void HandlePainting(MouseState mouse, KeyboardState keyboard)
     {
-        if ((_mouseService.IsLeftMouseButtonPressed(mouse) || _keyboardService.IsKeyPressed(keyboard, Keys.Space)) && 
+        if ((_inputService.IsLeftMouseButtonPressed(mouse) || _inputService.IsKeyPressed(keyboard, Keys.Space)) && 
             !IsMouseOverUI() && 
             Utils.Remap(_cameraService.Zoom, _cameraService.MinZoom, _cameraService.MinZoom * 2, 0f, 1f) > 0.01f)
         {
@@ -269,11 +266,11 @@ public class GameScene : IScene
     
     private void HandleScroll(MouseState mouse, KeyboardState keyboard)
     {
-        if (_mouseService.IsScroll(mouse))
+        if (_inputService.IsScroll(mouse))
         {
-            var scrollDelta = _mouseService.GetScrollDelta(mouse);
+            var scrollDelta = _inputService.GetScrollDelta(mouse);
             
-            if (_keyboardService.IsKeyPressed(keyboard, Keys.LeftControl))
+            if (_inputService.IsKeyPressed(keyboard, Keys.LeftControl))
             {
                 _cameraService.ChangeZoom(mouse, scrollDelta);
             }
