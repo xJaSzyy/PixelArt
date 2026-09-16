@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -16,23 +15,22 @@ public class PixelProcessorService
     private Vector2 _pixelSize;
     private Point? _lastPaintPixel;
     
-    private readonly Color _highlightColor = new(72, 72, 72);
-    private readonly HashSet<int> _highlightedPixels = [];
-    
     private readonly ParticleService _particleService;
     private readonly CameraService _cameraService;
     private readonly SoundService _soundService;
     private readonly PixelTextureService _textureService;
     private readonly PixelDataService _pixelDataService;
     private readonly PixelReplayService _replayService;
+    private readonly PixelHighlightService _highlightService;
 
     private float _minNumberPixelSize = 12f;
     
     private readonly Color _glowColor = new(171, 171, 171, 200);
     
-    public PixelProcessorService(ParticleService particleService, CameraService cameraService, 
-        SoundService soundService, PixelTextureService textureService, 
-        PixelDataService pixelDataService, PixelReplayService replayService)
+    public PixelProcessorService(ParticleService particleService, 
+        CameraService cameraService, SoundService soundService, 
+        PixelTextureService textureService, PixelDataService pixelDataService, 
+        PixelReplayService replayService, PixelHighlightService highlightService)
     {
         _particleService = particleService;
         _cameraService = cameraService;
@@ -40,6 +38,7 @@ public class PixelProcessorService
         _textureService = textureService;
         _pixelDataService = pixelDataService;
         _replayService = replayService;
+        _highlightService = highlightService;
     }
 
     public void SetLevel(LevelData levelData)
@@ -52,7 +51,7 @@ public class PixelProcessorService
 
         _pixelDataService.Rebuild(CurrentLevel);
 
-        _highlightedPixels.Clear();
+        _highlightService.Reset();
         _lastPaintPixel = null;
     }
 
@@ -293,7 +292,7 @@ public class PixelProcessorService
 
         var scale = _cameraService.Zoom + _pixelSize.X * (numberLength == 1 ? 0.004f : 0.0025f);
 
-        if (pixel.CurrentColor != pixel.GrayColor && pixel.CurrentColor.ToColor() != _highlightColor)
+        if (pixel.CurrentColor != pixel.GrayColor && !_highlightService.IsHighlighted(pixel.Index))
         {
             color *= .6f;
         }
@@ -410,7 +409,7 @@ public class PixelProcessorService
             _particleService.Spawn(pixel.GetWorldPosition(_pixelSize.X, _pixelSize.Y, CurrentLevel.Texture.Width), particleColor, 5);
             _soundService.PlayPaintingSound();
 
-            _highlightedPixels.Remove(index);
+            _highlightService.Remove(index);
         }
         else
         {
@@ -432,9 +431,7 @@ public class PixelProcessorService
         {
             pixel.CurrentColor = pixel.GrayColor;
 
-            _textureService.SetPixel(
-                pixel.Index,
-                pixel.GrayColor.ToColor());
+            _textureService.SetPixel(pixel.Index, pixel.GrayColor.ToColor());
         }
 
         _replayService.Start();
@@ -452,7 +449,7 @@ public class PixelProcessorService
         CurrentLevel.IsFinished = false;
         CurrentLevel.History.Clear();
 
-        _highlightedPixels.Clear();
+        _highlightService.Reset();
 
         UpdateTexture();
     }
@@ -464,38 +461,26 @@ public class PixelProcessorService
 
     public void HighlightPixels(Color color)
     {
-        ClearHighlight();
-
         if (!_pixelDataService.TryGetGroup(color, out var selectedGroup))
         {
             return;
         }
 
-        foreach (var pixel in selectedGroup.Pixels.Where(pixel => !pixel.IsFinished))
-        {
-            pixel.CurrentColor = new ColorData(_highlightColor);
-            _textureService.SetPixel(pixel.Index, _highlightColor);
-
-            _highlightedPixels.Add(pixel.Index);
-        }
+        _highlightService.Highlight(
+            selectedGroup,
+            _pixelDataService,
+            pixel => _textureService.SetPixel(
+                pixel.Index,
+                pixel.CurrentColor.ToColor()));
     }
 
     public void ClearHighlight()
     {
-        foreach (var index in _highlightedPixels)
-        {
-            var pixel = _pixelDataService.GetPixel(index);
-
-            if (pixel == null || pixel.IsFinished)
-            {
-                continue;
-            }
-
-            pixel.CurrentColor = pixel.GrayColor;
-            _textureService.SetPixel(index, pixel.GrayColor.ToColor());
-        }
-
-        _highlightedPixels.Clear();
+        _highlightService.Clear(
+            _pixelDataService,
+            pixel => _textureService.SetPixel(
+                pixel.Index,
+                pixel.CurrentColor.ToColor()));
     }
 
     public void UpdateTexture()
@@ -515,100 +500,42 @@ public class PixelProcessorService
     
     public bool HasHighlightedPixelOnScreen()
     {
-        if (_highlightedPixels.Count == 0)
-        {
-            return false;
-        }
-
-        var bounds = GetImageBounds();
-
-        var pixelWidth = _pixelSize.X * _cameraService.Zoom;
-        var pixelHeight = _pixelSize.Y * _cameraService.Zoom;
-
-        var width = CurrentLevel.Texture.Width;
-
-        foreach (var index in _highlightedPixels)
-        {
-            var x = index % width;
-            var y = index / width;
-
-            var pixelLeft = bounds.X + x * pixelWidth;
-            var pixelTop = bounds.Y + y * pixelHeight;
-            var pixelRight = pixelLeft + pixelWidth;
-            var pixelBottom = pixelTop + pixelHeight;
-
-            if (pixelRight >= 0 && pixelLeft < GetGraphicsWidth() &&
-                pixelBottom >= 0 && pixelTop < GetGraphicsHeight())
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return _highlightService.HasPixelOnScreen(
+            GetImageBounds(),
+            _pixelSize,
+            _cameraService.Zoom,
+            CurrentLevel.Texture.Width,
+            GetGraphicsWidth(),
+            GetGraphicsHeight());
     }
     
     public bool TryGetHighlightedPixelScreenPosition(int index, out Vector2 position)
     {
-        position = default;
-
-        var pixel = _pixelDataService.GetPixel(index);
-
-        if (pixel == null || pixel.IsFinished)
-        {
-            return false;
-        }
-
-        var bounds = GetImageBounds();
-
-        var pixelWidth = _pixelSize.X * _cameraService.Zoom;
-        var pixelHeight = _pixelSize.Y * _cameraService.Zoom;
-
-        var width = CurrentLevel.Texture.Width;
-
-        var x = index % width;
-        var y = index / width;
-
-        position = new Vector2(
-            bounds.X + (x + 0.5f) * pixelWidth,
-            bounds.Y + (y + 0.5f) * pixelHeight);
-
-        return true;
+        return _highlightService.TryGetScreenPosition(
+            index,
+            _pixelDataService,
+            GetImageBounds(),
+            _pixelSize,
+            _cameraService.Zoom,
+            CurrentLevel.Texture.Width,
+            out position);
     }
     
     public bool TryGetNearestHighlightedPixel(Vector2 fromPosition, out int index, out Vector2 position)
     {
-        index = -1;
-        position = default;
-
-        if (_highlightedPixels.Count == 0)
-        {
-            return false;
-        }
-
-        var minDistanceSquared = float.MaxValue;
-
-        foreach (var pixelIndex in _highlightedPixels)
-        {
-            if (!TryGetHighlightedPixelScreenPosition(pixelIndex, out var pixelPosition))
-            {
-                continue;
-            }
-
-            var distanceSquared = Vector2.DistanceSquared(fromPosition, pixelPosition);
-
-            if (distanceSquared < minDistanceSquared)
-            {
-                minDistanceSquared = distanceSquared;
-                index = pixelIndex;
-                position = pixelPosition;
-            }
-        }
-
-        return index >= 0;
+        return _highlightService.TryGetNearestScreenPosition(
+            fromPosition,
+            _pixelDataService,
+            GetImageBounds(),
+            _pixelSize,
+            _cameraService.Zoom,
+            CurrentLevel.Texture.Width,
+            out index,
+            out position);
     }
 
     public bool ContainsHighlightedPixel(int index)
     {
-        return _highlightedPixels.Contains(index);
+        return _highlightService.Contains(index);
     }
 }

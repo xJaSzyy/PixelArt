@@ -54,6 +54,7 @@ public class Game1 : Game
         collection.AddSingleton<PixelTextureService>();
         collection.AddSingleton<PixelDataService>();
         collection.AddSingleton<PixelReplayService>();
+        collection.AddSingleton<PixelHighlightService>();
         
         collection.AddTransient<MenuScene>();
         collection.AddTransient<GameScene>();
