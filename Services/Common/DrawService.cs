@@ -175,4 +175,9 @@ public class DrawService
                 color);
         }
     }
+
+    public Texture2D GetPixelTexture()
+    {
+        return _pixelTexture;
+    }
 }

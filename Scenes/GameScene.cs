@@ -245,11 +245,11 @@ public class GameScene : IScene
 
     private void HandlePainting(MouseState mouse, KeyboardState keyboard)
     {
-        if (_processorService.CanShake)
+        /*if (_processorService.CanShake)
         {
             _screenShakeService.Shake(0.02f, 2.5f);
             _processorService.CanShake = false;
-        }
+        }*/
         
         if ((_inputService.IsLeftMouseButtonPressed(mouse) || _inputService.IsKeyPressed(keyboard, Keys.Space)) && 
             !IsMouseOverUI() && 
