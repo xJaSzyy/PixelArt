@@ -33,7 +33,7 @@ public class PixelProcessorService
     
     private readonly Dictionary<int, PixelBounceAnimation> _pixelBounceAnimations = new();
 
-    private const float _pixelBounceDuration = 0.4f;
+    private const float _pixelBounceDuration = 0.18f;
     
     public PixelProcessorService(ParticleService particleService, 
         CameraService cameraService, SoundService soundService, 
@@ -627,12 +627,12 @@ public class PixelProcessorService
         {
             var t = progress / 0.7f;
 
-            return MathHelper.Lerp(0.45f, 1.1f, EaseOutCubic(t));
+            return MathHelper.Lerp(0f, 1.075f, EaseOutCubic(t));
         }
 
         var settle = (progress - 0.7f) / 0.3f;
 
-        return MathHelper.Lerp(1.1f, 1f, EaseOutCubic(settle));
+        return MathHelper.Lerp(1.075f, 1f, EaseOutCubic(settle));
     }
 
     private float EaseOutCubic(float t)
