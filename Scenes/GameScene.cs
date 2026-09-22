@@ -33,6 +33,7 @@ public class GameScene : IScene
     private readonly BackgroundParticleService _backgroundService;
     private readonly LanguageService _languageService;
     private ColorButtonsService _colorButtonsService;
+    private readonly TooltipService _tooltipService;
 
     private Button _homeButton;
     private Button _restartButton;
@@ -47,6 +48,7 @@ public class GameScene : IScene
     private const int _minMoveSpeed = 10;
     private const int _maxMoveSpeed = 22;
 
+    private bool _isMoving = false;
     private int _moveSpeed = 10;
     
     private KeyboardState _previousKeyboardState;
@@ -78,6 +80,7 @@ public class GameScene : IScene
         _backgroundService = _services.GetRequiredService<BackgroundParticleService>();
         _languageService = _services.GetRequiredService<LanguageService>();
         _pixelReplayService = _services.GetRequiredService<PixelReplayService>();
+        _tooltipService = _services.GetRequiredService<TooltipService>();
     }
 
     public void LoadContent(ContentManager content)
@@ -167,6 +170,7 @@ public class GameScene : IScene
         _restartButton.Update(mouse);
         _popupService.Update(gameTime);
         _backgroundService.Update(gameTime);
+        _tooltipService.Update(mouse, [_homeButton, _restartButton, _deleteButton], ["Home", "Restart", "Delete"]);
 
         if (_processorService.CurrentLevel.Type == LevelType.Custom)
         {
@@ -202,7 +206,7 @@ public class GameScene : IScene
 
         if (movement == Vector2.Zero)
         {
-            isMoving = false;
+            _isMoving = false;
             return;
         }
 
@@ -216,7 +220,7 @@ public class GameScene : IScene
 
             _moveSpeed = MathHelper.Clamp(_moveSpeed, _minMoveSpeed, _maxMoveSpeed);
 
-            isMoving = true;
+            _isMoving = true;
         }
         
         var speed = _moveSpeed * _cameraService.Zoom;
@@ -277,7 +281,7 @@ public class GameScene : IScene
             }
             else
             {
-                if (!isMoving)
+                if (!_isMoving)
                 {
                     if (scrollDelta > 0)
                     {
@@ -291,8 +295,6 @@ public class GameScene : IScene
             }
         }
     }
-
-    private bool isMoving = false;
     
     private void HandleColoringCompleted()
     {
@@ -354,6 +356,7 @@ public class GameScene : IScene
         DrawArrow();
 
         _popupService.Draw(_spriteBatch);
+        _tooltipService.Draw(_spriteBatch);
 
         _spriteBatch.End();
     }

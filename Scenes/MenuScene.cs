@@ -156,29 +156,27 @@ public class MenuScene : IScene
                 ChangeLanguage();
             }
         }
-
+        
         if (!_dialogService.IsDialogOpen)
         {
             if (_inputService.IsLeftMouseButtonClicked(mouse))
             {
-                if (!IsMouseOverHeader(mouse))
+                var hoveredLevel = _levelService.GetHoveredLevel();
+                
+                if (hoveredLevel != null && !IsMouseOverHeader(mouse))
                 {
-                    var hoveredLevel = _levelService.GetHoveredLevel();
-                    if (hoveredLevel != null)
+                    if (hoveredLevel.IsLocked)
                     {
-                        if (hoveredLevel.IsLocked)
-                        {
-                            _dialogService.ShowDialog($"{_languageService.GetText("Menu.Pay")} ${_unlockLevelCost}?", () => UnlockLevel(hoveredLevel));
-                            _inputService.SetState(mouse, keyboard);
-                        }
-                        else
-                        {
-                            _processorService.SetLevel(hoveredLevel);
-                            _sceneService.SetScene<GameScene>();
-                        }
+                        _dialogService.ShowDialog($"{_languageService.GetText("Menu.Pay")} ${_unlockLevelCost}?", () => UnlockLevel(hoveredLevel));
+                        _inputService.SetState(mouse, keyboard);
+                    }
+                    else
+                    {
+                        _processorService.SetLevel(hoveredLevel);
+                        _sceneService.SetScene<GameScene>();
                     }
                 }
-                
+
                 foreach (var typeButton in _typeButtons)
                 {
                     if (typeButton is { IsHovered: true, TextKey: not null })
@@ -278,7 +276,7 @@ public class MenuScene : IScene
         {
             _loadImageButton.Draw(_spriteBatch);
         }
-
+        
         _spriteBatch.End();
     }
 
