@@ -49,6 +49,9 @@ public class LanguageService
                 ["Menu.Fish"] = "Рыба",
                 ["Menu.Food"] = "Еда",
                 ["Menu.Sword"] = "Мечи",
+                ["Game.Home"] = "Домой",
+                ["Game.Restart"] = "Заново",
+                ["Game.Delete"] = "Удалить"
             },
             ["EN"] = new Dictionary<string, string>
             {
@@ -64,6 +67,9 @@ public class LanguageService
                 ["Menu.Fish"] = "Fish",
                 ["Menu.Food"] = "Food",
                 ["Menu.Sword"] = "Swords",
+                ["Game.Home"] = "Home",
+                ["Game.Restart"] = "Restart",
+                ["Game.Delete"] = "Delete"
             }
         };
     

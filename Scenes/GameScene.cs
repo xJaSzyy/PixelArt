@@ -170,7 +170,7 @@ public class GameScene : IScene
         _restartButton.Update(mouse);
         _popupService.Update(gameTime);
         _backgroundService.Update(gameTime);
-        _tooltipService.Update(mouse, [_homeButton, _restartButton, _deleteButton], ["Home", "Restart", "Delete"]);
+        _tooltipService.Update(mouse, [_homeButton, _restartButton, _deleteButton], ["Game.Home", "Game.Restart", "Game.Delete"]);
 
         if (_processorService.CurrentLevel.Type == LevelType.Custom)
         {

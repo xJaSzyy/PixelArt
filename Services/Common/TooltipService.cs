@@ -8,18 +8,20 @@ namespace PixelArt.Services.Common;
 public class TooltipService
 {
     private readonly DrawService _drawService;
+    private readonly LanguageService _languageService;
 
     private bool IsVisible { get; set; }
-    private string Text { get; set; }
+    private string TextKey { get; set; }
     
     private Point _mousePosition;
     
-    public TooltipService(DrawService drawService)
+    public TooltipService(DrawService drawService, LanguageService languageService)
     {
         _drawService = drawService;
+        _languageService = languageService;
     }
 
-    public void Update(MouseState mouse, Button[] buttons, string[] texts)
+    public void Update(MouseState mouse, Button[] buttons, string[] textKeys)
     {
         _mousePosition = mouse.Position;
 
@@ -28,7 +30,7 @@ public class TooltipService
             if (buttons[buttonIndex].IsHovered)
             {
                 IsVisible = true;
-                Text = texts[buttonIndex];
+                TextKey = textKeys[buttonIndex];
                 return;
             }
 
@@ -46,25 +48,17 @@ public class TooltipService
         const float scale = .5f;
         const int padding = 4;
 
-        var textSize = _drawService.MeasureString(Text) * scale;
-
-        var viewport = spriteBatch.GraphicsDevice.Viewport;
+        var text = _languageService.GetText(TextKey);
+        var textSize = _drawService.MeasureString(text) * scale;
 
         var halfWidth = textSize.X / 2f + padding;
         var halfHeight = textSize.Y / 2f + padding;
+        
+        var viewport = spriteBatch.GraphicsDevice.Viewport;
 
-        var x = MathHelper.Clamp(
-            _mousePosition.X,
-            halfWidth,
-            viewport.Width - halfWidth
-        );
+        var x = MathHelper.Clamp(_mousePosition.X, halfWidth, viewport.Width - halfWidth);
+        var y = MathHelper.Clamp(_mousePosition.Y, halfHeight, viewport.Height - halfHeight);
 
-        var y = MathHelper.Clamp(
-            _mousePosition.Y,
-            halfHeight,
-            viewport.Height - halfHeight
-        );
-
-        _drawService.DrawStringWithBackground(spriteBatch, Text, new Vector2(x, y), Colors.Text, Colors.Black, scale, padding);
+        _drawService.DrawStringWithBackground(spriteBatch, text, new Vector2(x, y), Colors.Text, Colors.Black, scale, padding);
     }
 }
