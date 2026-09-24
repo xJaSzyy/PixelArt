@@ -34,7 +34,6 @@ public class GameScene : IScene
     private readonly LanguageService _languageService;
     private ColorButtonsService _colorButtonsService;
     private readonly TooltipService _tooltipService;
-    private readonly ScreenShakeService _screenShakeService;
 
     private Button _homeButton;
     private Button _restartButton;
@@ -82,7 +81,6 @@ public class GameScene : IScene
         _languageService = _services.GetRequiredService<LanguageService>();
         _pixelReplayService = _services.GetRequiredService<PixelReplayService>();
         _tooltipService = _services.GetRequiredService<TooltipService>();
-        _screenShakeService = _services.GetRequiredService<ScreenShakeService>();
     }
 
     public void LoadContent(ContentManager content)
@@ -245,12 +243,6 @@ public class GameScene : IScene
 
     private void HandlePainting(MouseState mouse, KeyboardState keyboard)
     {
-        /*if (_processorService.CanShake)
-        {
-            _screenShakeService.Shake(0.02f, 2.5f);
-            _processorService.CanShake = false;
-        }*/
-        
         if ((_inputService.IsLeftMouseButtonPressed(mouse) || _inputService.IsKeyPressed(keyboard, Keys.Space)) && 
             !IsMouseOverUI() && 
             Utils.Remap(_cameraService.Zoom, _cameraService.MinZoom, _cameraService.MinZoom * 2, 0f, 1f) > 0.01f)
@@ -340,18 +332,7 @@ public class GameScene : IScene
     {
         _graphicsDevice.Clear(Colors.Background);
 
-        var shakeOffset = _screenShakeService.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
-
-        var transformMatrix = Matrix.CreateTranslation(
-            shakeOffset.X,
-            shakeOffset.Y,
-            0f);
-
-        _spriteBatch.Begin(
-            transformMatrix: transformMatrix,
-            samplerState: SamplerState.PointClamp);
-        
-        //_spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+        _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
         _backgroundService.Draw(_spriteBatch);
         _processorService.Draw(_spriteBatch, _drawService);

@@ -14,7 +14,6 @@ public class PixelProcessorService
 {
     public LevelData CurrentLevel { get; private set; }
     public int BrushRadius { get; set; }
-    public bool CanShake { get; set; }
 
     private Vector2 _pixelSize;
     private Point? _lastPaintPixel;
@@ -483,7 +482,6 @@ public class PixelProcessorService
 
             _particleService.Spawn(pixel.GetWorldPosition(_pixelSize.X, _pixelSize.Y, CurrentLevel.Texture.Width), particleColor, 5);
             _soundService.PlayPaintingSound();
-            CanShake = true;
 
             _highlightService.Remove(index);
             
