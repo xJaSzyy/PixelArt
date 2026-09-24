@@ -100,6 +100,7 @@ public class MenuScene : IScene
             _levelService.LoadLevels(saveData.Levels, LevelsHeaderHeight);
             _playerService.AddCoins(saveData.Coins);
             _languageService.SetLanguage(saveData.Language);
+            _settingsService.SetLanguage(saveData.Language);
         }
         else
         {
@@ -325,7 +326,6 @@ public class MenuScene : IScene
         _levelService.SetHeaderHeight(LevelsHeaderHeight);
         _levelService.Resize();
         _loadImageButton.Bounds = _levelService.GetNextLevelBounds(_buttonSize.X, _buttonSize.Y);
-        _settingsService.LanguageChanged = false;
     }
 
     private void ResizeTypeButtons()

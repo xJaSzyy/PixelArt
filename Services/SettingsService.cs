@@ -10,7 +10,6 @@ namespace PixelArt.Services;
 public class SettingsService
 {
     public bool IsActive { get; private set; }
-    public bool LanguageChanged { get; set; }
 
     private SettingsData Data { get; } = new();
 
@@ -22,8 +21,7 @@ public class SettingsService
     private bool _draggingMusic;
     private bool _draggingSound;
 
-    public SettingsService(GraphicsDevice graphicsDevice, DrawService drawService, InputService inputService,
-        LanguageService languageService)
+    public SettingsService(GraphicsDevice graphicsDevice, DrawService drawService, InputService inputService, LanguageService languageService)
     {
         _graphicsDevice = graphicsDevice;
         _drawService = drawService;
@@ -62,35 +60,20 @@ public class SettingsService
 
     private void DrawPanel(SpriteBatch spriteBatch, Rectangle bounds)
     {
-        _drawService.DrawRoundedRectangle(
-            spriteBatch,
-            new Rectangle(
-                bounds.Location.X + 6,
-                bounds.Location.Y + 6,
-                bounds.Size.X,
-                bounds.Size.Y),
-            new Color(Colors.Black, 100),
-            6);
+        _drawService.DrawRoundedRectangle(spriteBatch,
+            new Rectangle(bounds.Location.X + 6, bounds.Location.Y + 6,
+                bounds.Size.X, bounds.Size.Y),
+            new Color(Colors.Black, 100), 6);
 
-        _drawService.DrawRoundedRectangle(
-            spriteBatch,
-            new Rectangle(
-                bounds.Location.X,
-                bounds.Location.Y,
-                bounds.Size.X,
-                bounds.Size.Y),
-            Colors.PanelOuter,
-            6);
+        _drawService.DrawRoundedRectangle(spriteBatch,
+            new Rectangle(bounds.Location.X, bounds.Location.Y,
+                bounds.Size.X, bounds.Size.Y),
+            Colors.PanelOuter, 6);
 
-        _drawService.DrawRoundedRectangle(
-            spriteBatch,
-            new Rectangle(
-                bounds.Location.X + 6,
-                bounds.Location.Y + 6,
-                bounds.Size.X - 12,
-                bounds.Size.Y - 12),
-            Colors.PanelInner,
-            6);
+        _drawService.DrawRoundedRectangle(spriteBatch, 
+            new Rectangle(bounds.Location.X + 6, bounds.Location.Y + 6, 
+                bounds.Size.X - 12, bounds.Size.Y - 12), 
+            Colors.PanelInner, 6);
     }
 
     private void DrawSettings(SpriteBatch spriteBatch, Rectangle bounds)
@@ -100,26 +83,54 @@ public class SettingsService
 
         var arrowBounds = GetArrowBounds(bounds, right);
         
-        _drawService.DrawStringLeft(spriteBatch, "ARROW HINT", new Vector2(left, bounds.Y + 76 + arrowBounds.Height / 4f), Color.White);
-        _drawService.DrawCheckbox(spriteBatch, arrowBounds, Data.ArrowHintEnabled, Color.White, Color.Black, Color.White);
+        _drawService.DrawStringLeft(spriteBatch, "ARROW HINT", 
+            new Vector2(left, bounds.Y + 16 + arrowBounds.Height / 4f), 
+            Colors.Text);
+        
+        _drawService.DrawCheckbox(spriteBatch, arrowBounds, Data.ArrowHintEnabled, 
+            Colors.Text, Color.Black, Colors.Text);
 
         var animationBounds = GetAnimationBounds(bounds, right);
-        _drawService.DrawStringLeft(spriteBatch, "ANIMATION", new Vector2(left, bounds.Y + 120 + animationBounds.Height / 4f), Color.White);
-        _drawService.DrawCheckbox(spriteBatch, animationBounds, Data.DrawAnimationEnabled, Color.White, Color.Black, Color.White);
+        
+        _drawService.DrawStringLeft(spriteBatch, "ANIMATION", 
+            new Vector2(left, bounds.Y + 60 + animationBounds.Height / 4f), 
+            Colors.Text);
+        
+        _drawService.DrawCheckbox(spriteBatch, animationBounds, Data.DrawAnimationEnabled, 
+            Colors.Text, Color.Black, Colors.Text);
 
         var languageBounds = GetLanguageBounds(bounds, right);
-        _drawService.DrawStringLeft(spriteBatch, "LANGUAGE", new Vector2(left, languageBounds.Y + languageBounds.Height / 4f), Color.White);
-        _drawService.DrawRoundedRectangle(spriteBatch, languageBounds, Color.White, 0);
-        _drawService.DrawRoundedRectangle(spriteBatch, new Rectangle(languageBounds.X + 2, languageBounds.Y + 2, languageBounds.Width - 4, languageBounds.Height - 4), Color.Black, 0);
-        _drawService.DrawString(spriteBatch, Data.Language.ShortName, languageBounds.Center.ToVector2(), Color.White);
+        
+        _drawService.DrawStringLeft(spriteBatch, "LANGUAGE", 
+            new Vector2(left, languageBounds.Y + languageBounds.Height / 4f), 
+            Colors.Text);
+        
+        _drawService.DrawRoundedRectangle(spriteBatch, languageBounds, Colors.Text, 0);
+        _drawService.DrawRoundedRectangle(spriteBatch, 
+            new Rectangle(languageBounds.X + 2, languageBounds.Y + 2,
+                languageBounds.Width - 4, languageBounds.Height - 4),
+            Color.Black, 0);
+        
+        _drawService.DrawString(spriteBatch, Data.Language.ShortName, 
+            languageBounds.Center.ToVector2(), Colors.Text);
 
         var musicSliderInputBounds = GetMusicSliderInputBounds(bounds, left);
-        _drawService.DrawString(spriteBatch, "MUSIC", new Vector2(bounds.Center.X, bounds.Y + 208), Color.White);
-        _drawService.DrawSlider(spriteBatch, musicSliderInputBounds, Data.MusicVolume, Color.White, Color.DarkGray, Color.White, Color.White);
+        
+        _drawService.DrawString(spriteBatch, "MUSIC", 
+            new Vector2(bounds.Center.X, bounds.Y + 168), 
+            Colors.Text);
+        
+        _drawService.DrawSlider(spriteBatch, musicSliderInputBounds, Data.MusicVolume, 
+            Colors.Text, Color.DarkGray, Colors.Text, Colors.Text);
 
         var soundSliderInputBounds = GetSoundSliderInputBounds(bounds, left);
-        _drawService.DrawString(spriteBatch, "SOUND", new Vector2(bounds.Center.X, bounds.Y + 272), Color.White);
-        _drawService.DrawSlider(spriteBatch, soundSliderInputBounds, Data.SoundVolume, Color.White, Color.DarkGray, Color.White, Color.White);
+        
+        _drawService.DrawString(spriteBatch, "SOUND", 
+            new Vector2(bounds.Center.X, bounds.Y + 232), 
+            Colors.Text);
+        
+        _drawService.DrawSlider(spriteBatch, soundSliderInputBounds, Data.SoundVolume, 
+            Colors.Text, Color.DarkGray, Colors.Text, Colors.Text);
     }
 
     private void HandleCheckboxes(MouseState mouse, Action action)
@@ -210,20 +221,21 @@ public class SettingsService
 
     private static Rectangle GetMusicSliderInputBounds(Rectangle bounds, int left)
     {
-        return new Rectangle(left, bounds.Y + 228, bounds.Width - 48, 12);
+        return new Rectangle(left, bounds.Y + 188, 
+            bounds.Width - 48, 12);
     }
 
     private static Rectangle GetSoundSliderInputBounds(Rectangle bounds, int left)
     {
-        return new Rectangle(left, bounds.Y + 292, bounds.Width - 48, 12);
+        return new Rectangle(left, bounds.Y + 252, 
+            bounds.Width - 48, 12);
     }
 
     private Rectangle GetBounds()
     {
-        var size = new Point(256, 320);
+        var size = new Point(256, 288);
 
-        var position = new Point(
-            (int)(_graphicsDevice.Viewport.Width / 2f - size.X / 2f),
+        var position = new Point((int)(_graphicsDevice.Viewport.Width / 2f - size.X / 2f),
             (int)(_graphicsDevice.Viewport.Height / 2f - size.Y / 2f));
 
         return new Rectangle(position, size);
@@ -234,7 +246,8 @@ public class SettingsService
         const int width = 24;
         const int height = 24;
         
-        return new Rectangle(right - 18, bounds.Y + 76, width, height);
+        return new Rectangle(right - 18, bounds.Y + 16, 
+            width, height);
     }
 
     private static Rectangle GetAnimationBounds(Rectangle bounds, int right)
@@ -242,7 +255,8 @@ public class SettingsService
         const int width = 24;
         const int height = 24;
         
-        return new Rectangle(right - 18, bounds.Y + 120, width, height);
+        return new Rectangle(right - 18, bounds.Y + 60, 
+            width, height);
     }
     
     private static Rectangle GetLanguageBounds(Rectangle bounds, int right)
@@ -250,7 +264,8 @@ public class SettingsService
         const int width = 48;
         const int height = 36;
         
-        return new Rectangle(right - 18 - width / 2, bounds.Y + 164, width, height);
+        return new Rectangle(right - 18 - width / 2, bounds.Y + 104, 
+            width, height);
     }
 
     private void ChangeLanguage(Action action)
@@ -258,5 +273,10 @@ public class SettingsService
         _languageService.ChangeLanguage();
         Data.Language = _languageService.CurrentLanguage;
         action.Invoke();
+    }
+
+    public void SetLanguage(Language language)
+    {
+        Data.Language = language;
     }
 }
