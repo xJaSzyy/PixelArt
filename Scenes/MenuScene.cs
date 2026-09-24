@@ -145,14 +145,6 @@ public class MenuScene : IScene
     {
         var mouse = Mouse.GetState();
         var keyboard = Keyboard.GetState();
-
-        /*if (_inputService.IsLeftMouseButtonClicked(mouse))
-        {
-            if (_languageButton.IsHovered)
-            {
-                ChangeLanguage();
-            }
-        }*/
         
         if (_inputService.IsLeftMouseButtonClicked(mouse))
         {
@@ -243,7 +235,7 @@ public class MenuScene : IScene
         _popupService.Update(gameTime);
         _backgroundService.Update(gameTime);
         _typeButtons.ForEach(b => b.Update(mouse));
-        _settingsService.Update(mouse);
+        _settingsService.Update(mouse, ResizeAll);
 
         if (_levelService.CurrentLevelType == LevelType.Custom)
         {
@@ -328,30 +320,13 @@ public class MenuScene : IScene
 
     private void ResizeAll()
     {
-        //ResizeLanguageButton();
         _settingsButton.Bounds = new Rectangle(new Point(_headerProgressBarExtraWidth, 6), _buttonSize);
         ResizeTypeButtons();
         _levelService.SetHeaderHeight(LevelsHeaderHeight);
         _levelService.Resize();
         _loadImageButton.Bounds = _levelService.GetNextLevelBounds(_buttonSize.X, _buttonSize.Y);
+        _settingsService.LanguageChanged = false;
     }
-
-    /*private void ResizeLanguageButton()
-    {
-        var language = _languageService.CurrentLanguage.ShortName;
-        
-        _languageButton.TextKey = language;
-
-        var stringSize = _drawService.MeasureString(language, _headerTextScale);
-        var textSize = new Point((int)MathF.Ceiling(stringSize.X), (int)MathF.Ceiling(stringSize.Y));
-
-        _languageButton.Bounds = new Rectangle(
-            _headerProgressBarExtraWidth,
-            20,
-            textSize.X + 2,
-            textSize.Y + 2
-        );
-    }*/
 
     private void ResizeTypeButtons()
     {

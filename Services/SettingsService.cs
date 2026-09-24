@@ -1,3 +1,4 @@
+using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -9,6 +10,7 @@ namespace PixelArt.Services;
 public class SettingsService
 {
     public bool IsActive { get; private set; }
+    public bool LanguageChanged { get; set; }
 
     private SettingsData Data { get; } = new();
 
@@ -34,14 +36,14 @@ public class SettingsService
         IsActive = !IsActive;
     }
 
-    public void Update(MouseState mouse)
+    public void Update(MouseState mouse, Action action)
     {
         if (!IsActive)
         {
             return;
         }
 
-        HandleCheckboxes(mouse);
+        HandleCheckboxes(mouse, action);
         HandleSliders(mouse);
     }
 
@@ -120,7 +122,7 @@ public class SettingsService
         _drawService.DrawSlider(spriteBatch, soundSliderInputBounds, Data.SoundVolume, Color.White, Color.DarkGray, Color.White, Color.White);
     }
 
-    private void HandleCheckboxes(MouseState mouse)
+    private void HandleCheckboxes(MouseState mouse, Action action)
     {
         if (!_inputService.IsLeftMouseButtonClicked(mouse))
         {
@@ -151,7 +153,7 @@ public class SettingsService
 
         if (languageBounds.Contains(mouse.Position))
         {
-            ChangeLanguage();
+            ChangeLanguage(action);
             return;
         }
     }
@@ -227,7 +229,7 @@ public class SettingsService
         return new Rectangle(position, size);
     }
 
-    private Rectangle GetArrowBounds(Rectangle bounds, int right)
+    private static Rectangle GetArrowBounds(Rectangle bounds, int right)
     {
         const int width = 24;
         const int height = 24;
@@ -235,7 +237,7 @@ public class SettingsService
         return new Rectangle(right - 18, bounds.Y + 76, width, height);
     }
 
-    private Rectangle GetAnimationBounds(Rectangle bounds, int right)
+    private static Rectangle GetAnimationBounds(Rectangle bounds, int right)
     {
         const int width = 24;
         const int height = 24;
@@ -243,7 +245,7 @@ public class SettingsService
         return new Rectangle(right - 18, bounds.Y + 120, width, height);
     }
     
-    private Rectangle GetLanguageBounds(Rectangle bounds, int right)
+    private static Rectangle GetLanguageBounds(Rectangle bounds, int right)
     {
         const int width = 48;
         const int height = 36;
@@ -251,11 +253,10 @@ public class SettingsService
         return new Rectangle(right - 18 - width / 2, bounds.Y + 164, width, height);
     }
 
-    private void ChangeLanguage()
+    private void ChangeLanguage(Action action)
     {
         _languageService.ChangeLanguage();
         Data.Language = _languageService.CurrentLanguage;
-        /*_dialogService.SetText($"{_languageService.GetText("Menu.Pay")} ${_unlockLevelCost}?");
-        ResizeTypeButtons();*/
+        action.Invoke();
     }
 }
