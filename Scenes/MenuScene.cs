@@ -320,7 +320,7 @@ public class MenuScene : IScene
 
     private void ResizeAll()
     {
-        _settingsButton.Bounds = new Rectangle(new Point(_headerProgressBarExtraWidth, 6), new Point(48, 48));
+        _settingsButton.Bounds = new Rectangle(new Point(_headerProgressBarExtraWidth, 8), new Point(48, 48));
         ResizeTypeButtons();
         _levelService.SetHeaderHeight(LevelsHeaderHeight);
         _levelService.Resize();
