@@ -429,11 +429,13 @@ public class GameScene : IScene
 
             var arrowPosition = GetArrowPosition(screenCenter, currentTargetPosition);
 
+            var backgroundPixelIsDark = _processorService.PixelIsDark(arrowPosition);
+
             _spriteBatch.Draw(
                 arrowTexture,
                 arrowPosition,
                 null,
-                Colors.Yellow,
+                backgroundPixelIsDark ? Colors.Text : Colors.Black,
                 0f,
                 new Vector2(
                     arrowTexture.Width / 2f,
