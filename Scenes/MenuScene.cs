@@ -170,7 +170,7 @@ public class MenuScene : IScene
                     }
                     else
                     {
-                        _processorService.SetLevel(hoveredLevel);
+                        _processorService.SetLevel(hoveredLevel, _settingsService.GetSettings());
                         _sceneService.SetScene<GameScene>();
                     }
                 }

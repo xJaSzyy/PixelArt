@@ -34,6 +34,8 @@ public class GameScene : IScene
     private readonly LanguageService _languageService;
     private ColorButtonsService _colorButtonsService;
     private readonly TooltipService _tooltipService;
+    
+    private SettingsData _settings;
 
     private Button _homeButton;
     private Button _restartButton;
@@ -114,6 +116,9 @@ public class GameScene : IScene
         _colorButtonsService = new ColorButtonsService(_graphicsDevice, _spriteBatch, _processorService);
         _colorButtonsService.LoadContent(pixelTexture);
 
+        var settingsService = _services.GetRequiredService<SettingsService>();
+        _settings = settingsService.GetSettings();
+        
         ImageToCenter();
     }
 
@@ -365,7 +370,7 @@ public class GameScene : IScene
     {
         var screenCenter = new Vector2(_graphicsDevice.Viewport.Width / 2f, _graphicsDevice.Viewport.Height / 2f);
 
-        if (!_processorService.HasHighlightedPixelOnScreen())
+        if (_settings.ArrowHintEnabled && !_processorService.HasHighlightedPixelOnScreen())
         {
             if (_arrowTargetPixel.HasValue && _processorService.TryGetHighlightedPixelScreenPosition(_arrowTargetPixel.Value, out var currentTargetPosition))
             {
@@ -448,7 +453,6 @@ public class GameScene : IScene
         var saveService = _services.GetRequiredService<SaveService>();
         var levelService = _services.GetRequiredService<LevelService>();
         var playerService = _services.GetRequiredService<PlayerService>();
-        var settingsService = _services.GetRequiredService<SettingsService>();
 
         _processorService.ClearHighlight();
         
@@ -456,7 +460,7 @@ public class GameScene : IScene
         {
             Coins = playerService.Coins,
             Levels = levelService.Levels,
-            Settings = settingsService.GetSettings()
+            Settings = _settings
         });
     }
     
