@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Xna.Framework.Content;
 using PixelArt.Interfaces;
 
-namespace PixelArt.Services;
+namespace PixelArt.Services.Common;
 
 public class SceneService
 {

@@ -13,6 +13,9 @@ using PixelArt.Enums;
 using PixelArt.Interfaces;
 using PixelArt.Models;
 using PixelArt.Services;
+using PixelArt.Services.Common;
+using PixelArt.Services.Particles;
+using PixelArt.Services.Pixel;
 using Point = Microsoft.Xna.Framework.Point;
 using Rectangle = Microsoft.Xna.Framework.Rectangle;
 
@@ -26,7 +29,7 @@ public class MenuScene : IScene
     private readonly SpriteBatch _spriteBatch;
     
     private readonly SceneService _sceneService;
-    private readonly MouseService _mouseService;
+    private readonly InputService _inputService;
     private readonly PixelProcessorService _processorService;
     private readonly DrawService _drawService;
     private readonly PlayerService _playerService;
@@ -74,7 +77,7 @@ public class MenuScene : IScene
         _spriteBatch = new SpriteBatch(_graphicsDevice);
         _sceneService = services.GetRequiredService<SceneService>();
         
-        _mouseService = services.GetRequiredService<MouseService>();
+        _inputService = services.GetRequiredService<InputService>();
         _drawService = services.GetRequiredService<DrawService>();
         _playerService = services.GetRequiredService<PlayerService>();
         _processorService = services.GetRequiredService<PixelProcessorService>();
@@ -144,37 +147,36 @@ public class MenuScene : IScene
     public void Update(GameTime gameTime)
     {
         var mouse = Mouse.GetState();
+        var keyboard = Keyboard.GetState();
 
-        if (_mouseService.IsLeftMouseButtonClicked(mouse))
+        if (_inputService.IsLeftMouseButtonClicked(mouse))
         {
             if (_languageButton.IsHovered)
             {
                 ChangeLanguage();
             }
         }
-
+        
         if (!_dialogService.IsDialogOpen)
         {
-            if (_mouseService.IsLeftMouseButtonClicked(mouse))
+            if (_inputService.IsLeftMouseButtonClicked(mouse))
             {
-                if (!IsMouseOverHeader(mouse))
+                var hoveredLevel = _levelService.GetHoveredLevel();
+                
+                if (hoveredLevel != null && !IsMouseOverHeader(mouse))
                 {
-                    var hoveredLevel = _levelService.GetHoveredLevel();
-                    if (hoveredLevel != null)
+                    if (hoveredLevel.IsLocked)
                     {
-                        if (hoveredLevel.IsLocked)
-                        {
-                            _dialogService.ShowDialog($"{_languageService.GetText("Menu.Pay")} ${_unlockLevelCost}?", () => UnlockLevel(hoveredLevel));
-                            _mouseService.SetMouse(mouse);
-                        }
-                        else
-                        {
-                            _processorService.SetLevel(hoveredLevel);
-                            _sceneService.SetScene<GameScene>();
-                        }
+                        _dialogService.ShowDialog($"{_languageService.GetText("Menu.Pay")} ${_unlockLevelCost}?", () => UnlockLevel(hoveredLevel));
+                        _inputService.SetState(mouse, keyboard);
+                    }
+                    else
+                    {
+                        _processorService.SetLevel(hoveredLevel);
+                        _sceneService.SetScene<GameScene>();
                     }
                 }
-                
+
                 foreach (var typeButton in _typeButtons)
                 {
                     if (typeButton is { IsHovered: true, TextKey: not null })
@@ -229,9 +231,9 @@ public class MenuScene : IScene
             }
         }
 
-        _levelService.Update(_mouseService, mouse);
+        _levelService.Update(_inputService, mouse);
         _languageButton.Update(mouse);
-        _dialogService.Update(mouse, gameTime);
+        _dialogService.Update(gameTime, mouse, keyboard);
         _popupService.Update(gameTime);
         _backgroundService.Update(gameTime);
         _typeButtons.ForEach(b => b.Update(mouse));
@@ -241,7 +243,7 @@ public class MenuScene : IScene
             _loadImageButton.Update(mouse);
         }
         
-        _mouseService.SetMouse(mouse);
+        _inputService.SetState(mouse, keyboard);
     }
 
     private void ChangeLanguage()
@@ -274,7 +276,7 @@ public class MenuScene : IScene
         {
             _loadImageButton.Draw(_spriteBatch);
         }
-
+        
         _spriteBatch.End();
     }
 

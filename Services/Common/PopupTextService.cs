@@ -1,12 +1,10 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace PixelArt.Services;
+namespace PixelArt.Services.Common;
 
-public class PopupTextService
+public class PopupTextService(DrawService drawService)
 {
-    private readonly DrawService _drawService;
-    
     private string _text;
     private Vector2 _position;
     private Color _color;
@@ -18,18 +16,8 @@ public class PopupTextService
     private float _delayTimer;
 
     private bool IsVisible => _text != null && _delayTimer <= 0f;
-    
-    public PopupTextService(DrawService drawService)
-    {
-        _drawService = drawService;
-    }
 
-    public void Show(
-        string text,
-        Vector2 position,
-        float duration = 0.5f,
-        Color? color = null,
-        float scale = 1f)
+    public void Show(string text, Vector2 position, float duration = 0.5f, Color? color = null, float scale = 1f)
     {
         if (IsVisible)
         {
@@ -45,13 +33,7 @@ public class PopupTextService
         _delayTimer = 0f;
     }
 
-    public void ShowDelayed(
-        string text,
-        Vector2 position,
-        float delay,
-        float duration = 0.5f,
-        Color? color = null,
-        float scale = 1f)
+    public void ShowDelayed(string text, Vector2 position, float delay, float duration = 0.5f, Color? color = null, float scale = 1f)
     {
         _text = text;
         _position = position;
@@ -106,6 +88,6 @@ public class PopupTextService
 
         var color = _color * alpha;
 
-        _drawService.DrawString(spriteBatch, _text, _position, color, _scale);
+        drawService.DrawString(spriteBatch, _text, _position, color, _scale);
     }
 }

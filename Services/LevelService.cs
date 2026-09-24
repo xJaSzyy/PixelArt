@@ -11,6 +11,8 @@ using Microsoft.Xna.Framework.Input;
 using PixelArt.Buttons;
 using PixelArt.Enums;
 using PixelArt.Models;
+using PixelArt.Services.Common;
+using PixelArt.Services.Pixel;
 
 namespace PixelArt.Services;
 
@@ -68,13 +70,13 @@ public class LevelService
         Resize();
     }
     
-    public void Update(MouseService mouseService, MouseState mouse)
+    public void Update(InputService inputService, MouseState mouse)
     {
         _scroll = MathHelper.Lerp(_scroll, _targetScroll, _scrollSpeed);
         
-        if (mouseService.IsScroll(mouse))
+        if (inputService.IsScroll(mouse))
         {
-            var scrollDelta = mouseService.GetScrollDelta(mouse);
+            var scrollDelta = inputService.GetScrollDelta(mouse);
 
             if (scrollDelta > 0)
             {

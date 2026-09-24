@@ -1,5 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
+        <ApplicationTitle>Pixoin</ApplicationTitle>
+        <AssemblyName>Pixoin</AssemblyName>
         <OutputType>WinExe</OutputType>
         <TargetFramework>net9.0</TargetFramework>
         <RollForward>Major</RollForward>

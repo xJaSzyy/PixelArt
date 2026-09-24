@@ -1,10 +1,10 @@
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using PixelArt.Models;
 
-namespace PixelArt.Services;
+namespace PixelArt.Services.Particles;
 
 public sealed class BackgroundParticleService
 {

@@ -4,6 +4,9 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using PixelArt.Scenes;
 using PixelArt.Services;
+using PixelArt.Services.Common;
+using PixelArt.Services.Particles;
+using PixelArt.Services.Pixel;
 
 namespace PixelArt;
 
@@ -35,7 +38,7 @@ public class Game1 : Game
         
         collection.AddSingleton(GraphicsDevice);
         collection.AddSingleton(new DrawService(GraphicsDevice, Content.Load<SpriteFont>("DefaultFont")));
-        collection.AddSingleton<MouseService>();
+        collection.AddSingleton<InputService>();
         collection.AddSingleton<PlayerService>();
         collection.AddSingleton<SceneService>();
         collection.AddSingleton<PixelProcessorService>();
@@ -49,8 +52,12 @@ public class Game1 : Game
         collection.AddSingleton<SoundService>();
         collection.AddSingleton<BackgroundParticleService>();
         collection.AddSingleton<LanguageService>();
-        collection.AddSingleton<KeyboardService>();
         collection.AddSingleton<ImageLoaderService>();
+        collection.AddSingleton<PixelTextureService>();
+        collection.AddSingleton<PixelDataService>();
+        collection.AddSingleton<PixelReplayService>();
+        collection.AddSingleton<PixelHighlightService>();
+        collection.AddSingleton<TooltipService>();
         
         collection.AddTransient<MenuScene>();
         collection.AddTransient<GameScene>();
