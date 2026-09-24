@@ -11,7 +11,7 @@ public class SettingsService
 {
     public bool IsActive { get; private set; }
 
-    private SettingsData Data { get; } = new();
+    private SettingsData Settings { get; set; } = new();
 
     private readonly GraphicsDevice _graphicsDevice;
     private readonly DrawService _drawService;
@@ -87,7 +87,7 @@ public class SettingsService
             new Vector2(left, bounds.Y + 16 + arrowBounds.Height / 4f), 
             Colors.Text);
         
-        _drawService.DrawCheckbox(spriteBatch, arrowBounds, Data.ArrowHintEnabled, 
+        _drawService.DrawCheckbox(spriteBatch, arrowBounds, Settings.ArrowHintEnabled, 
             Colors.Text, Color.Black, Colors.Text);
 
         var animationBounds = GetAnimationBounds(bounds, right);
@@ -96,7 +96,7 @@ public class SettingsService
             new Vector2(left, bounds.Y + 60 + animationBounds.Height / 4f), 
             Colors.Text);
         
-        _drawService.DrawCheckbox(spriteBatch, animationBounds, Data.DrawAnimationEnabled, 
+        _drawService.DrawCheckbox(spriteBatch, animationBounds, Settings.DrawAnimationEnabled, 
             Colors.Text, Color.Black, Colors.Text);
 
         var languageBounds = GetLanguageBounds(bounds, right);
@@ -111,7 +111,7 @@ public class SettingsService
                 languageBounds.Width - 4, languageBounds.Height - 4),
             Color.Black, 0);
         
-        _drawService.DrawString(spriteBatch, Data.Language.ShortName, 
+        _drawService.DrawString(spriteBatch, Settings.Language.ShortName, 
             languageBounds.Center.ToVector2(), Colors.Text);
 
         var musicSliderInputBounds = GetMusicSliderInputBounds(bounds, left);
@@ -120,7 +120,7 @@ public class SettingsService
             new Vector2(bounds.Center.X, bounds.Y + 168), 
             Colors.Text);
         
-        _drawService.DrawSlider(spriteBatch, musicSliderInputBounds, Data.MusicVolume, 
+        _drawService.DrawSlider(spriteBatch, musicSliderInputBounds, Settings.MusicVolume, 
             Colors.Text, Color.DarkGray, Colors.Text, Colors.Text);
 
         var soundSliderInputBounds = GetSoundSliderInputBounds(bounds, left);
@@ -129,7 +129,7 @@ public class SettingsService
             new Vector2(bounds.Center.X, bounds.Y + 232), 
             Colors.Text);
         
-        _drawService.DrawSlider(spriteBatch, soundSliderInputBounds, Data.SoundVolume, 
+        _drawService.DrawSlider(spriteBatch, soundSliderInputBounds, Settings.SoundVolume, 
             Colors.Text, Color.DarkGray, Colors.Text, Colors.Text);
     }
 
@@ -148,7 +148,7 @@ public class SettingsService
 
         if (arrowHintBounds.Contains(mouse.Position))
         {
-            Data.ArrowHintEnabled = !Data.ArrowHintEnabled;
+            Settings.ArrowHintEnabled = !Settings.ArrowHintEnabled;
             return;
         }
 
@@ -156,7 +156,7 @@ public class SettingsService
 
         if (animationBounds.Contains(mouse.Position))
         {
-            Data.DrawAnimationEnabled = !Data.DrawAnimationEnabled;
+            Settings.DrawAnimationEnabled = !Settings.DrawAnimationEnabled;
             return;
         }
 
@@ -194,14 +194,14 @@ public class SettingsService
         {
             if (_draggingMusic)
             {
-                Data.MusicVolume = CalculateSliderValue(
+                Settings.MusicVolume = CalculateSliderValue(
                     mouse.Position.X,
                     musicBounds);
             }
 
             if (_draggingSound)
             {
-                Data.SoundVolume = CalculateSliderValue(
+                Settings.SoundVolume = CalculateSliderValue(
                     mouse.Position.X,
                     soundBounds);
             }
@@ -271,12 +271,19 @@ public class SettingsService
     private void ChangeLanguage(Action action)
     {
         _languageService.ChangeLanguage();
-        Data.Language = _languageService.CurrentLanguage;
+        Settings.Language = _languageService.CurrentLanguage;
         action.Invoke();
     }
 
-    public void SetLanguage(Language language)
+    public void SetSettings(SettingsData settings)
     {
-        Data.Language = language;
+        Settings = settings;
+
+        _languageService.SetLanguage(Settings.Language);
+    }
+
+    public SettingsData GetSettings()
+    {
+        return Settings;
     }
 }
