@@ -161,8 +161,8 @@ public class MenuScene : IScene
                 _settingsService.Toggle();
             }
         }
-        
-        if (!_dialogService.IsDialogOpen)
+
+        if (!_dialogService.IsDialogOpen && !_settingsService.IsActive)
         {
             if (_inputService.IsLeftMouseButtonClicked(mouse))
             {
@@ -242,6 +242,7 @@ public class MenuScene : IScene
         _popupService.Update(gameTime);
         _backgroundService.Update(gameTime);
         _typeButtons.ForEach(b => b.Update(mouse));
+        _settingsService.Update(mouse);
 
         if (_levelService.CurrentLevelType == LevelType.Custom)
         {
@@ -249,14 +250,6 @@ public class MenuScene : IScene
         }
         
         _inputService.SetState(mouse, keyboard);
-    }
-
-    private void ChangeLanguage()
-    {
-        _languageService.ChangeLanguage();
-        //ResizeLanguageButton();
-        _dialogService.SetText($"{_languageService.GetText("Menu.Pay")} ${_unlockLevelCost}?");
-        ResizeTypeButtons();
     }
 
     public void Draw(GameTime gameTime)

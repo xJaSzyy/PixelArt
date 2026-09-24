@@ -9,14 +9,10 @@ public class SettingsData
 
     public float MusicVolume { get; set; } = 1f;
     public float SoundVolume { get; set; } = 1f;
-    
-    public void SetMusicVolume(float value)
-    {
-        MusicVolume = MathHelper.Clamp(value, 0f, 1f);
-    }
 
-    public void SetSoundVolume(float value)
+    public Language Language { get; set; } = new()
     {
-        SoundVolume = MathHelper.Clamp(value, 0f, 1f);
-    }
+        Name = "English",
+        ShortName = "EN"
+    };
 }
