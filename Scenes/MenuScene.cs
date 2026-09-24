@@ -40,8 +40,9 @@ public class MenuScene : IScene
     private readonly BackgroundParticleService _backgroundService;
     private readonly LanguageService _languageService;
     private readonly ImageLoaderService _imageLoaderService;
+    private readonly SettingsService _settingsService;
 
-    private Button _languageButton;
+    private Button _settingsButton;
     
     private Button _loadImageButton;
     private Texture2D? _loadedImageTexture;
@@ -88,6 +89,7 @@ public class MenuScene : IScene
         _backgroundService = services.GetRequiredService<BackgroundParticleService>();
         _languageService = services.GetRequiredService<LanguageService>();
         _imageLoaderService = _services.GetRequiredService<ImageLoaderService>();
+        _settingsService = _services.GetRequiredService<SettingsService>();
     }
 
     public void LoadContent(ContentManager content)
@@ -109,16 +111,11 @@ public class MenuScene : IScene
             });
         }
 
-        _languageButton = new Button(
+        _settingsButton = new Button(
             _drawService,
             _languageService,
-            null,
-            Rectangle.Empty)
-        {
-            TextKey = _languageService.CurrentLanguage.ShortName,
-            TextColor = Colors.Text,
-            TextScale = _headerTextScale
-        };
+            content.Load<Texture2D>("Icons/settings"),
+            Rectangle.Empty);
         
         _loadImageButton = new Button(
             _drawService,
@@ -149,11 +146,19 @@ public class MenuScene : IScene
         var mouse = Mouse.GetState();
         var keyboard = Keyboard.GetState();
 
-        if (_inputService.IsLeftMouseButtonClicked(mouse))
+        /*if (_inputService.IsLeftMouseButtonClicked(mouse))
         {
             if (_languageButton.IsHovered)
             {
                 ChangeLanguage();
+            }
+        }*/
+        
+        if (_inputService.IsLeftMouseButtonClicked(mouse))
+        {
+            if (_settingsButton.IsHovered)
+            {
+                _settingsService.Toggle();
             }
         }
         
@@ -232,7 +237,7 @@ public class MenuScene : IScene
         }
 
         _levelService.Update(_inputService, mouse);
-        _languageButton.Update(mouse);
+        _settingsButton.Update(mouse);
         _dialogService.Update(gameTime, mouse, keyboard);
         _popupService.Update(gameTime);
         _backgroundService.Update(gameTime);
@@ -249,7 +254,7 @@ public class MenuScene : IScene
     private void ChangeLanguage()
     {
         _languageService.ChangeLanguage();
-        ResizeLanguageButton();
+        //ResizeLanguageButton();
         _dialogService.SetText($"{_languageService.GetText("Menu.Pay")} ${_unlockLevelCost}?");
         ResizeTypeButtons();
     }
@@ -276,6 +281,8 @@ public class MenuScene : IScene
         {
             _loadImageButton.Draw(_spriteBatch);
         }
+        
+        _settingsService.Draw(_spriteBatch);
         
         _spriteBatch.End();
     }
@@ -317,7 +324,7 @@ public class MenuScene : IScene
             Colors.Yellow,
             2f);
         
-        _languageButton.Draw(_spriteBatch);
+        _settingsButton.Draw(_spriteBatch);
     }
 
     public void OnClientSizeChanged(object sender, EventArgs e)
@@ -327,14 +334,15 @@ public class MenuScene : IScene
 
     private void ResizeAll()
     {
-        ResizeLanguageButton();
+        //ResizeLanguageButton();
+        _settingsButton.Bounds = new Rectangle(new Point(_headerProgressBarExtraWidth, 6), _buttonSize);
         ResizeTypeButtons();
         _levelService.SetHeaderHeight(LevelsHeaderHeight);
         _levelService.Resize();
         _loadImageButton.Bounds = _levelService.GetNextLevelBounds(_buttonSize.X, _buttonSize.Y);
     }
 
-    private void ResizeLanguageButton()
+    /*private void ResizeLanguageButton()
     {
         var language = _languageService.CurrentLanguage.ShortName;
         
@@ -349,7 +357,7 @@ public class MenuScene : IScene
             textSize.X + 2,
             textSize.Y + 2
         );
-    }
+    }*/
 
     private void ResizeTypeButtons()
     {

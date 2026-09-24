@@ -175,6 +175,166 @@ public class DrawService
                 color);
         }
     }
+    
+    public void DrawCheckbox(
+        SpriteBatch spriteBatch,
+        Rectangle bounds,
+        bool checkedState,
+        Color borderColor,
+        Color backgroundColor,
+        Color checkColor)
+    {
+        DrawRectangle(
+            spriteBatch,
+            bounds,
+            borderColor);
+
+        var inner = new Rectangle(
+            bounds.X + 2,
+            bounds.Y + 2,
+            bounds.Width - 4,
+            bounds.Height - 4);
+
+        DrawRectangle(
+            spriteBatch,
+            inner,
+            backgroundColor);
+
+        if (checkedState)
+        {
+            DrawCheckmark(spriteBatch, inner, checkColor);
+        }
+    }
+    
+    private void DrawCheckmark(
+        SpriteBatch spriteBatch,
+        Rectangle bounds,
+        Color color)
+    {
+        var x = bounds.X;
+        var y = bounds.Y;
+
+        DrawRectangle(spriteBatch,
+            new Rectangle(x + 3, y + 7, 3, 3),
+            color);
+
+        DrawRectangle(spriteBatch,
+            new Rectangle(x + 5, y + 9, 3, 3),
+            color);
+
+        DrawRectangle(spriteBatch,
+            new Rectangle(x + 7, y + 7, 3, 3),
+            color);
+
+        DrawRectangle(spriteBatch,
+            new Rectangle(x + 9, y + 5, 3, 3),
+            color);
+
+        DrawRectangle(spriteBatch,
+            new Rectangle(x + 11, y + 3, 3, 3),
+            color);
+    }
+    
+    public void DrawSlider(
+        SpriteBatch spriteBatch,
+        Rectangle bounds,
+        float value,
+        Color borderColor,
+        Color emptyColor,
+        Color fillColor,
+        Color handleColor,
+        int borderThickness = 2,
+        int handleWidth = 6)
+    {
+        value = MathHelper.Clamp(value, 0f, 1f);
+
+        // Внешняя рамка
+        DrawRectangle(
+            spriteBatch,
+            bounds,
+            borderColor);
+
+        // Внутренняя область
+        var inner = new Rectangle(
+            bounds.X + borderThickness,
+            bounds.Y + borderThickness,
+            bounds.Width - borderThickness * 2,
+            bounds.Height - borderThickness * 2);
+
+        DrawRectangle(
+            spriteBatch,
+            inner,
+            emptyColor);
+
+        // Заполненная часть
+        var fillWidth = (int)(inner.Width * value);
+
+        if (fillWidth > 0)
+        {
+            DrawRectangle(
+                spriteBatch,
+                new Rectangle(
+                    inner.X,
+                    inner.Y,
+                    fillWidth,
+                    inner.Height),
+                fillColor);
+        }
+
+        // Handle
+        var handleX =
+            inner.X +
+            (int)(inner.Width * value) -
+            handleWidth / 2;
+
+        var handle = new Rectangle(
+            handleX,
+            bounds.Y - 2,
+            handleWidth,
+            bounds.Height + 4);
+
+        DrawRectangle(
+            spriteBatch,
+            handle,
+            handleColor);
+        
+        DrawRectangle(
+            spriteBatch,
+            new Rectangle(
+                handleX + 2,
+                bounds.Y - 1,
+                handleWidth,
+                bounds.Height + 6),
+            Color.Black);
+
+        DrawRectangle(
+            spriteBatch,
+            new Rectangle(
+                handleX,
+                bounds.Y - 3,
+                handleWidth,
+                bounds.Height + 6),
+            handleColor);
+    }
+    
+    public void DrawStringLeft(
+        SpriteBatch spriteBatch,
+        string text,
+        Vector2 position,
+        Color color,
+        float scale = 1f)
+    {
+        spriteBatch.DrawString(
+            _font,
+            text,
+            position,
+            color,
+            0f,
+            Vector2.Zero,
+            scale,
+            SpriteEffects.None,
+            0f);
+    }
 
     public Texture2D GetPixelTexture()
     {
