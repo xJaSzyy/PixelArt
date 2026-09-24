@@ -602,18 +602,11 @@ public class PixelProcessorService
             CurrentLevel.Texture.Width,
             out position);
     }
-    
+
     public bool TryGetNearestHighlightedPixel(Vector2 fromPosition, out int index, out Vector2 position)
     {
-        return _highlightService.TryGetNearestScreenPosition(
-            fromPosition,
-            _pixelDataService,
-            GetImageBounds(),
-            _pixelSize,
-            _cameraService.Zoom,
-            CurrentLevel.Texture.Width,
-            out index,
-            out position);
+        return _highlightService.TryGetNearestScreenPosition(fromPosition, _pixelDataService, GetImageBounds(),
+            _pixelSize, _cameraService.Zoom, CurrentLevel.Texture.Width, out index, out position);
     }
 
     public bool ContainsHighlightedPixel(int index)
@@ -623,20 +616,18 @@ public class PixelProcessorService
     
     private float GetBounceScale(float progress)
     {
-        if (progress < 0.7f)
+        if (progress < 0.8f)
         {
-            var t = progress / 0.7f;
-
-            return MathHelper.Lerp(0f, 1.075f, EaseOutCubic(t));
+            var t1 = progress / 0.8f;
+            return MathHelper.Lerp(0f, 1.04f, EaseOutSine(t1));
         }
 
-        var settle = (progress - 0.7f) / 0.3f;
-
-        return MathHelper.Lerp(1.075f, 1f, EaseOutCubic(settle));
+        var t2 = (progress - 0.8f) / 0.2f;
+        return MathHelper.Lerp(1.04f, 1f, EaseOutSine(t2));
     }
-
-    private float EaseOutCubic(float t)
+    
+    private float EaseOutSine(float t)
     {
-        return 1f - MathF.Pow(1f - t, 3f);
+        return MathF.Sin((t * MathF.PI) / 2);
     }
 }
