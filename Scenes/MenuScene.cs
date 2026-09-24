@@ -159,6 +159,7 @@ public class MenuScene : IScene
             if (_settingsButton.IsHovered)
             {
                 _settingsService.Toggle();
+                _dialogService.IsDialogOpen = false;
             }
         }
 

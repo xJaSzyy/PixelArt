@@ -96,94 +96,28 @@ public class SettingsService
         var left = bounds.X + 24;
         var right = bounds.Right - 24;
 
-        _drawService.DrawStringLeft(spriteBatch, "ARROW HINT", new Vector2(left, bounds.Y + 76), Color.White);
+        var arrowBounds = GetArrowBounds(bounds, right);
+        
+        _drawService.DrawStringLeft(spriteBatch, "ARROW HINT", new Vector2(left, bounds.Y + 76 + arrowBounds.Height / 4f), Color.White);
+        _drawService.DrawCheckbox(spriteBatch, arrowBounds, Data.ArrowHintEnabled, Color.White, Color.Black, Color.White);
 
-        _drawService.DrawCheckbox(
-            spriteBatch,
-            GetArrowBounds(bounds, right),
-            Data.ArrowHintEnabled,
-            Color.White,
-            Color.Black,
-            Color.White);
+        var animationBounds = GetAnimationBounds(bounds, right);
+        _drawService.DrawStringLeft(spriteBatch, "ANIMATION", new Vector2(left, bounds.Y + 120 + animationBounds.Height / 4f), Color.White);
+        _drawService.DrawCheckbox(spriteBatch, animationBounds, Data.DrawAnimationEnabled, Color.White, Color.Black, Color.White);
 
-        _drawService.DrawStringLeft(spriteBatch, "ANIMATION", new Vector2(left, bounds.Y + 120), Color.White);
-
-        _drawService.DrawCheckbox(
-            spriteBatch,
-            GetAnimationBounds(bounds, right),
-            Data.DrawAnimationEnabled,
-            Color.White,
-            Color.Black,
-            Color.White);
-
-        _drawService.DrawStringLeft(spriteBatch, "LANGUAGE", new Vector2(left, bounds.Y + 164), Color.White);
-
-        var languageBounds = GetLanguageBounds(bounds);
-
-        _drawService.DrawRoundedRectangle(spriteBatch, languageBounds, Colors.PanelOuter, 4);
-
-        _drawService.DrawRoundedRectangle(
-            spriteBatch,
-            new Rectangle(
-                languageBounds.X + 2,
-                languageBounds.Y + 2,
-                languageBounds.Width - 4,
-                languageBounds.Height - 4),
-            Colors.PanelInner,
-            3);
-
+        var languageBounds = GetLanguageBounds(bounds, right);
+        _drawService.DrawStringLeft(spriteBatch, "LANGUAGE", new Vector2(left, languageBounds.Y + languageBounds.Height / 4f), Color.White);
+        _drawService.DrawRoundedRectangle(spriteBatch, languageBounds, Color.White, 0);
+        _drawService.DrawRoundedRectangle(spriteBatch, new Rectangle(languageBounds.X + 2, languageBounds.Y + 2, languageBounds.Width - 4, languageBounds.Height - 4), Color.Black, 0);
         _drawService.DrawString(spriteBatch, Data.Language.ShortName, languageBounds.Center.ToVector2(), Color.White);
 
-        _drawService.DrawString(spriteBatch, "MUSIC", new Vector2(bounds.Center.X, bounds.Y + 208),
-            Color.White);
+        var musicSliderInputBounds = GetMusicSliderInputBounds(bounds, left);
+        _drawService.DrawString(spriteBatch, "MUSIC", new Vector2(bounds.Center.X, bounds.Y + 208), Color.White);
+        _drawService.DrawSlider(spriteBatch, musicSliderInputBounds, Data.MusicVolume, Color.White, Color.DarkGray, Color.White, Color.White);
 
-        _drawService.DrawSlider(
-            spriteBatch,
-            new Rectangle(left, bounds.Y + 228, bounds.Width - 48, 12),
-            Data.MusicVolume,
-            Color.White,
-            Color.DarkGray,
-            Color.White,
-            Color.White);
-
-        _drawService.DrawString(
-            spriteBatch,
-            "SOUND",
-            new Vector2(
-                bounds.Center.X,
-                bounds.Y + 272),
-            Color.White);
-
-        _drawService.DrawSlider(
-            spriteBatch,
-            new Rectangle(
-                left,
-                bounds.Y + 292,
-                bounds.Width - 48,
-                12),
-            Data.SoundVolume,
-            Color.White,
-            Color.DarkGray,
-            Color.White,
-            Color.White);
-    }
-
-    private Rectangle GetArrowBounds(Rectangle bounds, int right)
-    {
-        return new Rectangle(
-            right - 18,
-            bounds.Y + 76,
-            18,
-            18);
-    }
-
-    private Rectangle GetAnimationBounds(Rectangle bounds, int right)
-    {
-        return new Rectangle(
-            right - 18,
-            bounds.Y + 120,
-            18,
-            18);
+        var soundSliderInputBounds = GetSoundSliderInputBounds(bounds, left);
+        _drawService.DrawString(spriteBatch, "SOUND", new Vector2(bounds.Center.X, bounds.Y + 272), Color.White);
+        _drawService.DrawSlider(spriteBatch, soundSliderInputBounds, Data.SoundVolume, Color.White, Color.DarkGray, Color.White, Color.White);
     }
 
     private void HandleCheckboxes(MouseState mouse)
@@ -213,7 +147,7 @@ public class SettingsService
             return;
         }
 
-        var languageBounds = GetLanguageBounds(bounds);
+        var languageBounds = GetLanguageBounds(bounds, right);
 
         if (languageBounds.Contains(mouse.Position))
         {
@@ -226,8 +160,10 @@ public class SettingsService
     {
         var bounds = GetBounds();
 
-        var musicBounds = GetMusicSliderInputBounds(bounds);
-        var soundBounds = GetSoundSliderInputBounds(bounds);
+        var left = bounds.X + 24;
+        
+        var musicBounds = GetMusicSliderInputBounds(bounds, left);
+        var soundBounds = GetSoundSliderInputBounds(bounds, left);
 
         if (_inputService.IsLeftMouseButtonClicked(mouse))
         {
@@ -270,14 +206,14 @@ public class SettingsService
         return MathHelper.Clamp(value, 0f, 1f);
     }
 
-    private static Rectangle GetMusicSliderInputBounds(Rectangle bounds)
+    private static Rectangle GetMusicSliderInputBounds(Rectangle bounds, int left)
     {
-        return new Rectangle(bounds.X + 24, bounds.Y + 180 + 6, bounds.Width - 48, 24);
+        return new Rectangle(left, bounds.Y + 228, bounds.Width - 48, 12);
     }
 
-    private static Rectangle GetSoundSliderInputBounds(Rectangle bounds)
+    private static Rectangle GetSoundSliderInputBounds(Rectangle bounds, int left)
     {
-        return new Rectangle(bounds.X + 24, bounds.Y + 240 + 6, bounds.Width - 48, 24);
+        return new Rectangle(left, bounds.Y + 292, bounds.Width - 48, 12);
     }
 
     private Rectangle GetBounds()
@@ -291,18 +227,34 @@ public class SettingsService
         return new Rectangle(position, size);
     }
 
-    private Rectangle GetLanguageBounds(Rectangle bounds)
+    private Rectangle GetArrowBounds(Rectangle bounds, int right)
     {
-        return new Rectangle(
-            bounds.Right - 70,
-            bounds.Y + 145,
-            46,
-            24);
+        const int width = 24;
+        const int height = 24;
+        
+        return new Rectangle(right - 18, bounds.Y + 76, width, height);
+    }
+
+    private Rectangle GetAnimationBounds(Rectangle bounds, int right)
+    {
+        const int width = 24;
+        const int height = 24;
+        
+        return new Rectangle(right - 18, bounds.Y + 120, width, height);
+    }
+    
+    private Rectangle GetLanguageBounds(Rectangle bounds, int right)
+    {
+        const int width = 48;
+        const int height = 36;
+        
+        return new Rectangle(right - 18 - width / 2, bounds.Y + 164, width, height);
     }
 
     private void ChangeLanguage()
     {
         _languageService.ChangeLanguage();
+        Data.Language = _languageService.CurrentLanguage;
         /*_dialogService.SetText($"{_languageService.GetText("Menu.Pay")} ${_unlockLevelCost}?");
         ResizeTypeButtons();*/
     }
