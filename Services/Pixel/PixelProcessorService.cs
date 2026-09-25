@@ -406,7 +406,7 @@ public class PixelProcessorService
         }
 
         var currentPixel = new Point(x, y);
-
+        
         if (_lastPaintPixel.HasValue)
         {
             foreach (var point in Utils.GetLine(_lastPaintPixel.Value, currentPixel))
@@ -471,6 +471,11 @@ public class PixelProcessorService
         {
             return;
         }
+        
+        if (pixel.CurrentColor.ToColor() == Color.Lerp(color, pixel.GrayColor.ToColor(), 0.6f))
+        {
+            return;
+        }
 
         if (color == pixel.OriginalColor.ToColor())
         {
@@ -487,27 +492,26 @@ public class PixelProcessorService
             _soundService.PlayPaintingSound();
 
             _highlightService.Remove(index);
-
-            if (_settings != null && _settings.FillAnimationEnabled)
-            {
-                _pixelBounceAnimations[index] = new PixelBounceAnimation
-                {
-                    Color = color,
-                    Progress = 0f
-                };
-            }
-            else
-            {
-                _textureService.SetPixel(index, color);
-            }
         }
         else
         {
             color = Color.Lerp(color, pixel.GrayColor.ToColor(), 0.6f);
-            _textureService.SetPixel(index, color);
         }
 
         pixel.CurrentColor = new ColorData(color);
+        
+        if (_settings is { FillAnimationEnabled: true })
+        {
+            _pixelBounceAnimations[index] = new PixelBounceAnimation
+            {
+                Color = color,
+                Progress = 0f
+            };
+        }
+        else
+        {
+            _textureService.SetPixel(index, color);
+        }
     }
 
     public void SetPixelSize(float pixelWidth, float pixelHeight)

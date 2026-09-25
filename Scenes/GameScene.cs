@@ -349,12 +349,12 @@ public class GameScene : IScene
 
         if (!_pixelReplayService.IsRunning)
         {
-            _homeButton.Draw(_spriteBatch, Colors.Text);
-            _restartButton.Draw(_spriteBatch, Colors.Text);
+            _homeButton.Draw(_spriteBatch);
+            _restartButton.Draw(_spriteBatch);
 
             if (_processorService.CurrentLevel.Type == LevelType.Custom)
             {
-                _deleteButton.Draw(_spriteBatch, Colors.Text);
+                _deleteButton.Draw(_spriteBatch);
             }
         }
 
