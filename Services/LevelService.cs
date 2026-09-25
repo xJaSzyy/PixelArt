@@ -110,7 +110,7 @@ public class LevelService
                 bounds.Location += new Point(_buttonSize - _iconSize, level.Button.IsHovered ? -2 : 0);
                 bounds.Size = new Point(_iconSize, _iconSize);
                 
-                spriteBatch.Draw(_lockTexture, bounds, Colors.Red);
+                spriteBatch.Draw(_lockTexture, bounds, Colors.Decline);
             }
             else if (level.IsFinished)
             {
@@ -118,7 +118,7 @@ public class LevelService
                 bounds.Location += new Point(_buttonSize - _iconSize, level.Button.IsHovered ? -2 : 0);
                 bounds.Size = new Point(_iconSize, _iconSize);
 
-                spriteBatch.Draw(_checkTexture, bounds, Colors.Green);
+                spriteBatch.Draw(_checkTexture, bounds, Colors.Accept);
             }
         }
     }

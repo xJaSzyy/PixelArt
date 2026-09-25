@@ -300,7 +300,7 @@ public class MenuScene : IScene
                 progress,
                 Colors.Text,
                 Colors.Text,
-                Colors.Green,
+                Colors.Accept,
                 2);
         }
 
@@ -422,7 +422,7 @@ public class MenuScene : IScene
                     32
                 ),
                 1.25f,
-                Colors.Red);
+                Colors.Decline);
             
             return true;
         }
@@ -434,7 +434,7 @@ public class MenuScene : IScene
                 _graphicsDevice.Viewport.Height / 2f
             ),
             0.5f,
-            Colors.Red);
+            Colors.Decline);
 
         return false;
     }

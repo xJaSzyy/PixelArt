@@ -209,8 +209,8 @@ public class DialogService
             _buttonSize,
             _buttonSize);
 
-        _confirmButton.Draw(spriteBatch, Colors.Green);
-        _cancelButton.Draw(spriteBatch, Colors.Red);
+        _confirmButton.Draw(spriteBatch, Colors.Accept);
+        _cancelButton.Draw(spriteBatch, Colors.Decline);
 
         spriteBatch.End();
         spriteBatch.Begin(samplerState: SamplerState.PointClamp);

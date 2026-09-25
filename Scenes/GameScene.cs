@@ -325,7 +325,7 @@ public class GameScene : IScene
                     ),
                     _pixelReplayService.ReplayDuration,
                     1.5f,
-                    Colors.Green,
+                    Colors.Accept,
                     2f);
 
                 _processorService.CurrentLevel.IsFinished = true;
