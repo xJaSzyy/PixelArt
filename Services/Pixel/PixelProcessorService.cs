@@ -642,35 +642,4 @@ public class PixelProcessorService
     {
         return MathF.Sin((t * MathF.PI) / 2);
     }
-
-    public bool PixelIsDark(Vector2 position)
-    {
-        var bounds = GetImageBounds();
-
-        if (!bounds.Contains(position))
-        {
-            return false;
-        }
-
-        var screenPixelWidth = _pixelSize.X * _cameraService.Zoom;
-        var screenPixelHeight = _pixelSize.Y * _cameraService.Zoom;
-
-        var x = (int)((position.X - bounds.X) / screenPixelWidth);
-        var y = (int)((position.Y - bounds.Y) / screenPixelHeight);
-
-        if (x < 0 || x >= CurrentLevel.Texture.Width ||
-            y < 0 || y >= CurrentLevel.Texture.Height)
-        {
-            return false;
-        }
-
-        var pixel = _pixelDataService.GetPixel(y * CurrentLevel.Texture.Width + x);
-
-        if (pixel == null)
-        {
-            return false;
-        }
-
-        return Colors.IsDark(pixel.CurrentColor.ToColor());
-    }
 }

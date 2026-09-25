@@ -415,20 +415,10 @@ public class GameScene : IScene
 
             var arrowPosition = GetArrowPosition(screenCenter, currentTargetPosition);
 
-            var backgroundPixelIsDark = _processorService.PixelIsDark(arrowPosition);
-
-            _spriteBatch.Draw(
-                arrowTexture,
-                arrowPosition,
-                null,
-                backgroundPixelIsDark ? Colors.Text : Colors.Black,
-                0f,
-                new Vector2(
-                    arrowTexture.Width / 2f,
-                    arrowTexture.Height / 2f),
-                80f / arrowTexture.Width,
-                SpriteEffects.None,
-                0f);
+            _spriteBatch.Draw(arrowTexture, arrowPosition, null,
+                Colors.Text,
+                0f, new Vector2(arrowTexture.Width / 2f, arrowTexture.Height / 2f),
+                48f / arrowTexture.Width, SpriteEffects.None, 0f);
         }
         else
         {
