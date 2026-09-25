@@ -303,34 +303,32 @@ public class GameScene : IScene
     
     private void HandleColoringCompleted()
     {
-        if (_processorService.CurrentLevel.ColorGroups.All(x => x.IsFinished))
+        if (!_processorService.CurrentLevel.ColorGroups.All(x => x.IsFinished))
         {
-            ColoringIsCompleted = true;
-            ImageToCenter();
-            _processorService.Replay();
-
-            if (!_processorService.CurrentLevel.IsFinished)
-            {
-                var coinsToAdd = _processorService.CurrentLevel.History.Count / 10;
-
-                _services.GetRequiredService<PlayerService>().AddCoins(coinsToAdd);
-
-                var popupText = $"+${coinsToAdd}";
-
-                _popupService.ShowDelayed(
-                    popupText,
-                    new Vector2(
-                        _graphicsDevice.Viewport.Width / 2f,
-                        _drawService.MeasureString(popupText).Y * 2.5f
-                    ),
-                    _pixelReplayService.ReplayDuration,
-                    1.5f,
-                    Colors.Accept,
-                    2f);
-
-                _processorService.CurrentLevel.IsFinished = true;
-            }
+            return;
         }
+        
+        ColoringIsCompleted = true;
+        ImageToCenter();
+        _processorService.Replay();
+
+        if (_processorService.CurrentLevel.IsFinished)
+        {
+            return;
+        }
+        
+        var coinsToAdd = _processorService.CurrentLevel.History.Count / 10;
+
+        _services.GetRequiredService<PlayerService>().AddCoins(coinsToAdd);
+
+        var popupText = $"+${coinsToAdd}";
+
+        _popupService.ShowDelayed(popupText, 
+            new Vector2(_graphicsDevice.Viewport.Width / 2f, _drawService.MeasureString(popupText).Y * 2.5f), 
+            _pixelReplayService.ReplayDuration, 
+            1.5f, Colors.Accept, 2f);
+
+        _processorService.CurrentLevel.IsFinished = true;
     }
 
     public void Draw(GameTime gameTime)
@@ -338,7 +336,7 @@ public class GameScene : IScene
         _graphicsDevice.Clear(Colors.Background);
 
         _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
-
+        
         _backgroundService.Draw(_spriteBatch);
         _processorService.Draw(_spriteBatch, _drawService);
 
@@ -415,8 +413,7 @@ public class GameScene : IScene
 
             var arrowPosition = GetArrowPosition(screenCenter, currentTargetPosition);
 
-            _spriteBatch.Draw(arrowTexture, arrowPosition, null,
-                Colors.Text,
+            _spriteBatch.Draw(arrowTexture, arrowPosition, null, Colors.Text, 
                 0f, new Vector2(arrowTexture.Width / 2f, arrowTexture.Height / 2f),
                 48f / arrowTexture.Width, SpriteEffects.None, 0f);
         }
