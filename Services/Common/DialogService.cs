@@ -13,7 +13,7 @@ public class DialogService
     private readonly DrawService _drawService;
     private readonly InputService _inputService;
 
-    public bool IsDialogOpen { get; private set; }
+    public bool IsDialogOpen { get; set; }
 
     private string _text = string.Empty;
     private Func<bool> _onConfirm;
@@ -209,8 +209,8 @@ public class DialogService
             _buttonSize,
             _buttonSize);
 
-        _confirmButton.Draw(spriteBatch, Colors.Green);
-        _cancelButton.Draw(spriteBatch, Colors.Red);
+        _confirmButton.Draw(spriteBatch, Colors.Accept);
+        _cancelButton.Draw(spriteBatch, Colors.Decline);
 
         spriteBatch.End();
         spriteBatch.Begin(samplerState: SamplerState.PointClamp);

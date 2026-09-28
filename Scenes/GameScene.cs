@@ -34,6 +34,8 @@ public class GameScene : IScene
     private readonly LanguageService _languageService;
     private ColorButtonsService _colorButtonsService;
     private readonly TooltipService _tooltipService;
+    
+    private SettingsData _settings;
 
     private Button _homeButton;
     private Button _restartButton;
@@ -114,6 +116,9 @@ public class GameScene : IScene
         _colorButtonsService = new ColorButtonsService(_graphicsDevice, _spriteBatch, _processorService);
         _colorButtonsService.LoadContent(pixelTexture);
 
+        var settingsService = _services.GetRequiredService<SettingsService>();
+        _settings = settingsService.GetSettings();
+        
         ImageToCenter();
     }
 
@@ -298,34 +303,32 @@ public class GameScene : IScene
     
     private void HandleColoringCompleted()
     {
-        if (_processorService.CurrentLevel.ColorGroups.All(x => x.IsFinished))
+        if (!_processorService.CurrentLevel.ColorGroups.All(x => x.IsFinished))
         {
-            ColoringIsCompleted = true;
-            ImageToCenter();
-            _processorService.Replay();
-
-            if (!_processorService.CurrentLevel.IsFinished)
-            {
-                var coinsToAdd = _processorService.CurrentLevel.History.Count / 10;
-
-                _services.GetRequiredService<PlayerService>().AddCoins(coinsToAdd);
-
-                var popupText = $"+${coinsToAdd}";
-
-                _popupService.ShowDelayed(
-                    popupText,
-                    new Vector2(
-                        _graphicsDevice.Viewport.Width / 2f,
-                        _drawService.MeasureString(popupText).Y * 2.5f
-                    ),
-                    _pixelReplayService.ReplayDuration,
-                    1.5f,
-                    Colors.Green,
-                    2f);
-
-                _processorService.CurrentLevel.IsFinished = true;
-            }
+            return;
         }
+        
+        ColoringIsCompleted = true;
+        ImageToCenter();
+        _processorService.Replay();
+
+        if (_processorService.CurrentLevel.IsFinished)
+        {
+            return;
+        }
+        
+        var coinsToAdd = _processorService.CurrentLevel.History.Count / 10;
+
+        _services.GetRequiredService<PlayerService>().AddCoins(coinsToAdd);
+
+        var popupText = $"+${coinsToAdd}";
+
+        _popupService.ShowDelayed(popupText, 
+            new Vector2(_graphicsDevice.Viewport.Width / 2f, _drawService.MeasureString(popupText).Y * 2.5f), 
+            _pixelReplayService.ReplayDuration, 
+            1.5f, Colors.Accept, 2f);
+
+        _processorService.CurrentLevel.IsFinished = true;
     }
 
     public void Draw(GameTime gameTime)
@@ -333,7 +336,7 @@ public class GameScene : IScene
         _graphicsDevice.Clear(Colors.Background);
 
         _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
-
+        
         _backgroundService.Draw(_spriteBatch);
         _processorService.Draw(_spriteBatch, _drawService);
 
@@ -344,12 +347,12 @@ public class GameScene : IScene
 
         if (!_pixelReplayService.IsRunning)
         {
-            _homeButton.Draw(_spriteBatch, Colors.Text);
-            _restartButton.Draw(_spriteBatch, Colors.Text);
+            _homeButton.Draw(_spriteBatch);
+            _restartButton.Draw(_spriteBatch);
 
             if (_processorService.CurrentLevel.Type == LevelType.Custom)
             {
-                _deleteButton.Draw(_spriteBatch, Colors.Text);
+                _deleteButton.Draw(_spriteBatch);
             }
         }
 
@@ -365,7 +368,7 @@ public class GameScene : IScene
     {
         var screenCenter = new Vector2(_graphicsDevice.Viewport.Width / 2f, _graphicsDevice.Viewport.Height / 2f);
 
-        if (!_processorService.HasHighlightedPixelOnScreen())
+        if (_settings.ArrowHintEnabled && !_processorService.HasHighlightedPixelOnScreen())
         {
             if (_arrowTargetPixel.HasValue && _processorService.TryGetHighlightedPixelScreenPosition(_arrowTargetPixel.Value, out var currentTargetPosition))
             {
@@ -410,20 +413,9 @@ public class GameScene : IScene
 
             var arrowPosition = GetArrowPosition(screenCenter, currentTargetPosition);
 
-            var backgroundPixelIsDark = _processorService.PixelIsDark(arrowPosition);
-
-            _spriteBatch.Draw(
-                arrowTexture,
-                arrowPosition,
-                null,
-                backgroundPixelIsDark ? Colors.Text : Colors.Black,
-                0f,
-                new Vector2(
-                    arrowTexture.Width / 2f,
-                    arrowTexture.Height / 2f),
-                80f / arrowTexture.Width,
-                SpriteEffects.None,
-                0f);
+            _spriteBatch.Draw(arrowTexture, arrowPosition, null, Colors.Text, 
+                0f, new Vector2(arrowTexture.Width / 2f, arrowTexture.Height / 2f),
+                48f / arrowTexture.Width, SpriteEffects.None, 0f);
         }
         else
         {
@@ -448,7 +440,6 @@ public class GameScene : IScene
         var saveService = _services.GetRequiredService<SaveService>();
         var levelService = _services.GetRequiredService<LevelService>();
         var playerService = _services.GetRequiredService<PlayerService>();
-        var languageService = _services.GetRequiredService<LanguageService>();
 
         _processorService.ClearHighlight();
         
@@ -456,7 +447,7 @@ public class GameScene : IScene
         {
             Coins = playerService.Coins,
             Levels = levelService.Levels,
-            Language = languageService.CurrentLanguage
+            Settings = _settings
         });
     }
     

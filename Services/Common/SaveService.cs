@@ -36,12 +36,7 @@ public class SaveService
             return new SaveData
             {
                 Coins = 0,
-                Levels = [],
-                Language = new Language
-                {
-                    Name = "English",
-                    ShortName = "EN"
-                }
+                Levels = []
             };
         }
 

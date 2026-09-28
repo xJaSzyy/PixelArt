@@ -40,8 +40,9 @@ public class MenuScene : IScene
     private readonly BackgroundParticleService _backgroundService;
     private readonly LanguageService _languageService;
     private readonly ImageLoaderService _imageLoaderService;
+    private readonly SettingsService _settingsService;
 
-    private Button _languageButton;
+    private Button _settingsButton;
     
     private Button _loadImageButton;
     private Texture2D? _loadedImageTexture;
@@ -88,6 +89,7 @@ public class MenuScene : IScene
         _backgroundService = services.GetRequiredService<BackgroundParticleService>();
         _languageService = services.GetRequiredService<LanguageService>();
         _imageLoaderService = _services.GetRequiredService<ImageLoaderService>();
+        _settingsService = _services.GetRequiredService<SettingsService>();
     }
 
     public void LoadContent(ContentManager content)
@@ -97,7 +99,7 @@ public class MenuScene : IScene
             var saveData = _saveService.Load();
             _levelService.LoadLevels(saveData.Levels, LevelsHeaderHeight);
             _playerService.AddCoins(saveData.Coins);
-            _languageService.SetLanguage(saveData.Language);
+            _settingsService.SetSettings(saveData.Settings);
         }
         else
         {
@@ -105,20 +107,15 @@ public class MenuScene : IScene
             {
                 Coins = _playerService.Coins,
                 Levels = _levelService.Levels,
-                Language = _languageService.CurrentLanguage
+                Settings = _settingsService.GetSettings()
             });
         }
 
-        _languageButton = new Button(
+        _settingsButton = new Button(
             _drawService,
             _languageService,
-            null,
-            Rectangle.Empty)
-        {
-            TextKey = _languageService.CurrentLanguage.ShortName,
-            TextColor = Colors.Text,
-            TextScale = _headerTextScale
-        };
+            content.Load<Texture2D>("Icons/settings"),
+            Rectangle.Empty);
         
         _loadImageButton = new Button(
             _drawService,
@@ -148,16 +145,17 @@ public class MenuScene : IScene
     {
         var mouse = Mouse.GetState();
         var keyboard = Keyboard.GetState();
-
+        
         if (_inputService.IsLeftMouseButtonClicked(mouse))
         {
-            if (_languageButton.IsHovered)
+            if (_settingsButton.IsHovered)
             {
-                ChangeLanguage();
+                _settingsService.Toggle();
+                _dialogService.IsDialogOpen = false;
             }
         }
-        
-        if (!_dialogService.IsDialogOpen)
+
+        if (!_dialogService.IsDialogOpen && !_settingsService.IsActive)
         {
             if (_inputService.IsLeftMouseButtonClicked(mouse))
             {
@@ -172,7 +170,7 @@ public class MenuScene : IScene
                     }
                     else
                     {
-                        _processorService.SetLevel(hoveredLevel);
+                        _processorService.SetLevel(hoveredLevel, _settingsService.GetSettings());
                         _sceneService.SetScene<GameScene>();
                     }
                 }
@@ -232,11 +230,12 @@ public class MenuScene : IScene
         }
 
         _levelService.Update(_inputService, mouse);
-        _languageButton.Update(mouse);
+        _settingsButton.Update(mouse);
         _dialogService.Update(gameTime, mouse, keyboard);
         _popupService.Update(gameTime);
         _backgroundService.Update(gameTime);
         _typeButtons.ForEach(b => b.Update(mouse));
+        _settingsService.Update(mouse, ResizeAll);
 
         if (_levelService.CurrentLevelType == LevelType.Custom)
         {
@@ -244,14 +243,6 @@ public class MenuScene : IScene
         }
         
         _inputService.SetState(mouse, keyboard);
-    }
-
-    private void ChangeLanguage()
-    {
-        _languageService.ChangeLanguage();
-        ResizeLanguageButton();
-        _dialogService.SetText($"{_languageService.GetText("Menu.Pay")} ${_unlockLevelCost}?");
-        ResizeTypeButtons();
     }
 
     public void Draw(GameTime gameTime)
@@ -276,6 +267,8 @@ public class MenuScene : IScene
         {
             _loadImageButton.Draw(_spriteBatch);
         }
+        
+        _settingsService.Draw(_spriteBatch);
         
         _spriteBatch.End();
     }
@@ -307,7 +300,7 @@ public class MenuScene : IScene
                 progress,
                 Colors.Text,
                 Colors.Text,
-                Colors.Green,
+                Colors.Accept,
                 2);
         }
 
@@ -317,7 +310,7 @@ public class MenuScene : IScene
             Colors.Yellow,
             2f);
         
-        _languageButton.Draw(_spriteBatch);
+        _settingsButton.Draw(_spriteBatch);
     }
 
     public void OnClientSizeChanged(object sender, EventArgs e)
@@ -327,28 +320,11 @@ public class MenuScene : IScene
 
     private void ResizeAll()
     {
-        ResizeLanguageButton();
+        _settingsButton.Bounds = new Rectangle(new Point(_headerProgressBarExtraWidth, 8), new Point(48, 48));
         ResizeTypeButtons();
         _levelService.SetHeaderHeight(LevelsHeaderHeight);
         _levelService.Resize();
         _loadImageButton.Bounds = _levelService.GetNextLevelBounds(_buttonSize.X, _buttonSize.Y);
-    }
-
-    private void ResizeLanguageButton()
-    {
-        var language = _languageService.CurrentLanguage.ShortName;
-        
-        _languageButton.TextKey = language;
-
-        var stringSize = _drawService.MeasureString(language, _headerTextScale);
-        var textSize = new Point((int)MathF.Ceiling(stringSize.X), (int)MathF.Ceiling(stringSize.Y));
-
-        _languageButton.Bounds = new Rectangle(
-            _headerProgressBarExtraWidth,
-            20,
-            textSize.X + 2,
-            textSize.Y + 2
-        );
     }
 
     private void ResizeTypeButtons()
@@ -429,7 +405,7 @@ public class MenuScene : IScene
         {
             Coins = _playerService.Coins,
             Levels = _levelService.Levels,
-            Language = _languageService.CurrentLanguage
+            Settings = _settingsService.GetSettings()
         });
     }
 
@@ -446,7 +422,7 @@ public class MenuScene : IScene
                     32
                 ),
                 1.25f,
-                Colors.Red);
+                Colors.Decline);
             
             return true;
         }
@@ -458,7 +434,7 @@ public class MenuScene : IScene
                 _graphicsDevice.Viewport.Height / 2f
             ),
             0.5f,
-            Colors.Red);
+            Colors.Decline);
 
         return false;
     }

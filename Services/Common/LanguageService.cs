@@ -51,7 +51,12 @@ public class LanguageService
                 ["Menu.Sword"] = "Мечи",
                 ["Game.Home"] = "Домой",
                 ["Game.Restart"] = "Заново",
-                ["Game.Delete"] = "Удалить"
+                ["Game.Delete"] = "Удалить",
+                ["Settings.ArrowHint"] = "ПОДСКАЗКА СТРЕЛКОЙ",
+                ["Settings.FillAnimation"] = "АНИМАЦИЯ ЗАКРАШИВАНИЯ",
+                ["Settings.Language"] = "ЯЗЫК",
+                ["Settings.Music"] = "МУЗЫКА",
+                ["Settings.Sound"] = "ЗВУК"
             },
             ["EN"] = new Dictionary<string, string>
             {
@@ -69,7 +74,12 @@ public class LanguageService
                 ["Menu.Sword"] = "Swords",
                 ["Game.Home"] = "Home",
                 ["Game.Restart"] = "Restart",
-                ["Game.Delete"] = "Delete"
+                ["Game.Delete"] = "Delete",
+                ["Settings.ArrowHint"] = "ARROW HINT",
+                ["Settings.FillAnimation"] = "FILL ANIMATION",
+                ["Settings.Language"] = "LANGUAGE",
+                ["Settings.Music"] = "MUSIC",
+                ["Settings.Sound"] = "SOUND"
             }
         };
     

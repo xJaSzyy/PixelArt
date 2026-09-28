@@ -26,6 +26,8 @@ public class PixelProcessorService
     private readonly PixelReplayService _replayService;
     private readonly PixelHighlightService _highlightService;
 
+    private SettingsData _settings;
+    
     private float _minNumberPixelSize = 12f;
     
     private readonly Color _glowColor = new(171, 171, 171, 200);
@@ -34,9 +36,8 @@ public class PixelProcessorService
 
     private const float _pixelBounceDuration = 0.18f;
     
-    public PixelProcessorService(ParticleService particleService, 
-        CameraService cameraService, SoundService soundService, 
-        PixelTextureService textureService, PixelDataService pixelDataService, 
+    public PixelProcessorService(ParticleService particleService, CameraService cameraService, 
+        SoundService soundService, PixelTextureService textureService, PixelDataService pixelDataService, 
         PixelReplayService replayService, PixelHighlightService highlightService)
     {
         _particleService = particleService;
@@ -48,7 +49,7 @@ public class PixelProcessorService
         _highlightService = highlightService;
     }
 
-    public void SetLevel(LevelData levelData)
+    public void SetLevel(LevelData levelData, SettingsData settings = null)
     {
         CurrentLevel = levelData;
 
@@ -60,6 +61,8 @@ public class PixelProcessorService
 
         _highlightService.Reset();
         _lastPaintPixel = null;
+
+        _settings = settings;
     }
 
     public void ProcessImage()
@@ -403,7 +406,7 @@ public class PixelProcessorService
         }
 
         var currentPixel = new Point(x, y);
-
+        
         if (_lastPaintPixel.HasValue)
         {
             foreach (var point in Utils.GetLine(_lastPaintPixel.Value, currentPixel))
@@ -468,6 +471,11 @@ public class PixelProcessorService
         {
             return;
         }
+        
+        if (pixel.CurrentColor.ToColor() == Color.Lerp(color, pixel.GrayColor.ToColor(), 0.6f))
+        {
+            return;
+        }
 
         if (color == pixel.OriginalColor.ToColor())
         {
@@ -484,7 +492,16 @@ public class PixelProcessorService
             _soundService.PlayPaintingSound();
 
             _highlightService.Remove(index);
-            
+        }
+        else
+        {
+            color = Color.Lerp(color, pixel.GrayColor.ToColor(), 0.6f);
+        }
+
+        pixel.CurrentColor = new ColorData(color);
+        
+        if (_settings is { FillAnimationEnabled: true })
+        {
             _pixelBounceAnimations[index] = new PixelBounceAnimation
             {
                 Color = color,
@@ -493,11 +510,8 @@ public class PixelProcessorService
         }
         else
         {
-            color = Color.Lerp(color, pixel.GrayColor.ToColor(), 0.6f);
             _textureService.SetPixel(index, color);
         }
-
-        pixel.CurrentColor = new ColorData(color);
     }
 
     public void SetPixelSize(float pixelWidth, float pixelHeight)
@@ -627,31 +641,5 @@ public class PixelProcessorService
     private float EaseOutSine(float t)
     {
         return MathF.Sin((t * MathF.PI) / 2);
-    }
-
-    public bool PixelIsDark(Vector2 position)
-    {
-        var bounds = GetImageBounds();
-
-        if (!bounds.Contains(position))
-        {
-            return false;
-        }
-
-        var screenPixelWidth = _pixelSize.X * _cameraService.Zoom;
-        var screenPixelHeight = _pixelSize.Y * _cameraService.Zoom;
-
-        var x = (int)((position.X - bounds.X) / screenPixelWidth);
-        var y = (int)((position.Y - bounds.Y) / screenPixelHeight);
-
-        if (x < 0 || x >= CurrentLevel.Texture.Width ||
-            y < 0 || y >= CurrentLevel.Texture.Height)
-        {
-            return false;
-        }
-
-        var pixel = _pixelDataService.GetPixel(y * CurrentLevel.Texture.Width + x);
-
-        return Colors.IsDark(pixel.CurrentColor.ToColor());
     }
 }

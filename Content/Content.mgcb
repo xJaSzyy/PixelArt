@@ -212,7 +212,7 @@
 /processorParam:TextureFormat=Color
 /build:Icons/restart.png
 
-#begin Icons/unlock.png
+#begin Icons/settings.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -222,7 +222,7 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Icons/unlock.png
+/build:Icons/settings.png
 
 #begin Images/Animal/1.png
 /importer:TextureImporter
