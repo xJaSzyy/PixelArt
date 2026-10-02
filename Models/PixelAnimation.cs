@@ -2,9 +2,9 @@ using Microsoft.Xna.Framework;
 
 namespace PixelArt.Models;
 
-public class PixelBounceAnimation
+public class PixelAnimation
 {
     public Color FromColor { get; set; }
-    public Color Color { get; init; }
+    public Color ToColor { get; init; }
     public float Progress { get; set; }
 }

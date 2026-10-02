@@ -32,9 +32,9 @@ public class PixelProcessorService
     
     private readonly Color _glowColor = new(171, 171, 171, 200);
     
-    private readonly Dictionary<int, PixelBounceAnimation> _pixelBounceAnimations = new();
+    private readonly Dictionary<int, PixelAnimation> _pixelAnimations = new();
 
-    private const float _pixelBounceDuration = 0.36f;
+    private const float _pixelAnimationDuration = 0.25f;
     
     public PixelProcessorService(ParticleService particleService, CameraService cameraService, 
         SoundService soundService, PixelTextureService textureService, PixelDataService pixelDataService, 
@@ -140,18 +140,18 @@ public class PixelProcessorService
 
         _replayService.Update(CurrentLevel, (float)gameTime.ElapsedGameTime.TotalSeconds, ReplayPixel);
 
-        UpdatePixelBounceAnimations((float)gameTime.ElapsedGameTime.TotalSeconds);
+        UpdatePixelAnimations((float)gameTime.ElapsedGameTime.TotalSeconds);
 
         UpdateTexture();
     }
     
-    private void UpdatePixelBounceAnimations(float deltaTime)
+    private void UpdatePixelAnimations(float deltaTime)
     {
         var finished = new List<int>();
 
-        foreach (var animation in _pixelBounceAnimations.ToList())
+        foreach (var animation in _pixelAnimations.ToList())
         {
-            var progress = animation.Value.Progress + deltaTime / _pixelBounceDuration;
+            var progress = animation.Value.Progress + deltaTime / _pixelAnimationDuration;
 
             if (progress >= 1f)
             {
@@ -159,11 +159,11 @@ public class PixelProcessorService
                 finished.Add(animation.Key);
             }
 
-            _pixelBounceAnimations[animation.Key].Progress = progress;
+            _pixelAnimations[animation.Key].Progress = progress;
 
             var color = Color.Lerp(
                 animation.Value.FromColor,
-                animation.Value.Color,
+                animation.Value.ToColor,
                 EaseOutSine(progress));
 
             _textureService.SetPixel(animation.Key, color);
@@ -171,19 +171,19 @@ public class PixelProcessorService
 
         foreach (var index in finished)
         {
-            FinishPixelBounce(index);
+            FinishPixelAnimation(index);
         }
     }
     
-    private void FinishPixelBounce(int index)
+    private void FinishPixelAnimation(int index)
     {
-        if (!_pixelBounceAnimations.TryGetValue(index, out var animation))
+        if (!_pixelAnimations.TryGetValue(index, out var animation))
         {
             return;
         }
 
-        _textureService.SetPixel(index, animation.Color);
-        _pixelBounceAnimations.Remove(index);
+        _textureService.SetPixel(index, animation.ToColor);
+        _pixelAnimations.Remove(index);
     }
     
     private void ReplayPixel(int pixelIndex)
@@ -213,47 +213,12 @@ public class PixelProcessorService
             drawBounds,
             Color.White);
 
-        DrawPixelBounceAnimations(spriteBatch, drawBounds, drawService);
-        
         DrawPixelNumbers(
             drawBounds,
             spriteBatch,
             drawService);
 
         _particleService.Draw(spriteBatch);
-    }
-    
-    private void DrawPixelBounceAnimations(SpriteBatch spriteBatch, Rectangle bounds, DrawService drawService)
-    {
-        foreach (var (index, animation) in _pixelBounceAnimations)
-        {
-            var x = index % CurrentLevel.Texture.Width;
-            var y = index / CurrentLevel.Texture.Width;
-
-            var pixelWidth = bounds.Width / (float)CurrentLevel.Texture.Width;
-            var pixelHeight = bounds.Height / (float)CurrentLevel.Texture.Height;
-
-            var center = new Vector2(
-                bounds.X + x * pixelWidth + pixelWidth / 2f,
-                bounds.Y + y * pixelHeight + pixelHeight / 2f);
-
-            var scale = GetBounceScale(animation.Progress);
-
-            var size = new Vector2(pixelWidth * scale, pixelHeight * scale);
-
-            var destination = new Rectangle(
-                (int)(center.X - size.X / 2f),
-                (int)(center.Y - size.Y / 2f),
-                (int)size.X,
-                (int)size.Y);
-
-            var animatedColor = Color.Lerp(
-                animation.FromColor,
-                animation.Color,
-                EaseOutSine(animation.Progress));
-
-            spriteBatch.Draw(drawService.GetPixelTexture(), destination, animatedColor);
-        }
     }
     
     private void DrawGlow(SpriteBatch spriteBatch, Rectangle bounds)
@@ -514,15 +479,15 @@ public class PixelProcessorService
         
         if (_settings is { FillAnimationEnabled: true })
         {
-            if (_pixelBounceAnimations.TryGetValue(index, out var existing))
+            if (_pixelAnimations.TryGetValue(index, out var existing))
             {
-                fromColor = Color.Lerp(existing.FromColor, existing.Color, EaseOutSine(existing.Progress));
+                fromColor = Color.Lerp(existing.FromColor, existing.ToColor, EaseOutSine(existing.Progress));
             }
             
-            _pixelBounceAnimations[index] = new PixelBounceAnimation
+            _pixelAnimations[index] = new PixelAnimation
             {
                 FromColor = fromColor,
-                Color = color,
+                ToColor = color,
                 Progress = 0f
             };
         }
@@ -642,23 +607,6 @@ public class PixelProcessorService
     public bool ContainsHighlightedPixel(int index)
     {
         return _highlightService.Contains(index);
-    }
-    
-    private float GetBounceScale(float progress)
-    {
-        if (progress < .4f)
-        {
-            return 0f;
-        }
-        
-        if (progress < 0.8f)
-        {
-            var t1 = progress / 0.8f;
-            return MathHelper.Lerp(0f, 1.05f, EaseOutSine(t1));
-        }
-
-        var t2 = (progress - 0.8f) / 0.2f;
-        return MathHelper.Lerp(1.05f, 1f, EaseOutSine(t2));
     }
     
     private float EaseOutSine(float t)

@@ -31,7 +31,7 @@ public class LevelService
     private const int _unlockedLevelsCount = 4;
     
     private const int _buttonSize = 128;
-    private const int _iconSize = 40;
+    private const int _iconSize = 48;
     private const int _buttonSpacing = 24;
     private const float _scrollSpeed = 0.2f;
 

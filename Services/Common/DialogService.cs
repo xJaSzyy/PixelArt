@@ -20,7 +20,7 @@ public class DialogService
 
     private Point _dialogSize;
 
-    private const int _buttonSize = 64;
+    private const int _buttonSize = 72;
     private const int _spacing = 16;
 
     private readonly Button _confirmButton;

@@ -45,7 +45,7 @@ public class GameScene : IScene
     private int? _arrowTargetPixel;
     private const float _arrowTargetSwitchThreshold = 0.55f;
 
-    private const int _buttonSize = 56;
+    private const int _buttonSize = 64;
     private const int _buttonSpacing = 12;
     private const int _minMoveSpeed = 10;
     private const int _maxMoveSpeed = 22;
@@ -175,7 +175,10 @@ public class GameScene : IScene
         _restartButton.Update(mouse);
         _popupService.Update(gameTime);
         _backgroundService.Update(gameTime);
-        _tooltipService.Update(mouse, [_homeButton, _restartButton, _deleteButton], ["Game.Home", "Game.Restart", "Game.Delete"]);
+        _tooltipService.Update(mouse, 
+            [_homeButton, _restartButton, _deleteButton], 
+            ["Game.Home", "Game.Restart", "Game.Delete"]
+            );
 
         if (_processorService.CurrentLevel.Type == LevelType.Custom)
         {
@@ -370,7 +373,9 @@ public class GameScene : IScene
 
         if (_settings.ArrowHintEnabled && !_processorService.HasHighlightedPixelOnScreen())
         {
-            if (_arrowTargetPixel.HasValue && _processorService.TryGetHighlightedPixelScreenPosition(_arrowTargetPixel.Value, out var currentTargetPosition))
+            if (_arrowTargetPixel.HasValue &&
+                _processorService.TryGetHighlightedPixelScreenPosition(_arrowTargetPixel.Value,
+                    out var currentTargetPosition))
             {
                 if (!_processorService.ContainsHighlightedPixel(_arrowTargetPixel.Value))
                 {
@@ -382,7 +387,8 @@ public class GameScene : IScene
             {
                 _arrowTargetPixel = null;
 
-                if (!_processorService.TryGetNearestHighlightedPixel(screenCenter, out var nearestIndex, out currentTargetPosition))
+                if (!_processorService.TryGetNearestHighlightedPixel(screenCenter, out var nearestIndex,
+                        out currentTargetPosition))
                 {
                     return;
                 }
@@ -390,14 +396,16 @@ public class GameScene : IScene
                 _arrowTargetPixel = nearestIndex;
             }
 
-            if (_processorService.TryGetNearestHighlightedPixel(screenCenter, out var newNearestIndex, out var newNearestPosition))
+            if (_processorService.TryGetNearestHighlightedPixel(screenCenter, out var newNearestIndex,
+                    out var newNearestPosition))
             {
                 var currentDistanceSquared = Vector2.DistanceSquared(screenCenter, currentTargetPosition);
                 var newDistanceSquared = Vector2.DistanceSquared(screenCenter, newNearestPosition);
 
                 const float thresholdSquared = _arrowTargetSwitchThreshold * _arrowTargetSwitchThreshold;
 
-                if (newNearestIndex != _arrowTargetPixel.Value && newDistanceSquared < currentDistanceSquared * thresholdSquared)
+                if (newNearestIndex != _arrowTargetPixel.Value &&
+                    newDistanceSquared < currentDistanceSquared * thresholdSquared)
                 {
                     _arrowTargetPixel = newNearestIndex;
                     currentTargetPosition = newNearestPosition;
@@ -413,9 +421,9 @@ public class GameScene : IScene
 
             var arrowPosition = GetArrowPosition(screenCenter, currentTargetPosition);
 
-            _spriteBatch.Draw(arrowTexture, arrowPosition, null, Colors.Text, 
+            _spriteBatch.Draw(arrowTexture, arrowPosition, null, Color.White,
                 0f, new Vector2(arrowTexture.Width / 2f, arrowTexture.Height / 2f),
-                48f / arrowTexture.Width, SpriteEffects.None, 0f);
+                64f / arrowTexture.Width, SpriteEffects.None, 0f);
         }
         else
         {
@@ -537,7 +545,7 @@ public class GameScene : IScene
         direction.Normalize();
 
         const float arrowSize = 64f;
-        const float padding = 8f;
+        const float padding = 12f;
 
         var left = arrowSize + padding;
         var right = _graphicsDevice.Viewport.Width - padding;
