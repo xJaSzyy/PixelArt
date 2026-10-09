@@ -107,7 +107,7 @@ public class PixelProcessorService
             }
         }
 
-        _textureService.Upload();
+        UpdateTexture();;
 
         CurrentLevel.GrayTexture.SetData(_textureService.CreateCopy());
     }
@@ -202,7 +202,7 @@ public class PixelProcessorService
 
     public void Draw(SpriteBatch spriteBatch, DrawService drawService)
     {
-        _textureService.Upload();
+        UpdateTexture();;
 
         var drawBounds = GetImageBounds();
 
@@ -542,6 +542,17 @@ public class PixelProcessorService
         {
             return;
         }
+        
+        if (_pixelAnimations.Count > 0)
+        {
+            foreach (var pixelAnimation in _pixelAnimations)
+            {
+                _textureService.SetPixel(pixelAnimation.Key, pixelAnimation.Value.ToColor);
+                _pixelAnimations.Remove(pixelAnimation.Key);
+            }
+            
+            UpdateTexture();
+        }
 
         _highlightService.Highlight(
             selectedGroup,
@@ -612,5 +623,10 @@ public class PixelProcessorService
     private float EaseOutSine(float t)
     {
         return MathF.Sin((t * MathF.PI) / 2);
+    }
+
+    public bool PixelAnimationIsActive()
+    {
+        return _pixelAnimations.Any(x => x.Value.Progress < 1f);
     }
 }

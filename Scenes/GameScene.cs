@@ -306,7 +306,7 @@ public class GameScene : IScene
     
     private void HandleColoringCompleted()
     {
-        if (!_processorService.CurrentLevel.ColorGroups.All(x => x.IsFinished))
+        if (!_processorService.CurrentLevel.ColorGroups.All(x => x.IsFinished) || _processorService.PixelAnimationIsActive())
         {
             return;
         }
