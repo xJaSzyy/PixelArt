@@ -171,8 +171,6 @@ public class GameScene : IScene
         }
 
         _processorService.Update(gameTime);
-        _homeButton.Update(mouse);
-        _restartButton.Update(mouse);
         _popupService.Update(gameTime);
         _backgroundService.Update(gameTime);
         _tooltipService.Update(mouse, 
@@ -180,11 +178,16 @@ public class GameScene : IScene
             ["Game.Home", "Game.Restart", "Game.Delete"]
             );
 
-        if (_processorService.CurrentLevel.Type == LevelType.Custom)
+        if (!_pixelReplayService.IsRunning)
         {
-            _deleteButton.Update(mouse);
+            _homeButton.Update(mouse);
+            _restartButton.Update(mouse);
+            if (_processorService.CurrentLevel.Type == LevelType.Custom)
+            {
+                _deleteButton.Update(mouse);
+            }
         }
-        
+
         _inputService.SetState(mouse, keyboard);
     }
 
