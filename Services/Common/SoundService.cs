@@ -7,11 +7,14 @@ namespace PixelArt.Services.Common;
 
 public class SoundService
 {
+    private readonly SettingsService _settingsService;
     private readonly SoundEffectInstance[] _instances;
     private int _currentInstance;
-
-    public SoundService(ContentManager content)
+    
+    public SoundService(ContentManager content, SettingsService settingsService)
     {
+        _settingsService = settingsService;
+
         var paintingSound = content.Load<SoundEffect>("Sounds/painting");
 
         _instances = Enumerable.Range(0, 8)
@@ -26,7 +29,9 @@ public class SoundService
         instance.Stop();
 
         instance.Pitch = Random.Shared.NextSingle() * 0.16f - 0.08f;
-        instance.Volume = 0.9f + Random.Shared.NextSingle() * 0.1f;
+
+        var randomVolume = 0.9f + Random.Shared.NextSingle() * 0.1f;
+        instance.Volume = randomVolume * _settingsService.GetSettings().SoundVolume;
 
         instance.Play();
 
