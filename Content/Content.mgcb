@@ -2156,6 +2156,12 @@
 /processorParam:TextureFormat=Color
 /build:Images/Sword/9.png
 
+#begin Sounds/background.wav
+/importer:WavImporter
+/processor:SongProcessor
+/processorParam:Quality=Best
+/build:Sounds/background.wav
+
 #begin Sounds/painting.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor

@@ -18,16 +18,18 @@ public class SettingsService
     private readonly DrawService _drawService;
     private readonly InputService _inputService;
     private readonly LanguageService _languageService;
+    private readonly SoundService _soundService;
 
     private bool _draggingMusic;
     private bool _draggingSound;
 
-    public SettingsService(GraphicsDevice graphicsDevice, DrawService drawService, InputService inputService, LanguageService languageService)
+    public SettingsService(GraphicsDevice graphicsDevice, DrawService drawService, InputService inputService, LanguageService languageService, SoundService soundService)
     {
         _graphicsDevice = graphicsDevice;
         _drawService = drawService;
         _inputService = inputService;
         _languageService = languageService;
+        _soundService = soundService;
     }
 
     public void Toggle()
@@ -178,8 +180,8 @@ public class SettingsService
     {
         var bounds = GetBounds();
 
-        var top = 24;
-        var step = 36;
+        const int top = 24;
+        const int step = 36;
         var left = bounds.X + 24;
         
         var musicBounds = GetMusicSliderInputBounds(bounds, top, step, left);
@@ -201,17 +203,15 @@ public class SettingsService
         {
             if (_draggingMusic)
             {
-                Settings.MusicVolume = CalculateSliderValue(
-                    mouse.Position.X,
-                    musicBounds);
+                Settings.MusicVolume = CalculateSliderValue(mouse.Position.X, musicBounds);
             }
 
             if (_draggingSound)
             {
-                Settings.SoundVolume = CalculateSliderValue(
-                    mouse.Position.X,
-                    soundBounds);
+                Settings.SoundVolume = CalculateSliderValue(mouse.Position.X, soundBounds);
             }
+            
+            _soundService.UpdateVolume(Settings.MusicVolume, Settings.SoundVolume);
         }
         else
         {
@@ -293,6 +293,7 @@ public class SettingsService
         Settings = settings;
 
         _languageService.SetLanguage(Settings.Language);
+        _soundService.UpdateVolume(Settings.MusicVolume, Settings.SoundVolume);
     }
 
     public SettingsData GetSettings()
