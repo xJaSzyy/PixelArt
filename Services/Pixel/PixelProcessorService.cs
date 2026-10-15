@@ -30,7 +30,8 @@ public class PixelProcessorService
     
     private float _minNumberPixelSize = 12f;
     
-    private readonly Color _gridColor = new(0, 0, 0, 15);
+    private readonly Color _gridDarkColor = new(0, 0, 0, 15);
+    private readonly Color _gridLightColor = new(32, 32, 32, 10);
 
     private readonly Dictionary<int, PixelAnimation> _pixelAnimations = new();
 
@@ -231,8 +232,7 @@ public class PixelProcessorService
         var width = CurrentLevel.Texture.Width;
         var height = CurrentLevel.Texture.Height;
 
-        var pixelWidth = (float)bounds.Width / width;
-        var pixelHeight = (float)bounds.Height / height;
+        var pixelSize = new Vector2(_pixelSize.X * _cameraService.Zoom, _pixelSize.Y * _cameraService.Zoom);
 
         for (var y = 0; y < height; y++)
         {
@@ -245,18 +245,20 @@ public class PixelProcessorService
                 {
                     continue;
                 }
-
-                var left = bounds.X + (int)(x * pixelWidth);
-                var top = bounds.Y + (int)(y * pixelHeight);
-                var right = bounds.X + (int)((x + 1) * pixelWidth);
-                var bottom = bounds.Y + (int)((y + 1) * pixelHeight);
+                
+                var left = bounds.X + (int)(x * pixelSize.X);
+                var top = bounds.Y + (int)(y * pixelSize.Y);
+                var right = bounds.X + (int)((x + 1) * pixelSize.X);
+                var bottom = bounds.Y + (int)((y + 1) * pixelSize.Y);
 
                 var pixelBounds = new Rectangle(left, top, right - left, bottom - top);
-                
-                spriteBatch.Draw(pixelTexture, new Rectangle(left, top, pixelBounds.Width, 1), _gridColor);
-                spriteBatch.Draw(pixelTexture, new Rectangle(left, bottom - 1, pixelBounds.Width, 1), _gridColor);
-                spriteBatch.Draw(pixelTexture, new Rectangle(left, top, 1, pixelBounds.Height), _gridColor);
-                spriteBatch.Draw(pixelTexture, new Rectangle(right - 1, top, 1, pixelBounds.Height), _gridColor);
+
+                var color = Colors.IsDark(pixel.CurrentColor.ToColor()) ? _gridLightColor : _gridDarkColor;
+
+                spriteBatch.Draw(pixelTexture, new Rectangle(left, top, pixelBounds.Width, 1), color);
+                spriteBatch.Draw(pixelTexture, new Rectangle(left, bottom, pixelBounds.Width, 1), color);
+                spriteBatch.Draw(pixelTexture, new Rectangle(left, top, 1, pixelBounds.Height), color);
+                spriteBatch.Draw(pixelTexture, new Rectangle(right, top, 1, pixelBounds.Height), color);
             }
         }
     }
