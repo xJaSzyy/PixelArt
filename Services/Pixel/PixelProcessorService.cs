@@ -17,7 +17,7 @@ public class PixelProcessorService
 
     private Vector2 _pixelSize;
     private Point? _lastPaintPixel;
-    
+
     private readonly ParticleService _particleService;
     private readonly CameraService _cameraService;
     private readonly SoundService _soundService;
@@ -27,18 +27,18 @@ public class PixelProcessorService
     private readonly PixelHighlightService _highlightService;
 
     private SettingsData _settings;
-    
+
     private float _minNumberPixelSize = 12f;
-    
-    private readonly Color _gridDarkColor = new(0, 0, 0, 15);
-    private readonly Color _gridLightColor = new(32, 32, 32, 10);
+
+    private readonly Color _gridMainColor = new(0, 0, 0, 15);
+    private readonly Color _gridBorderColor = new(64,64,64, 10);
 
     private readonly Dictionary<int, PixelAnimation> _pixelAnimations = new();
 
     private const float _pixelAnimationDuration = 0.25f;
-    
-    public PixelProcessorService(ParticleService particleService, CameraService cameraService, 
-        SoundService soundService, PixelTextureService textureService, PixelDataService pixelDataService, 
+
+    public PixelProcessorService(ParticleService particleService, CameraService cameraService,
+        SoundService soundService, PixelTextureService textureService, PixelDataService pixelDataService,
         PixelReplayService replayService, PixelHighlightService highlightService)
     {
         _particleService = particleService;
@@ -108,7 +108,7 @@ public class PixelProcessorService
             }
         }
 
-        UpdateTexture();;
+        UpdateTexture();
 
         CurrentLevel.GrayTexture.SetData(_textureService.CreateCopy());
     }
@@ -145,7 +145,7 @@ public class PixelProcessorService
 
         UpdateTexture();
     }
-    
+
     private void UpdatePixelAnimations(float deltaTime)
     {
         var finished = new List<int>();
@@ -175,7 +175,7 @@ public class PixelProcessorService
             FinishPixelAnimation(index);
         }
     }
-    
+
     private void FinishPixelAnimation(int index)
     {
         if (!_pixelAnimations.TryGetValue(index, out var animation))
@@ -186,7 +186,7 @@ public class PixelProcessorService
         _textureService.SetPixel(index, animation.ToColor);
         _pixelAnimations.Remove(index);
     }
-    
+
     private void ReplayPixel(int pixelIndex)
     {
         var pixel = _pixelDataService.GetPixel(pixelIndex);
@@ -203,7 +203,7 @@ public class PixelProcessorService
 
     public void Draw(SpriteBatch spriteBatch, DrawService drawService)
     {
-        UpdateTexture();;
+        UpdateTexture();
 
         var drawBounds = GetImageBounds();
 
@@ -211,17 +211,17 @@ public class PixelProcessorService
             drawBounds,
             Color.White);
 
-        DrawGrid(spriteBatch, 
-            drawBounds, 
+        DrawGrid(spriteBatch,
+            drawBounds,
             drawService.GetPixelTexture());
-        
+
         DrawPixelNumbers(drawBounds,
             spriteBatch,
             drawService);
 
         _particleService.Draw(spriteBatch);
     }
-    
+
     private void DrawGrid(SpriteBatch spriteBatch, Rectangle bounds, Texture2D pixelTexture)
     {
         if (pixelTexture == null)
@@ -232,7 +232,8 @@ public class PixelProcessorService
         var width = CurrentLevel.Texture.Width;
         var height = CurrentLevel.Texture.Height;
 
-        var pixelSize = new Vector2(_pixelSize.X * _cameraService.Zoom, _pixelSize.Y * _cameraService.Zoom);
+        var pixelSize = new Vector2(_pixelSize.X * _cameraService.Zoom,
+            _pixelSize.Y * _cameraService.Zoom);
 
         for (var y = 0; y < height; y++)
         {
@@ -245,7 +246,7 @@ public class PixelProcessorService
                 {
                     continue;
                 }
-                
+
                 var left = bounds.X + (int)(x * pixelSize.X);
                 var top = bounds.Y + (int)(y * pixelSize.Y);
                 var right = bounds.X + (int)((x + 1) * pixelSize.X);
@@ -253,14 +254,35 @@ public class PixelProcessorService
 
                 var pixelBounds = new Rectangle(left, top, right - left, bottom - top);
 
-                var color = Colors.IsDark(pixel.CurrentColor.ToColor()) ? _gridLightColor : _gridDarkColor;
+                var hasLeft = x > 0 && IsVisiblePixel(index - 1);
+                var hasRight = x < width - 1 && IsVisiblePixel(index + 1);
+                var hasTop = y > 0 && IsVisiblePixel(index - width);
+                var hasBottom = y < height - 1 && IsVisiblePixel(index + width);
 
-                spriteBatch.Draw(pixelTexture, new Rectangle(left, top, pixelBounds.Width, 1), color);
-                spriteBatch.Draw(pixelTexture, new Rectangle(left, bottom, pixelBounds.Width, 1), color);
-                spriteBatch.Draw(pixelTexture, new Rectangle(left, top, 1, pixelBounds.Height), color);
-                spriteBatch.Draw(pixelTexture, new Rectangle(right, top, 1, pixelBounds.Height), color);
+                spriteBatch.Draw(pixelTexture,
+                    new Rectangle(left, top, pixelBounds.Width, 1),
+                    hasTop ? _gridMainColor : _gridBorderColor);
+
+                spriteBatch.Draw(pixelTexture,
+                    new Rectangle(left, bottom - 1, pixelBounds.Width, 1),
+                    hasBottom ? _gridMainColor : _gridBorderColor);
+
+                spriteBatch.Draw(pixelTexture,
+                    new Rectangle(left, top, 1, pixelBounds.Height),
+                    hasLeft ? _gridMainColor : _gridBorderColor);
+
+                spriteBatch.Draw(pixelTexture,
+                    new Rectangle(right - 1, top, 1, pixelBounds.Height),
+                    hasRight ? _gridMainColor : _gridBorderColor);
             }
         }
+    }
+
+    private bool IsVisiblePixel(int index)
+    {
+        var pixel = _pixelDataService.GetPixel(index);
+
+        return pixel != null && pixel.OriginalColor.ToColor().A > 0;
     }
 
     private void DrawPixelNumbers(Rectangle bounds, SpriteBatch spriteBatch, DrawService drawService)
