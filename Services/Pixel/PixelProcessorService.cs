@@ -30,8 +30,8 @@ public class PixelProcessorService
     
     private float _minNumberPixelSize = 12f;
     
-    private readonly Color _glowColor = new(171, 171, 171, 200);
-    
+    private readonly Color _gridColor = new(0, 0, 0, 15);
+
     private readonly Dictionary<int, PixelAnimation> _pixelAnimations = new();
 
     private const float _pixelAnimationDuration = 0.25f;
@@ -206,77 +206,58 @@ public class PixelProcessorService
 
         var drawBounds = GetImageBounds();
 
-        DrawGlow(spriteBatch, drawBounds);
-
-        spriteBatch.Draw(
-            CurrentLevel.Texture,
+        spriteBatch.Draw(CurrentLevel.Texture,
             drawBounds,
             Color.White);
 
-        DrawPixelNumbers(
-            drawBounds,
+        DrawGrid(spriteBatch, 
+            drawBounds, 
+            drawService.GetPixelTexture());
+        
+        DrawPixelNumbers(drawBounds,
             spriteBatch,
             drawService);
 
         _particleService.Draw(spriteBatch);
     }
     
-    private void DrawGlow(SpriteBatch spriteBatch, Rectangle bounds)
+    private void DrawGrid(SpriteBatch spriteBatch, Rectangle bounds, Texture2D pixelTexture)
     {
-        const float glowSize = 0.5f;
-        const float step = 0.25f;
-
-        var position = new Vector2(bounds.X, bounds.Y);
-        var scale = new Vector2((float)bounds.Width / CurrentLevel.GrayTexture.Width,
-            (float)bounds.Height / CurrentLevel.GrayTexture.Height);
-
-        for (var i = glowSize; i > 0f; i -= step)
+        if (pixelTexture == null)
         {
-            var offset = i * 2f;
+            return;
+        }
 
-            spriteBatch.Draw(
-                CurrentLevel.GrayTexture,
-                position + new Vector2(-offset, 0),
-                null,
-                _glowColor,
-                0f,
-                Vector2.Zero,
-                scale,
-                SpriteEffects.None,
-                0f);
+        var width = CurrentLevel.Texture.Width;
+        var height = CurrentLevel.Texture.Height;
 
-            spriteBatch.Draw(
-                CurrentLevel.GrayTexture,
-                position + new Vector2(offset, 0),
-                null,
-                _glowColor,
-                0f,
-                Vector2.Zero,
-                scale,
-                SpriteEffects.None,
-                0f);
+        var pixelWidth = (float)bounds.Width / width;
+        var pixelHeight = (float)bounds.Height / height;
 
-            spriteBatch.Draw(
-                CurrentLevel.GrayTexture,
-                position + new Vector2(0, -offset),
-                null,
-                _glowColor,
-                0f,
-                Vector2.Zero,
-                scale,
-                SpriteEffects.None,
-                0f);
+        for (var y = 0; y < height; y++)
+        {
+            for (var x = 0; x < width; x++)
+            {
+                var index = y * width + x;
+                var pixel = _pixelDataService.GetPixel(index);
 
-            spriteBatch.Draw(
-                CurrentLevel.GrayTexture,
-                position + new Vector2(0, offset),
-                null,
-                _glowColor,
-                0f,
-                Vector2.Zero,
-                scale,
-                SpriteEffects.None,
-                0f);
+                if (pixel == null || pixel.OriginalColor.ToColor().A == 0)
+                {
+                    continue;
+                }
+
+                var left = bounds.X + (int)(x * pixelWidth);
+                var top = bounds.Y + (int)(y * pixelHeight);
+                var right = bounds.X + (int)((x + 1) * pixelWidth);
+                var bottom = bounds.Y + (int)((y + 1) * pixelHeight);
+
+                var pixelBounds = new Rectangle(left, top, right - left, bottom - top);
+                
+                spriteBatch.Draw(pixelTexture, new Rectangle(left, top, pixelBounds.Width, 1), _gridColor);
+                spriteBatch.Draw(pixelTexture, new Rectangle(left, bottom - 1, pixelBounds.Width, 1), _gridColor);
+                spriteBatch.Draw(pixelTexture, new Rectangle(left, top, 1, pixelBounds.Height), _gridColor);
+                spriteBatch.Draw(pixelTexture, new Rectangle(right - 1, top, 1, pixelBounds.Height), _gridColor);
+            }
         }
     }
 
