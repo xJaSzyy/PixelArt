@@ -139,6 +139,7 @@ public class MenuScene : IScene
 
         ResizeAll();
         UpdateLevelProgress();
+        _levelService.CanScrollToLevel = true;
     }
 
     public void Update(GameTime gameTime)
@@ -181,6 +182,7 @@ public class MenuScene : IScene
                     {
                         _levelService.CurrentLevelType = Enum.Parse<LevelType>(typeButton.TextKey.Replace("Menu.", ""));
                         _levelService.ResetScroll();
+                        _levelService.CanScrollToLevel = true;
                         UpdateLevelProgress();
                         ResizeAll();
                         break;
@@ -461,6 +463,6 @@ public class MenuScene : IScene
             return;
         }
 
-        _filePickerTask = Task.Run(() => ImageLoaderService.PickImage());
+        _filePickerTask = Task.Run(ImageLoaderService.PickImage);
     }
 }

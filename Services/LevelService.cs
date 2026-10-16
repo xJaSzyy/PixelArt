@@ -27,6 +27,7 @@ public class LevelService
 
     public List<LevelData> Levels { get; set; } = [];
     public LevelType CurrentLevelType { get; set; } = LevelType.Animal;
+    public bool CanScrollToLevel = true;
     
     private const int _unlockedLevelsCount = 4;
     
@@ -232,8 +233,31 @@ public class LevelService
 
             visibleLevels[i].Button.Bounds = new Rectangle(x, y, _buttonSize, _buttonSize);
         }
+
+        if (CanScrollToLevel)
+        {
+            ScrollToLevel();
+
+            CanScrollToLevel = false;
+        }
     }
-    
+
+    private void ScrollToLevel()
+    {
+        var level = Levels
+            .Where(l => l.Type == CurrentLevelType)
+            .FirstOrDefault(l => !l.IsFinished);
+            
+        if (level != null)
+        {
+            var scrollCount = (level.Button.Bounds.Y / level.Button.Bounds.Height) - 1;
+            for (var i = 0; i < scrollCount; i++)
+            {
+                ScrollDown();
+            }
+        }
+    }
+
     public void Resize()
     {
         _buttonsPerRow = Math.Max(1, (_graphicsDevice.Viewport.Width - _buttonSpacing) / (_buttonSize + _buttonSpacing));
