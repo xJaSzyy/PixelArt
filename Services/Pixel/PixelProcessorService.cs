@@ -254,26 +254,45 @@ public class PixelProcessorService
 
                 var pixelBounds = new Rectangle(left, top, right - left, bottom - top);
 
+                var completed = pixel.CurrentColor.ToColor() == pixel.OriginalColor.ToColor();
+
                 var hasLeft = x > 0 && IsVisiblePixel(index - 1);
                 var hasRight = x < width - 1 && IsVisiblePixel(index + 1);
                 var hasTop = y > 0 && IsVisiblePixel(index - width);
                 var hasBottom = y < height - 1 && IsVisiblePixel(index + width);
 
-                spriteBatch.Draw(pixelTexture,
-                    new Rectangle(left, top, pixelBounds.Width, 1),
-                    hasTop ? _gridMainColor : _gridBorderColor);
+                var topColor = hasTop ? _gridMainColor : _gridBorderColor;
+                var bottomColor = hasBottom ? _gridMainColor : _gridBorderColor;
+                var leftColor = hasLeft ? _gridMainColor : _gridBorderColor;
+                var rightColor = hasRight ? _gridMainColor : _gridBorderColor;
+                
+                if (!completed || !hasTop)
+                {
+                    spriteBatch.Draw(pixelTexture,
+                        new Rectangle(left, top, pixelBounds.Width, 1),
+                        topColor);
+                }
 
-                spriteBatch.Draw(pixelTexture,
-                    new Rectangle(left, bottom - 1, pixelBounds.Width, 1),
-                    hasBottom ? _gridMainColor : _gridBorderColor);
+                if (!completed || !hasBottom)
+                {
+                    spriteBatch.Draw(pixelTexture,
+                        new Rectangle(left, bottom - 1, pixelBounds.Width, 1),
+                        bottomColor);
+                }
 
-                spriteBatch.Draw(pixelTexture,
-                    new Rectangle(left, top, 1, pixelBounds.Height),
-                    hasLeft ? _gridMainColor : _gridBorderColor);
+                if (!completed || !hasLeft)
+                {
+                    spriteBatch.Draw(pixelTexture,
+                        new Rectangle(left, top, 1, pixelBounds.Height),
+                        leftColor);
+                }
 
-                spriteBatch.Draw(pixelTexture,
-                    new Rectangle(right - 1, top, 1, pixelBounds.Height),
-                    hasRight ? _gridMainColor : _gridBorderColor);
+                if (!completed || !hasRight)
+                {
+                    spriteBatch.Draw(pixelTexture,
+                        new Rectangle(right - 1, top, 1, pixelBounds.Height),
+                        rightColor);
+                }
             }
         }
     }
