@@ -50,7 +50,7 @@ public class MenuScene : IScene
 
     private readonly Point _buttonSize = new(64, 64);
 
-    private const int _unlockLevelCost = 49;
+    private const int _unlockLevelCost = 45;
     private const int _headerHeight = 64;
     private const float _headerTextScale = 1.5f;
     private const int _headerProgressBarHeight = 8;

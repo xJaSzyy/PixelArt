@@ -207,17 +207,11 @@ public class PixelProcessorService
 
         var drawBounds = GetImageBounds();
 
-        spriteBatch.Draw(CurrentLevel.Texture,
-            drawBounds,
-            Color.White);
+        spriteBatch.Draw(CurrentLevel.Texture, drawBounds, Color.White);
 
-        DrawGrid(spriteBatch,
-            drawBounds,
-            drawService.GetPixelTexture());
-
-        DrawPixelNumbers(drawBounds,
-            spriteBatch,
-            drawService);
+        DrawGrid(spriteBatch, drawBounds, drawService.GetPixelTexture());
+        
+        DrawPixelNumbers(drawBounds, spriteBatch, drawService);
 
         _particleService.Draw(spriteBatch);
     }
@@ -261,39 +255,38 @@ public class PixelProcessorService
                 var hasTop = y > 0 && IsVisiblePixel(index - width);
                 var hasBottom = y < height - 1 && IsVisiblePixel(index + width);
 
-                var topColor = hasTop ? _gridMainColor : _gridBorderColor;
-                var bottomColor = hasBottom ? _gridMainColor : _gridBorderColor;
-                var leftColor = hasLeft ? _gridMainColor : _gridBorderColor;
-                var rightColor = hasRight ? _gridMainColor : _gridBorderColor;
-                
-                if (!completed || !hasTop)
-                {
-                    spriteBatch.Draw(pixelTexture,
-                        new Rectangle(left, top, pixelBounds.Width, 1),
-                        topColor);
-                }
+                var replayIsRunning = _replayService.IsRunning;
 
-                if (!completed || !hasBottom)
-                {
-                    spriteBatch.Draw(pixelTexture,
-                        new Rectangle(left, bottom - 1, pixelBounds.Width, 1),
-                        bottomColor);
-                }
+                DrawGridEdge(spriteBatch, pixelTexture,
+                    new Rectangle(left, top, pixelBounds.Width, 1),
+                    completed, hasTop, replayIsRunning);
 
-                if (!completed || !hasLeft)
-                {
-                    spriteBatch.Draw(pixelTexture,
-                        new Rectangle(left, top, 1, pixelBounds.Height),
-                        leftColor);
-                }
+                DrawGridEdge(spriteBatch, pixelTexture,
+                    new Rectangle(left, bottom - 1, pixelBounds.Width, 1),
+                    completed, hasBottom, replayIsRunning);
 
-                if (!completed || !hasRight)
-                {
-                    spriteBatch.Draw(pixelTexture,
-                        new Rectangle(right - 1, top, 1, pixelBounds.Height),
-                        rightColor);
-                }
+                DrawGridEdge(spriteBatch, pixelTexture,
+                    new Rectangle(left, top, 1, pixelBounds.Height),
+                    completed, hasLeft, replayIsRunning);
+
+                DrawGridEdge(spriteBatch, pixelTexture,
+                    new Rectangle(right - 1, top, 1, pixelBounds.Height),
+                    completed, hasRight, replayIsRunning);
             }
+        }
+    }
+    
+    private void DrawGridEdge(SpriteBatch spriteBatch, Texture2D pixelTexture, 
+        Rectangle edge, bool completed, 
+        bool hasNeighbor, bool replayIsRunning)
+    {
+        if (!completed && hasNeighbor && !replayIsRunning)
+        {
+            spriteBatch.Draw(pixelTexture, edge, _gridMainColor);
+        }
+        else if (!hasNeighbor)
+        {
+            spriteBatch.Draw(pixelTexture, edge, _gridBorderColor);
         }
     }
 
