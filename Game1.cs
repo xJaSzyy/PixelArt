@@ -15,16 +15,20 @@ public class Game1 : Game
     private SceneService _sceneService;
     private ServiceProvider _services;
 
+    private readonly CursorService _cursorService = new();
+
     public Game1()
     {
         var graphics = new GraphicsDeviceManager(this);
 
         Content.RootDirectory = "Content";
-        IsMouseVisible = true;
+        IsMouseVisible = false;
+        IsFixedTimeStep = false;
         Window.AllowUserResizing = true;
         Window.ClientSizeChanged += OnClientSizeChanged;
         Exiting += OnGameExiting;
-        
+
+        graphics.SynchronizeWithVerticalRetrace = false;
         graphics.PreferredBackBufferWidth = 640;
         graphics.PreferredBackBufferHeight = 640;
         graphics.ApplyChanges();
@@ -70,6 +74,8 @@ public class Game1 : Game
         _sceneService = _services.GetRequiredService<SceneService>();
         _sceneService.SetScene<MenuScene>();
         
+        _cursorService.Initialize(GraphicsDevice, Content);
+        
         base.Initialize();
     }
 
@@ -83,12 +89,16 @@ public class Game1 : Game
         
         _sceneService.CurrentScene.Update(gameTime);
         
+        _cursorService.Update();
+        
         base.Update(gameTime);
     }
 
     protected override void Draw(GameTime gameTime)
     {
         _sceneService.CurrentScene.Draw(gameTime);
+        
+        _cursorService.Draw();
         
         base.Draw(gameTime);
     }
