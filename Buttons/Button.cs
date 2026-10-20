@@ -8,7 +8,7 @@ using PixelArt.Services.Common;
 
 namespace PixelArt.Buttons;
 
-public class Button(DrawService drawService, LanguageService languageService, Texture2D? texture, Rectangle bounds)
+public class Button(SoundService soundService, DrawService drawService, LanguageService languageService, Texture2D? texture, Rectangle bounds)
 {
     private Texture2D? Texture { get; set; } = texture;
     public Rectangle Bounds { get; set; } = bounds;
@@ -18,9 +18,18 @@ public class Button(DrawService drawService, LanguageService languageService, Te
     public float TextScale { get; set; } = 1f;
     public Color TextColor { get; set; } = Color.White;
 
+    private bool _lastHovered = false;
+    
     public void Update(MouseState mouse, bool canHover = true)
     {
         IsHovered = Bounds.Contains(mouse.Position) && canHover;
+
+        if (IsHovered && !_lastHovered)
+        {
+            soundService.PlayButtonHoveredSound();
+        }
+
+        _lastHovered = IsHovered;
     }
 
     public void Draw(SpriteBatch spriteBatch, Color? color = null)

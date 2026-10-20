@@ -9,14 +9,17 @@ namespace PixelArt.Services.Common;
 public class SoundService
 {
     private readonly SoundEffectInstance[] _paintingInstances;
+    private readonly SoundEffectInstance[] _buttonHoveredInstances;
     
     private readonly SoundEffect _dialogOpenSound;
     private readonly SoundEffect _dialogCloseSound;
 
     private double _lastPaintingSoundTime;
-    private const double _paintingSoundInterval = 45; 
+    private double _lastButtonHoveredSoundTime;
+    private const double _soundInterval = 45; 
     
-    private int _currentInstance;
+    private int _currentPaintingInstance;
+    private int _currentButtonHoveredInstance;
 
     private float _soundVolume;
 
@@ -24,11 +27,13 @@ public class SoundService
     {
         _dialogOpenSound = content.Load<SoundEffect>("Sounds/UI/dialog_open");
         _dialogCloseSound = content.Load<SoundEffect>("Sounds/UI/dialog_close");
-        
-        var paintingSound = content.Load<SoundEffect>("Sounds/painting");
 
+        _buttonHoveredInstances = Enumerable.Range(0, 4)
+            .Select(_ => content.Load<SoundEffect>("Sounds/UI/cursor1").CreateInstance())
+            .ToArray();
+        
         _paintingInstances = Enumerable.Range(0, 8)
-            .Select(_ => paintingSound.CreateInstance())
+            .Select(_ => content.Load<SoundEffect>("Sounds/painting").CreateInstance())
             .ToArray();
 
         var backgroundMusic = content.Load<Song>("Sounds/background");
@@ -38,42 +43,18 @@ public class SoundService
         MediaPlayer.Play(backgroundMusic);
     }
 
-    public void PlayDialogOpenSound()
-    {
-        var instance = _dialogOpenSound.CreateInstance();
-        
-        //instance.Pitch = Random.Shared.NextSingle() * 0.16f - 0.08f;
-
-        var randomVolume = 0.9f + Random.Shared.NextSingle() * 0.1f;
-        instance.Volume = randomVolume * _soundVolume;
-
-        instance.Play();
-    }
-    
-    public void PlayDialogCloseSound()
-    {
-        var instance = _dialogCloseSound.CreateInstance();
-        
-        //instance.Pitch = Random.Shared.NextSingle() * 0.16f - 0.08f;
-
-        var randomVolume = 0.9f + Random.Shared.NextSingle() * 0.1f;
-        instance.Volume = randomVolume * _soundVolume;
-
-        instance.Play();
-    }
-    
-    public void PlayPaintingSound()
+    public void PlayButtonHoveredSound()
     {
         var now = Environment.TickCount64;
 
-        if (now - _lastPaintingSoundTime < _paintingSoundInterval)
+        if (now - _lastButtonHoveredSoundTime < _soundInterval)
         {
             return;
         }
 
-        _lastPaintingSoundTime = now;
+        _lastButtonHoveredSoundTime = now;
         
-        var instance = _paintingInstances[_currentInstance];
+        var instance = _buttonHoveredInstances[_currentButtonHoveredInstance];
 
         instance.Stop();
 
@@ -84,7 +65,56 @@ public class SoundService
 
         instance.Play();
 
-        _currentInstance = (_currentInstance + 1) % _paintingInstances.Length;
+        _currentButtonHoveredInstance = (_currentButtonHoveredInstance + 1) % _buttonHoveredInstances.Length;
+    }
+    
+    public void PlayDialogOpenSound()
+    {
+        var instance = _dialogOpenSound.CreateInstance();
+
+        instance.Pitch = Random.Shared.NextSingle() * 0.16f - 0.08f;
+        
+        var randomVolume = 0.9f + Random.Shared.NextSingle() * 0.1f;
+        instance.Volume = randomVolume * _soundVolume;
+
+        instance.Play();
+    }
+    
+    public void PlayDialogCloseSound()
+    {
+        var instance = _dialogCloseSound.CreateInstance();
+
+        instance.Pitch = Random.Shared.NextSingle() * 0.16f - 0.08f;
+        
+        var randomVolume = 0.9f + Random.Shared.NextSingle() * 0.1f;
+        instance.Volume = randomVolume * _soundVolume;
+
+        instance.Play();
+    }
+    
+    public void PlayPaintingSound()
+    {
+        var now = Environment.TickCount64;
+
+        if (now - _lastPaintingSoundTime < _soundInterval)
+        {
+            return;
+        }
+
+        _lastPaintingSoundTime = now;
+        
+        var instance = _paintingInstances[_currentPaintingInstance];
+
+        instance.Stop();
+
+        instance.Pitch = Random.Shared.NextSingle() * 0.16f - 0.08f;
+
+        var randomVolume = 0.9f + Random.Shared.NextSingle() * 0.1f;
+        instance.Volume = randomVolume * _soundVolume;
+
+        instance.Play();
+
+        _currentPaintingInstance = (_currentPaintingInstance + 1) % _paintingInstances.Length;
     }
 
     public void UpdateVolume(float musicVolume, float soundVolume)

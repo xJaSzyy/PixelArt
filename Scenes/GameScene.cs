@@ -87,19 +87,21 @@ public class GameScene : IScene
 
     public void LoadContent(ContentManager content)
     {
-        _homeButton = new Button(_drawService, _languageService, content.Load<Texture2D>("Icons/home"),
+        var soundService = _services.GetRequiredService<SoundService>();
+        
+        _homeButton = new Button(soundService, _drawService, _languageService, content.Load<Texture2D>("Icons/home"),
             new Rectangle(_graphicsDevice.Viewport.Width - _buttonSize - _buttonSpacing,
                 _buttonSpacing,
                 _buttonSize,
                 _buttonSize));
         
-        _restartButton = new Button(_drawService, _languageService, content.Load<Texture2D>("Icons/restart"),
+        _restartButton = new Button(soundService, _drawService, _languageService, content.Load<Texture2D>("Icons/restart"),
             new Rectangle(_buttonSpacing,
                 _buttonSpacing,
                 _buttonSize,
                 _buttonSize));
         
-        _deleteButton = new Button(_drawService, _languageService, content.Load<Texture2D>("Icons/delete"),
+        _deleteButton = new Button(soundService, _drawService, _languageService, content.Load<Texture2D>("Icons/delete"),
             new Rectangle(_buttonSpacing,
                 _buttonSpacing + _buttonSize + _buttonSpacing,
                 _buttonSize,

@@ -111,13 +111,15 @@ public class MenuScene : IScene
             });
         }
 
-        _settingsButton = new Button(
+        var soundService = _services.GetRequiredService<SoundService>();
+        
+        _settingsButton = new Button(soundService,
             _drawService,
             _languageService,
             content.Load<Texture2D>("Icons/settings"),
             Rectangle.Empty);
         
-        _loadImageButton = new Button(
+        _loadImageButton = new Button(soundService,
             _drawService,
             _languageService,
             content.Load<Texture2D>("Icons/plus"),
@@ -125,7 +127,7 @@ public class MenuScene : IScene
         
         foreach (var type in Enum.GetNames<LevelType>())
         {
-            _typeButtons.Add(new Button(
+            _typeButtons.Add(new Button(soundService,
                 _drawService,
                 _languageService,
                 null,

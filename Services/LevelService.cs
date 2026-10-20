@@ -196,7 +196,7 @@ public class LevelService
         level.Texture = Utils.CloneTexture2D(_graphicsDevice, texture);
         level.GrayTexture = Utils.CloneTexture2D(_graphicsDevice, texture);
         level.OriginalTexture = texture;
-        level.Button = new Button(_drawService, _languageService, level.Texture, Rectangle.Empty);
+        level.Button = new Button(_services.GetRequiredService<SoundService>(), _drawService, _languageService, level.Texture, Rectangle.Empty);
             
         Levels.Add(level);
 

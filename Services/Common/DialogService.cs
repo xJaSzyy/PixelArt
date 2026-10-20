@@ -49,7 +49,7 @@ public class DialogService
 
         pixelTexture.SetData([Color.White]);
 
-        _confirmButton = new Button(_drawService, languageService,
+        _confirmButton = new Button(_soundService, _drawService, languageService,
             content.Load<Texture2D>("Icons/confirm"),
             new Rectangle(
                 0,
@@ -57,7 +57,7 @@ public class DialogService
                 _buttonSize,
                 _buttonSize));
 
-        _cancelButton = new Button(_drawService, languageService,
+        _cancelButton = new Button(_soundService, _drawService, languageService,
             content.Load<Texture2D>("Icons/cancel"),
             new Rectangle(
                 0,
