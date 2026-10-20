@@ -262,16 +262,22 @@ public class PixelProcessorService
                     completed, hasTop, replayIsRunning);
 
                 DrawGridEdge(spriteBatch, pixelTexture,
-                    new Rectangle(left, bottom - 1, pixelBounds.Width, 1),
-                    completed, hasBottom, replayIsRunning);
-
-                DrawGridEdge(spriteBatch, pixelTexture,
                     new Rectangle(left, top, 1, pixelBounds.Height),
                     completed, hasLeft, replayIsRunning);
-
-                DrawGridEdge(spriteBatch, pixelTexture,
-                    new Rectangle(right - 1, top, 1, pixelBounds.Height),
-                    completed, hasRight, replayIsRunning);
+                
+                if (!hasBottom)
+                {
+                    DrawGridEdge(spriteBatch, pixelTexture,
+                        new Rectangle(left, bottom - 1, pixelBounds.Width, 1),
+                        completed, false, replayIsRunning);
+                }
+                
+                if (!hasRight)
+                {
+                    DrawGridEdge(spriteBatch, pixelTexture,
+                        new Rectangle(right - 1, top, 1, pixelBounds.Height),
+                        completed, false, replayIsRunning);
+                }
             }
         }
     }
