@@ -164,7 +164,7 @@ public class GameScene : IScene
         
         if (!ColoringIsCompleted)
         {
-            _colorButtonsService.Update(mouse);
+            _colorButtonsService.Update(mouse, gameTime);
             _cameraService.Update(mouse);
 
             HandleColoringCompleted();

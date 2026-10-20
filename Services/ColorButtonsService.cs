@@ -16,7 +16,7 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
     private float _scroll;
     private float _targetScroll;
 
-    private const float _scrollSpeed = 0.2f;
+    private const float _scrollSpeed = 12f;
     private const int _buttonSize = 60;
     private const int _buttonSpacing = 16;
     
@@ -47,9 +47,17 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
         CreateColorButtons();
     }
 
-    public void Update(MouseState mouse)
+    public void Update(MouseState mouse, GameTime gameTime)
     {
-        _scroll = MathHelper.Lerp(_scroll, _targetScroll, _scrollSpeed);
+        var deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
+        var interpolation = 1f - MathF.Exp(-_scrollSpeed * deltaTime);
+
+        _scroll = MathHelper.Lerp(_scroll, _targetScroll, interpolation);
+
+        if (Math.Abs(_targetScroll - _scroll) < 0.1f)
+        {
+            _scroll = _targetScroll;
+        }
 
         LayoutButtons();
 
@@ -170,7 +178,12 @@ public class ColorButtonsService(GraphicsDevice graphicsDevice, SpriteBatch spri
     
     public void ScrollButtonsRight()
     {
-        var max = Math.Max(0, _colorButtons.Count * (_buttonSize + _buttonSpacing) - graphicsDevice.Viewport.Width + _buttonSpacing * 2 - _buttonSpacing);
+        var max = Math.Max(
+            0,
+            _colorButtons.Count * (_buttonSize + _buttonSpacing)
+            - graphicsDevice.Viewport.Width
+            + _buttonSpacing
+        );
 
         _targetScroll += _buttonSize + _buttonSpacing;
 

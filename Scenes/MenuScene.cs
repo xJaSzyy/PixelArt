@@ -231,7 +231,7 @@ public class MenuScene : IScene
             }
         }
 
-        _levelService.Update(_inputService, mouse);
+        _levelService.Update(_inputService, mouse, gameTime);
         _settingsButton.Update(mouse);
         _dialogService.Update(gameTime, mouse, keyboard);
         _popupService.Update(gameTime);

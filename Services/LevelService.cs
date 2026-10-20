@@ -71,28 +71,37 @@ public class LevelService
         Resize();
     }
     
-    public void Update(InputService inputService, MouseState mouse)
+    public void Update(InputService inputService, MouseState mouse, GameTime gameTime)
     {
-        _scroll = MathHelper.Lerp(_scroll, _targetScroll, _scrollSpeed);
-        
+        var deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
+        var interpolation = 1f - MathF.Exp(-12f * deltaTime);
+
+        _scroll = MathHelper.Lerp(_scroll, _targetScroll, interpolation);
+
+        if (Math.Abs(_targetScroll - _scroll) < 0.1f)
+        {
+            _scroll = _targetScroll;
+        }
+
         if (inputService.IsScroll(mouse))
         {
             var scrollDelta = inputService.GetScrollDelta(mouse);
 
-            if (scrollDelta > 0)
+            switch (scrollDelta)
             {
-                ScrollUp();
-            }
-            else
-            {
-                ScrollDown();
+                case > 0:
+                    ScrollUp();
+                    break;
+                case < 0:
+                    ScrollDown();
+                    break;
             }
         }
-        
+
         LayoutButtons();
 
         var isMouseOverHeader = IsMouseOverHeader(mouse);
-        
+
         foreach (var level in Levels.Where(l => l.Type == CurrentLevelType))
         {
             level.Button.Update(mouse, !isMouseOverHeader);
