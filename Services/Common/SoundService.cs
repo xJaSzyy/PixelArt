@@ -8,7 +8,10 @@ namespace PixelArt.Services.Common;
 
 public class SoundService
 {
-    private readonly SoundEffectInstance[] _instances;
+    private readonly SoundEffectInstance[] _paintingInstances;
+    
+    private readonly SoundEffect _dialogOpenSound;
+    private readonly SoundEffect _dialogCloseSound;
 
     private double _lastPaintingSoundTime;
     private const double _paintingSoundInterval = 45; 
@@ -19,9 +22,12 @@ public class SoundService
 
     public SoundService(ContentManager content)
     {
+        _dialogOpenSound = content.Load<SoundEffect>("Sounds/UI/dialog_open");
+        _dialogCloseSound = content.Load<SoundEffect>("Sounds/UI/dialog_close");
+        
         var paintingSound = content.Load<SoundEffect>("Sounds/painting");
 
-        _instances = Enumerable.Range(0, 8)
+        _paintingInstances = Enumerable.Range(0, 8)
             .Select(_ => paintingSound.CreateInstance())
             .ToArray();
 
@@ -30,6 +36,30 @@ public class SoundService
         MediaPlayer.IsRepeating = true;
         MediaPlayer.Volume = 0f;
         MediaPlayer.Play(backgroundMusic);
+    }
+
+    public void PlayDialogOpenSound()
+    {
+        var instance = _dialogOpenSound.CreateInstance();
+        
+        //instance.Pitch = Random.Shared.NextSingle() * 0.16f - 0.08f;
+
+        var randomVolume = 0.9f + Random.Shared.NextSingle() * 0.1f;
+        instance.Volume = randomVolume * _soundVolume;
+
+        instance.Play();
+    }
+    
+    public void PlayDialogCloseSound()
+    {
+        var instance = _dialogCloseSound.CreateInstance();
+        
+        //instance.Pitch = Random.Shared.NextSingle() * 0.16f - 0.08f;
+
+        var randomVolume = 0.9f + Random.Shared.NextSingle() * 0.1f;
+        instance.Volume = randomVolume * _soundVolume;
+
+        instance.Play();
     }
     
     public void PlayPaintingSound()
@@ -43,7 +73,7 @@ public class SoundService
 
         _lastPaintingSoundTime = now;
         
-        var instance = _instances[_currentInstance];
+        var instance = _paintingInstances[_currentInstance];
 
         instance.Stop();
 
@@ -54,7 +84,7 @@ public class SoundService
 
         instance.Play();
 
-        _currentInstance = (_currentInstance + 1) % _instances.Length;
+        _currentInstance = (_currentInstance + 1) % _paintingInstances.Length;
     }
 
     public void UpdateVolume(float musicVolume, float soundVolume)

@@ -12,6 +12,7 @@ public class DialogService
     private readonly GraphicsDevice _graphicsDevice;
     private readonly DrawService _drawService;
     private readonly InputService _inputService;
+    private readonly SoundService _soundService;
 
     public bool IsDialogOpen { get; set; }
 
@@ -32,16 +33,14 @@ public class DialogService
     private const float _openAnimationDuration = 0.25f;
     private const float _closeAnimationDuration = 0.1f;
 
-    public DialogService(
-        GraphicsDevice graphicsDevice,
-        DrawService drawService,
-        InputService inputService,
-        LanguageService languageService,
-        ContentManager content)
+    public DialogService(GraphicsDevice graphicsDevice, DrawService drawService,
+        InputService inputService, LanguageService languageService, 
+        ContentManager content, SoundService soundService)
     {
         _graphicsDevice = graphicsDevice;
         _drawService = drawService;
         _inputService = inputService;
+        _soundService = soundService;
 
         var pixelTexture = new Texture2D(
             _graphicsDevice,
@@ -115,6 +114,7 @@ public class DialogService
             else if (_cancelButton.IsHovered)
             {
                 HideDialog();
+                _soundService.PlayDialogCloseSound();
             }
         }
 
@@ -225,11 +225,8 @@ public class DialogService
 
         _isClosing = false;
         _animationProgress = 0f;
-    }
-
-    public void SetText(string text)
-    {
-        _text = text;
+        
+        _soundService.PlayDialogOpenSound();
     }
 
     private void OnConfirmButtonClicked()
