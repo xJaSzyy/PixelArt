@@ -1,3 +1,4 @@
+using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -10,11 +11,15 @@ public class CursorService
     private SpriteBatch _spriteBatch;
     private Texture2D _cursorTexture;
     private Vector2 _cursorPosition;
+    
+    private CameraService _camera;
 
-    public void Initialize(GraphicsDevice graphicsDevice, ContentManager content)
+    public void Initialize(GraphicsDevice graphicsDevice, ContentManager content, CameraService camera)
     {
+        _camera = camera;
+        
         _spriteBatch = new SpriteBatch(graphicsDevice);
-        _cursorTexture = content.Load<Texture2D>("Cursors/cursor1");
+        _cursorTexture = content.Load<Texture2D>("Cursors/cursor3");
     }
 
     public void Update()
@@ -37,6 +42,9 @@ public class CursorService
             blendState: BlendState.AlphaBlend
         );
 
+        var scale = 2f * _camera.Zoom;
+        scale = Math.Max(2.2f, scale);
+        
         _spriteBatch.Draw(
             _cursorTexture,
             _cursorPosition,
@@ -44,7 +52,7 @@ public class CursorService
             Color.White,
             0f,
             Vector2.Zero,
-            3f,
+            scale,
             SpriteEffects.None,
             0f
         );

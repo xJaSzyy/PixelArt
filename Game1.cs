@@ -74,7 +74,7 @@ public class Game1 : Game
         _sceneService = _services.GetRequiredService<SceneService>();
         _sceneService.SetScene<MenuScene>();
         
-        _cursorService.Initialize(GraphicsDevice, Content);
+        _cursorService.Initialize(GraphicsDevice, Content, _services.GetRequiredService<CameraService>());
         
         base.Initialize();
     }
