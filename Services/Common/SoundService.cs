@@ -9,8 +9,10 @@ namespace PixelArt.Services.Common;
 public class SoundService
 {
     private readonly SoundEffectInstance[] _instances;
-    private readonly Song _backgroundMusic;
 
+    private double _lastPaintingSoundTime;
+    private const double _paintingSoundInterval = 45; 
+    
     private int _currentInstance;
 
     private float _soundVolume;
@@ -23,15 +25,24 @@ public class SoundService
             .Select(_ => paintingSound.CreateInstance())
             .ToArray();
 
-        _backgroundMusic = content.Load<Song>("Sounds/background");
+        var backgroundMusic = content.Load<Song>("Sounds/background");
 
         MediaPlayer.IsRepeating = true;
         MediaPlayer.Volume = 0f;
-        MediaPlayer.Play(_backgroundMusic);
+        MediaPlayer.Play(backgroundMusic);
     }
-
+    
     public void PlayPaintingSound()
     {
+        var now = Environment.TickCount64;
+
+        if (now - _lastPaintingSoundTime < _paintingSoundInterval)
+        {
+            return;
+        }
+
+        _lastPaintingSoundTime = now;
+        
         var instance = _instances[_currentInstance];
 
         instance.Stop();
