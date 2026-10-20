@@ -155,7 +155,7 @@ public class GameScene : IScene
 
         if (!_pixelReplayService.IsRunning)
         {
-            HandleMoving(mouse, keyboard);
+            HandleMoving(mouse, keyboard, gameTime);
             HandleScroll(mouse, keyboard);
         }
 
@@ -191,7 +191,7 @@ public class GameScene : IScene
         _inputService.SetState(mouse, keyboard);
     }
 
-    private void HandleMoving(MouseState mouse, KeyboardState keyboard)
+    private void HandleMoving(MouseState mouse, KeyboardState keyboard, GameTime gameTime)
     {
         var movement = Vector2.Zero;
 
@@ -234,9 +234,10 @@ public class GameScene : IScene
             _isMoving = true;
         }
         
+        var deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
         var speed = _moveSpeed * _cameraService.Zoom;
-        
-        _cameraService.SetPosition(_cameraService.GetPosition() + movement * speed);
+
+        _cameraService.SetPosition(_cameraService.GetPosition() + movement * speed * deltaTime * 60f);
     }
 
     private void HandleKonami(KeyboardState keyboard)
