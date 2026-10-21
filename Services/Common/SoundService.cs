@@ -33,13 +33,13 @@ public class SoundService
         _dialogOpenSound = content.Load<SoundEffect>("Sounds/UI/dialog_open");
         _dialogCloseSound = content.Load<SoundEffect>("Sounds/UI/dialog_close");
         _removeMoneySound = content.Load<SoundEffect>("Sounds/UI/remove_money");
-        _levelSelectSound = content.Load<SoundEffect>("Sounds/UI/select2");
+        _levelSelectSound = content.Load<SoundEffect>("Sounds/UI/level_select");
         _noMoneySound = content.Load<SoundEffect>("Sounds/UI/no_money");
         _finishSound = content.Load<SoundEffect>("Sounds/UI/finish");
         _addMoneySound = content.Load<SoundEffect>("Sounds/UI/add_money");
 
         _buttonHoveredInstances = Enumerable.Range(0, 4)
-            .Select(_ => content.Load<SoundEffect>("Sounds/UI/cursor1").CreateInstance())
+            .Select(_ => content.Load<SoundEffect>("Sounds/UI/hover").CreateInstance())
             .ToArray();
         
         _paintingInstances = Enumerable.Range(0, 8)
