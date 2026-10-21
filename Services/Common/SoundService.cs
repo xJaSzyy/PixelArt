@@ -10,17 +10,9 @@ namespace PixelArt.Services.Common;
 
 public class SoundService
 {
-    private readonly SoundEffectInstance[] _paintingInstances;
-    private readonly SoundEffectInstance[] _buttonHoveredInstances;
-
     private readonly Dictionary<SoundType, SoundEffect> _soundByType = [];
 
-    private double _lastPaintingSoundTime;
-    private double _lastButtonHoveredSoundTime;
-    private const double _soundInterval = 45; 
-    
-    private int _currentPaintingInstance;
-    private int _currentButtonHoveredInstance;
+    private double _lastSoundTime;
 
     private float _soundVolume;
 
@@ -33,15 +25,9 @@ public class SoundService
         _soundByType.Add(SoundType.RemoveMoney, content.Load<SoundEffect>("Sounds/UI/remove_money"));
         _soundByType.Add(SoundType.DialogOpen, content.Load<SoundEffect>("Sounds/UI/dialog_open"));
         _soundByType.Add(SoundType.DialogClose, content.Load<SoundEffect>("Sounds/UI/dialog_close"));
+        _soundByType.Add(SoundType.OnHover, content.Load<SoundEffect>("Sounds/UI/hover"));
+        _soundByType.Add(SoundType.Paint, content.Load<SoundEffect>("Sounds/painting"));
         
-        _buttonHoveredInstances = Enumerable.Range(0, 4)
-            .Select(_ => content.Load<SoundEffect>("Sounds/UI/hover").CreateInstance())
-            .ToArray();
-        
-        _paintingInstances = Enumerable.Range(0, 8)
-            .Select(_ => content.Load<SoundEffect>("Sounds/painting").CreateInstance())
-            .ToArray();
-
         var backgroundMusic = content.Load<Song>("Sounds/background");
 
         MediaPlayer.IsRepeating = true;
@@ -60,19 +46,19 @@ public class SoundService
 
         instance.Play();
     }
-    
-    public void PlayButtonHoveredSound()
+
+    public void PlaySoundWithInterval(SoundType soundType, double soundInterval = 45d)
     {
         var now = Environment.TickCount64;
 
-        if (now - _lastButtonHoveredSoundTime < _soundInterval)
+        if (now - _lastSoundTime < soundInterval)
         {
             return;
         }
 
-        _lastButtonHoveredSoundTime = now;
+        _lastSoundTime = now;
         
-        var instance = _buttonHoveredInstances[_currentButtonHoveredInstance];
+        var instance = _soundByType[soundType].CreateInstance();
 
         instance.Stop();
 
@@ -82,33 +68,6 @@ public class SoundService
         instance.Volume = randomVolume * _soundVolume;
 
         instance.Play();
-
-        _currentButtonHoveredInstance = (_currentButtonHoveredInstance + 1) % _buttonHoveredInstances.Length;
-    }
-    
-    public void PlayPaintingSound()
-    {
-        var now = Environment.TickCount64;
-
-        if (now - _lastPaintingSoundTime < _soundInterval)
-        {
-            return;
-        }
-
-        _lastPaintingSoundTime = now;
-        
-        var instance = _paintingInstances[_currentPaintingInstance];
-
-        instance.Stop();
-
-        instance.Pitch = Random.Shared.NextSingle() * 0.16f - 0.08f;
-
-        var randomVolume = 0.9f + Random.Shared.NextSingle() * 0.1f;
-        instance.Volume = randomVolume * _soundVolume;
-
-        instance.Play();
-
-        _currentPaintingInstance = (_currentPaintingInstance + 1) % _paintingInstances.Length;
     }
 
     public void UpdateVolume(float musicVolume, float soundVolume)

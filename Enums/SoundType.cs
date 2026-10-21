@@ -8,5 +8,7 @@ public enum SoundType
     ButtonClick = 4,
     RemoveMoney = 5,
     DialogOpen = 6,
-    DialogClose = 7
+    DialogClose = 7,
+    OnHover = 8,
+    Paint = 9
 }

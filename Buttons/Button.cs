@@ -3,6 +3,7 @@ using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using PixelArt.Enums;
 using PixelArt.Services;
 using PixelArt.Services.Common;
 
@@ -26,7 +27,7 @@ public class Button(SoundService soundService, DrawService drawService, Language
 
         if (IsHovered && !_lastHovered)
         {
-            soundService.PlayButtonHoveredSound();
+            soundService.PlaySoundWithInterval(SoundType.OnHover);
         }
 
         _lastHovered = IsHovered;

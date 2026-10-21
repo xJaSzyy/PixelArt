@@ -4,6 +4,7 @@ using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using PixelArt.Enums;
 using PixelArt.Models;
 using PixelArt.Services.Common;
 using PixelArt.Services.Particles;
@@ -488,7 +489,7 @@ public class PixelProcessorService
                 Math.Clamp(color.B + brightnessOffset, 0, 255));
 
             _particleService.Spawn(pixel.GetWorldPosition(_pixelSize.X, _pixelSize.Y, CurrentLevel.Texture.Width), particleColor, 5);
-            _soundService.PlayPaintingSound();
+            _soundService.PlaySoundWithInterval(SoundType.Paint);
 
             _highlightService.Remove(index);
         }
