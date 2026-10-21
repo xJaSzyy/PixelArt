@@ -1,3 +1,4 @@
+using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -15,9 +16,12 @@ public class PopupTextService(DrawService drawService)
 
     private float _delayTimer;
 
+    private bool _soundPlayed;
+    private Action _soundAction;
+
     private bool IsVisible => _text != null && _delayTimer <= 0f;
 
-    public void Show(string text, Vector2 position, float duration = 0.5f, Color? color = null, float scale = 1f)
+    public void Show(string text, Vector2 position, Action soundAction, float duration = 0.5f, Color? color = null, float scale = 1f)
     {
         if (IsVisible)
         {
@@ -31,9 +35,11 @@ public class PopupTextService(DrawService drawService)
         _timer = duration;
         _scale = scale;
         _delayTimer = 0f;
+        _soundPlayed = false;
+        _soundAction = soundAction;
     }
 
-    public void ShowDelayed(string text, Vector2 position, float delay, float duration = 0.5f, Color? color = null, float scale = 1f)
+    public void ShowDelayed(string text, Vector2 position, float delay, Action soundAction, float duration = 0.5f, Color? color = null, float scale = 1f)
     {
         _text = text;
         _position = position;
@@ -42,6 +48,8 @@ public class PopupTextService(DrawService drawService)
         _timer = duration;
         _scale = scale;
         _delayTimer = delay;
+        _soundPlayed = false;
+        _soundAction = soundAction;
     }
 
     public void Update(GameTime gameTime)
@@ -63,6 +71,12 @@ public class PopupTextService(DrawService drawService)
             }
 
             _timer = _duration;
+        }
+
+        if (!_soundPlayed)
+        {
+            _soundAction?.Invoke();
+            _soundPlayed = true;
         }
 
         _timer -= deltaTime;

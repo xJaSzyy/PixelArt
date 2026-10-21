@@ -318,6 +318,8 @@ public class GameScene : IScene
             return;
         }
         
+        _services.GetRequiredService<SoundService>().PlayFinishSound();
+        
         ColoringIsCompleted = true;
         ImageToCenter();
         _processorService.Replay();
@@ -335,7 +337,7 @@ public class GameScene : IScene
 
         _popupService.ShowDelayed(popupText, 
             new Vector2(_graphicsDevice.Viewport.Width / 2f, _drawService.MeasureString(popupText).Y * 2.5f), 
-            _pixelReplayService.ReplayDuration, 
+            _pixelReplayService.ReplayDuration, _services.GetRequiredService<SoundService>().PlayAddMoneySound,
             1.5f, Colors.Accept, 2f);
 
         _processorService.CurrentLevel.IsFinished = true;

@@ -15,6 +15,9 @@ public class SoundService
     private readonly SoundEffect _dialogCloseSound;
     private readonly SoundEffect _removeMoneySound;
     private readonly SoundEffect _levelSelectSound;
+    private readonly SoundEffect _noMoneySound;
+    private readonly SoundEffect _finishSound;
+    private readonly SoundEffect _addMoneySound;
 
     private double _lastPaintingSoundTime;
     private double _lastButtonHoveredSoundTime;
@@ -31,6 +34,9 @@ public class SoundService
         _dialogCloseSound = content.Load<SoundEffect>("Sounds/UI/dialog_close");
         _removeMoneySound = content.Load<SoundEffect>("Sounds/UI/remove_money");
         _levelSelectSound = content.Load<SoundEffect>("Sounds/UI/select2");
+        _noMoneySound = content.Load<SoundEffect>("Sounds/UI/no_money");
+        _finishSound = content.Load<SoundEffect>("Sounds/UI/finish");
+        _addMoneySound = content.Load<SoundEffect>("Sounds/UI/add_money");
 
         _buttonHoveredInstances = Enumerable.Range(0, 4)
             .Select(_ => content.Load<SoundEffect>("Sounds/UI/cursor1").CreateInstance())
@@ -45,6 +51,42 @@ public class SoundService
         MediaPlayer.IsRepeating = true;
         MediaPlayer.Volume = 0f;
         MediaPlayer.Play(backgroundMusic);
+    }
+    
+    public void PlayAddMoneySound()
+    {
+        var instance = _addMoneySound.CreateInstance();
+
+        instance.Pitch = Random.Shared.NextSingle() * 0.16f - 0.08f;
+        
+        var randomVolume = 0.9f + Random.Shared.NextSingle() * 0.1f;
+        instance.Volume = randomVolume * _soundVolume;
+
+        instance.Play();
+    }
+    
+    public void PlayFinishSound()
+    {
+        var instance = _finishSound.CreateInstance();
+
+        instance.Pitch = Random.Shared.NextSingle() * 0.16f - 0.08f;
+        
+        var randomVolume = 0.9f + Random.Shared.NextSingle() * 0.1f;
+        instance.Volume = randomVolume * _soundVolume;
+
+        instance.Play();
+    }
+    
+    public void PlayNoMoneySound()
+    {
+        var instance = _noMoneySound.CreateInstance();
+
+        instance.Pitch = Random.Shared.NextSingle() * 0.16f - 0.08f;
+        
+        var randomVolume = 0.9f + Random.Shared.NextSingle() * 0.1f;
+        instance.Volume = randomVolume * _soundVolume;
+
+        instance.Play();
     }
 
     public void PlayLevelSelectSound()

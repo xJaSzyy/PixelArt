@@ -234,7 +234,6 @@ public class DialogService
         if (_onConfirm?.Invoke() == true)
         {
             HideDialog();
-            _soundService.PlayRemoveMoneySound();
         }
     }
 

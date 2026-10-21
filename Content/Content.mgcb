@@ -2180,11 +2180,11 @@
 /processorParam:Quality=Best
 /build:Sounds/painting.wav
 
-#begin Sounds/UI/remove_money.wav
+#begin Sounds/UI/add_money.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
-/build:Sounds/UI/remove_money.wav
+/build:Sounds/UI/add_money.wav
 
 #begin Sounds/UI/cancel.wav
 /importer:WavImporter
@@ -2221,6 +2221,30 @@
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:Sounds/UI/dialog_open.wav
+
+#begin Sounds/UI/finish.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/UI/finish.wav
+
+#begin Sounds/UI/hover.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/UI/hover.wav
+
+#begin Sounds/UI/no_money.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/UI/no_money.wav
+
+#begin Sounds/UI/remove_money.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/UI/remove_money.wav
 
 #begin Sounds/UI/select2.wav
 /importer:WavImporter

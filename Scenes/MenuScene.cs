@@ -425,7 +425,7 @@ public class MenuScene : IScene
                 new Vector2(
                     _graphicsDevice.Viewport.Width / 2f + _drawService.MeasureString("$" + _playerService.Coins).X * 1.8f,
                     32
-                ),
+                ), _services.GetRequiredService<SoundService>().PlayRemoveMoneySound,
                 1.25f,
                 Colors.Decline);
             
@@ -437,7 +437,7 @@ public class MenuScene : IScene
             new Vector2(
                 _graphicsDevice.Viewport.Width / 2f,
                 _graphicsDevice.Viewport.Height / 2f
-            ),
+            ), _services.GetRequiredService<SoundService>().PlayNoMoneySound,
             0.5f,
             Colors.Decline);
 
