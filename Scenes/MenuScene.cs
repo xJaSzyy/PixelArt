@@ -174,6 +174,7 @@ public class MenuScene : IScene
                     else
                     {
                         _processorService.SetLevel(hoveredLevel, _settingsService.GetSettings());
+                        _services.GetRequiredService<SoundService>().PlayLevelSelectSound();
                         _sceneService.SetScene<GameScene>();
                     }
                 }
