@@ -155,7 +155,7 @@ public class MenuScene : IScene
             {
                 _settingsService.Toggle();
                 _dialogService.IsDialogOpen = false;
-                _soundService.PlayButtonClickSound();
+                _soundService.PlaySoundByType(SoundType.ButtonClick);
             }
         }
 
@@ -175,7 +175,7 @@ public class MenuScene : IScene
                     else
                     {
                         _processorService.SetLevel(hoveredLevel, _settingsService.GetSettings());
-                        _soundService.PlayButtonClickSound();
+                        _soundService.PlaySoundByType(SoundType.ButtonClick);
                         _sceneService.SetScene<GameScene>();
                     }
                 }
@@ -189,7 +189,7 @@ public class MenuScene : IScene
                         _levelService.CanScrollToLevel = true;
                         UpdateLevelProgress();
                         ResizeAll();
-                        _soundService.PlayButtonClickSound();
+                        _soundService.PlaySoundByType(SoundType.ButtonClick);
                         break;
                     }
                 }
@@ -197,7 +197,7 @@ public class MenuScene : IScene
                 if (_loadImageButton.IsHovered)
                 {
                     OpenImageAsync();
-                    _soundService.PlayButtonClickSound();
+                    _soundService.PlaySoundByType(SoundType.ButtonClick);
                 }
             }
         }
@@ -428,7 +428,7 @@ public class MenuScene : IScene
                 new Vector2(
                     _graphicsDevice.Viewport.Width / 2f + _drawService.MeasureString("$" + _playerService.Coins).X * 1.8f,
                     32
-                ), _soundService.PlayRemoveMoneySound,
+                ), () => _soundService.PlaySoundByType(SoundType.RemoveMoney),
                 1.25f,
                 Colors.Decline);
             
@@ -440,7 +440,7 @@ public class MenuScene : IScene
             new Vector2(
                 _graphicsDevice.Viewport.Width / 2f,
                 _graphicsDevice.Viewport.Height / 2f
-            ), _soundService.PlayNoMoneySound,
+            ), () => _soundService.PlaySoundByType(SoundType.NoMoney),
             0.5f,
             Colors.Decline);
 

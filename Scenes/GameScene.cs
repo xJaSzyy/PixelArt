@@ -90,22 +90,13 @@ public class GameScene : IScene
     public void LoadContent(ContentManager content)
     {
         _homeButton = new Button(_soundService, _drawService, _languageService, content.Load<Texture2D>("Icons/home"),
-            new Rectangle(_graphicsDevice.Viewport.Width - _buttonSize - _buttonSpacing,
-                _buttonSpacing,
-                _buttonSize,
-                _buttonSize));
+            new Rectangle(_graphicsDevice.Viewport.Width - _buttonSize - _buttonSpacing, _buttonSpacing, _buttonSize, _buttonSize));
         
         _restartButton = new Button(_soundService, _drawService, _languageService, content.Load<Texture2D>("Icons/restart"),
-            new Rectangle(_buttonSpacing,
-                _buttonSpacing,
-                _buttonSize,
-                _buttonSize));
+            new Rectangle(_buttonSpacing, _buttonSpacing, _buttonSize, _buttonSize));
         
         _deleteButton = new Button(_soundService, _drawService, _languageService, content.Load<Texture2D>("Icons/delete"),
-            new Rectangle(_buttonSpacing,
-                _buttonSpacing + _buttonSize + _buttonSpacing,
-                _buttonSize,
-                _buttonSize));
+            new Rectangle(_buttonSpacing, _buttonSpacing + _buttonSize + _buttonSpacing, _buttonSize, _buttonSize));
 
         for (var i = 0; i < _arrowTextures.Length; i++)
         {
@@ -142,17 +133,17 @@ public class GameScene : IScene
                     _processorService.ClearHighlight();
                     _processorService.UpdateTexture();
                     _cameraService.Zoom = 1f;
-                    _soundService.PlayButtonClickSound();
+                    _soundService.PlaySoundByType(SoundType.ButtonClick);
                     _services.GetRequiredService<SceneService>().SetScene<MenuScene>();
                 }
                 else if (_restartButton.IsHovered)
                 {
-                    _soundService.PlayButtonClickSound();
+                    _soundService.PlaySoundByType(SoundType.ButtonClick);
                     Restart();
                 }
                 else if (_deleteButton.IsHovered && _processorService.CurrentLevel.Type == LevelType.Custom)
                 {
-                    _soundService.PlayButtonClickSound();
+                    _soundService.PlaySoundByType(SoundType.ButtonClick);
                     _services.GetRequiredService<LevelService>().Levels.Remove(_processorService.CurrentLevel);
                     _services.GetRequiredService<SceneService>().SetScene<MenuScene>();
                 }
@@ -321,7 +312,7 @@ public class GameScene : IScene
             return;
         }
         
-        _soundService.PlayFinishSound();
+        _soundService.PlaySoundByType(SoundType.Finish);
         
         ColoringIsCompleted = true;
         ImageToCenter();
@@ -340,7 +331,7 @@ public class GameScene : IScene
 
         _popupService.ShowDelayed(popupText, 
             new Vector2(_graphicsDevice.Viewport.Width / 2f, _drawService.MeasureString(popupText).Y * 2.5f), 
-            _pixelReplayService.ReplayDuration, _soundService.PlayAddMoneySound,
+            _pixelReplayService.ReplayDuration, () => _soundService.PlaySoundByType(SoundType.AddMoney),
             1.5f, Colors.Accept, 2f);
 
         _processorService.CurrentLevel.IsFinished = true;

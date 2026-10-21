@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using PixelArt.Buttons;
+using PixelArt.Enums;
 
 namespace PixelArt.Services.Common;
 
@@ -114,7 +115,7 @@ public class DialogService
             else if (_cancelButton.IsHovered)
             {
                 HideDialog();
-                _soundService.PlayDialogCloseSound();
+                _soundService.PlaySoundByType(SoundType.DialogClose);
             }
         }
 
@@ -226,7 +227,7 @@ public class DialogService
         _isClosing = false;
         _animationProgress = 0f;
         
-        _soundService.PlayDialogOpenSound();
+        _soundService.PlaySoundByType(SoundType.DialogOpen);
     }
 
     private void OnConfirmButtonClicked()

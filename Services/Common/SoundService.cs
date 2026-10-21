@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Media;
+using PixelArt.Enums;
 
 namespace PixelArt.Services.Common;
 
@@ -10,14 +12,8 @@ public class SoundService
 {
     private readonly SoundEffectInstance[] _paintingInstances;
     private readonly SoundEffectInstance[] _buttonHoveredInstances;
-    
-    private readonly SoundEffect _dialogOpenSound;
-    private readonly SoundEffect _dialogCloseSound;
-    private readonly SoundEffect _removeMoneySound;
-    private readonly SoundEffect _buttonClickSound;
-    private readonly SoundEffect _noMoneySound;
-    private readonly SoundEffect _finishSound;
-    private readonly SoundEffect _addMoneySound;
+
+    private readonly Dictionary<SoundType, SoundEffect> _soundByType = [];
 
     private double _lastPaintingSoundTime;
     private double _lastButtonHoveredSoundTime;
@@ -30,14 +26,14 @@ public class SoundService
 
     public SoundService(ContentManager content)
     {
-        _dialogOpenSound = content.Load<SoundEffect>("Sounds/UI/dialog_open");
-        _dialogCloseSound = content.Load<SoundEffect>("Sounds/UI/dialog_close");
-        _removeMoneySound = content.Load<SoundEffect>("Sounds/UI/remove_money");
-        _buttonClickSound = content.Load<SoundEffect>("Sounds/UI/level_select");
-        _noMoneySound = content.Load<SoundEffect>("Sounds/UI/no_money");
-        _finishSound = content.Load<SoundEffect>("Sounds/UI/finish");
-        _addMoneySound = content.Load<SoundEffect>("Sounds/UI/add_money");
-
+        _soundByType.Add(SoundType.AddMoney, content.Load<SoundEffect>("Sounds/UI/add_money"));
+        _soundByType.Add(SoundType.Finish, content.Load<SoundEffect>("Sounds/UI/finish"));
+        _soundByType.Add(SoundType.NoMoney, content.Load<SoundEffect>("Sounds/UI/no_money"));
+        _soundByType.Add(SoundType.ButtonClick, content.Load<SoundEffect>("Sounds/UI/level_select"));
+        _soundByType.Add(SoundType.RemoveMoney, content.Load<SoundEffect>("Sounds/UI/remove_money"));
+        _soundByType.Add(SoundType.DialogOpen, content.Load<SoundEffect>("Sounds/UI/dialog_open"));
+        _soundByType.Add(SoundType.DialogClose, content.Load<SoundEffect>("Sounds/UI/dialog_close"));
+        
         _buttonHoveredInstances = Enumerable.Range(0, 4)
             .Select(_ => content.Load<SoundEffect>("Sounds/UI/hover").CreateInstance())
             .ToArray();
@@ -53,58 +49,10 @@ public class SoundService
         MediaPlayer.Play(backgroundMusic);
     }
     
-    public void PlayAddMoneySound()
+    public void PlaySoundByType(SoundType soundType)
     {
-        var instance = _addMoneySound.CreateInstance();
-
-        instance.Pitch = Random.Shared.NextSingle() * 0.16f - 0.08f;
+        var instance = _soundByType[soundType].CreateInstance();
         
-        var randomVolume = 0.9f + Random.Shared.NextSingle() * 0.1f;
-        instance.Volume = randomVolume * _soundVolume;
-
-        instance.Play();
-    }
-    
-    public void PlayFinishSound()
-    {
-        var instance = _finishSound.CreateInstance();
-
-        instance.Pitch = Random.Shared.NextSingle() * 0.16f - 0.08f;
-        
-        var randomVolume = 0.9f + Random.Shared.NextSingle() * 0.1f;
-        instance.Volume = randomVolume * _soundVolume;
-
-        instance.Play();
-    }
-    
-    public void PlayNoMoneySound()
-    {
-        var instance = _noMoneySound.CreateInstance();
-
-        instance.Pitch = Random.Shared.NextSingle() * 0.16f - 0.08f;
-        
-        var randomVolume = 0.9f + Random.Shared.NextSingle() * 0.1f;
-        instance.Volume = randomVolume * _soundVolume;
-
-        instance.Play();
-    }
-
-    public void PlayButtonClickSound()
-    {
-        var instance = _buttonClickSound.CreateInstance();
-
-        instance.Pitch = Random.Shared.NextSingle() * 0.16f - 0.08f;
-        
-        var randomVolume = 0.9f + Random.Shared.NextSingle() * 0.1f;
-        instance.Volume = randomVolume * _soundVolume;
-
-        instance.Play();
-    }
-    
-    public void PlayRemoveMoneySound()
-    {
-        var instance = _removeMoneySound.CreateInstance();
-
         instance.Pitch = Random.Shared.NextSingle() * 0.16f - 0.08f;
         
         var randomVolume = 0.9f + Random.Shared.NextSingle() * 0.1f;
@@ -136,30 +84,6 @@ public class SoundService
         instance.Play();
 
         _currentButtonHoveredInstance = (_currentButtonHoveredInstance + 1) % _buttonHoveredInstances.Length;
-    }
-    
-    public void PlayDialogOpenSound()
-    {
-        var instance = _dialogOpenSound.CreateInstance();
-
-        instance.Pitch = Random.Shared.NextSingle() * 0.16f - 0.08f;
-        
-        var randomVolume = 0.9f + Random.Shared.NextSingle() * 0.1f;
-        instance.Volume = randomVolume * _soundVolume;
-
-        instance.Play();
-    }
-    
-    public void PlayDialogCloseSound()
-    {
-        var instance = _dialogCloseSound.CreateInstance();
-
-        instance.Pitch = Random.Shared.NextSingle() * 0.16f - 0.08f;
-        
-        var randomVolume = 0.9f + Random.Shared.NextSingle() * 0.1f;
-        instance.Volume = randomVolume * _soundVolume;
-
-        instance.Play();
     }
     
     public void PlayPaintingSound()
