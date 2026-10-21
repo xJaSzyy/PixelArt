@@ -141,6 +141,7 @@ public class GameScene : IScene
                 {
                     _processorService.ClearHighlight();
                     _processorService.UpdateTexture();
+                    _cameraService.Zoom = 1f;
                     _services.GetRequiredService<SceneService>().SetScene<MenuScene>();
                 }
                 else if (_restartButton.IsHovered)

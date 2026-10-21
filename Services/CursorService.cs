@@ -19,7 +19,7 @@ public class CursorService
         _camera = camera;
         
         _spriteBatch = new SpriteBatch(graphicsDevice);
-        _cursorTexture = content.Load<Texture2D>("Cursors/cursor3");
+        _cursorTexture = content.Load<Texture2D>("Cursors/cursor1");
     }
 
     public void Update()
@@ -30,20 +30,13 @@ public class CursorService
 
     public void Draw()
     {
-        var mouseState = Mouse.GetState();
-
-        _cursorPosition = new Vector2(
-            mouseState.X - _cursorTexture.Width,
-            mouseState.Y - _cursorTexture.Height
-        );
-
         _spriteBatch.Begin(
             samplerState: SamplerState.PointClamp,
             blendState: BlendState.AlphaBlend
         );
 
-        var scale = 2f * _camera.Zoom;
-        scale = Math.Max(2.2f, scale);
+        var scale = 3.2f * _camera.Zoom;
+        scale = Math.Max(3.2f, scale);
         
         _spriteBatch.Draw(
             _cursorTexture,
