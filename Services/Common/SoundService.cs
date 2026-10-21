@@ -13,6 +13,7 @@ public class SoundService
     
     private readonly SoundEffect _dialogOpenSound;
     private readonly SoundEffect _dialogCloseSound;
+    private readonly SoundEffect _removeMoneySound;
 
     private double _lastPaintingSoundTime;
     private double _lastButtonHoveredSoundTime;
@@ -27,6 +28,7 @@ public class SoundService
     {
         _dialogOpenSound = content.Load<SoundEffect>("Sounds/UI/dialog_open");
         _dialogCloseSound = content.Load<SoundEffect>("Sounds/UI/dialog_close");
+        _removeMoneySound = content.Load<SoundEffect>("Sounds/UI/remove_money");
 
         _buttonHoveredInstances = Enumerable.Range(0, 4)
             .Select(_ => content.Load<SoundEffect>("Sounds/UI/cursor1").CreateInstance())
@@ -43,6 +45,18 @@ public class SoundService
         MediaPlayer.Play(backgroundMusic);
     }
 
+    public void PlayRemoveMoneySound()
+    {
+        var instance = _removeMoneySound.CreateInstance();
+
+        instance.Pitch = Random.Shared.NextSingle() * 0.16f - 0.08f;
+        
+        var randomVolume = 0.9f + Random.Shared.NextSingle() * 0.1f;
+        instance.Volume = randomVolume * _soundVolume;
+
+        instance.Play();
+    }
+    
     public void PlayButtonHoveredSound()
     {
         var now = Environment.TickCount64;
