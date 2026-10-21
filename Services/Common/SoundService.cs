@@ -14,7 +14,7 @@ public class SoundService
     private readonly SoundEffect _dialogOpenSound;
     private readonly SoundEffect _dialogCloseSound;
     private readonly SoundEffect _removeMoneySound;
-    private readonly SoundEffect _levelSelectSound;
+    private readonly SoundEffect _buttonClickSound;
     private readonly SoundEffect _noMoneySound;
     private readonly SoundEffect _finishSound;
     private readonly SoundEffect _addMoneySound;
@@ -33,7 +33,7 @@ public class SoundService
         _dialogOpenSound = content.Load<SoundEffect>("Sounds/UI/dialog_open");
         _dialogCloseSound = content.Load<SoundEffect>("Sounds/UI/dialog_close");
         _removeMoneySound = content.Load<SoundEffect>("Sounds/UI/remove_money");
-        _levelSelectSound = content.Load<SoundEffect>("Sounds/UI/level_select");
+        _buttonClickSound = content.Load<SoundEffect>("Sounds/UI/level_select");
         _noMoneySound = content.Load<SoundEffect>("Sounds/UI/no_money");
         _finishSound = content.Load<SoundEffect>("Sounds/UI/finish");
         _addMoneySound = content.Load<SoundEffect>("Sounds/UI/add_money");
@@ -89,9 +89,9 @@ public class SoundService
         instance.Play();
     }
 
-    public void PlayLevelSelectSound()
+    public void PlayButtonClickSound()
     {
-        var instance = _levelSelectSound.CreateInstance();
+        var instance = _buttonClickSound.CreateInstance();
 
         instance.Pitch = Random.Shared.NextSingle() * 0.16f - 0.08f;
         

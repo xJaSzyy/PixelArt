@@ -155,6 +155,7 @@ public class MenuScene : IScene
             {
                 _settingsService.Toggle();
                 _dialogService.IsDialogOpen = false;
+                _services.GetRequiredService<SoundService>().PlayButtonClickSound();
             }
         }
 
@@ -174,7 +175,7 @@ public class MenuScene : IScene
                     else
                     {
                         _processorService.SetLevel(hoveredLevel, _settingsService.GetSettings());
-                        _services.GetRequiredService<SoundService>().PlayLevelSelectSound();
+                        _services.GetRequiredService<SoundService>().PlayButtonClickSound();
                         _sceneService.SetScene<GameScene>();
                     }
                 }
@@ -188,6 +189,7 @@ public class MenuScene : IScene
                         _levelService.CanScrollToLevel = true;
                         UpdateLevelProgress();
                         ResizeAll();
+                        _services.GetRequiredService<SoundService>().PlayButtonClickSound();
                         break;
                     }
                 }
@@ -195,6 +197,7 @@ public class MenuScene : IScene
                 if (_loadImageButton.IsHovered)
                 {
                     OpenImageAsync();
+                    _services.GetRequiredService<SoundService>().PlayButtonClickSound();
                 }
             }
         }

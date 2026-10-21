@@ -142,14 +142,17 @@ public class GameScene : IScene
                     _processorService.ClearHighlight();
                     _processorService.UpdateTexture();
                     _cameraService.Zoom = 1f;
+                    _services.GetRequiredService<SoundService>().PlayButtonClickSound();
                     _services.GetRequiredService<SceneService>().SetScene<MenuScene>();
                 }
                 else if (_restartButton.IsHovered)
                 {
+                    _services.GetRequiredService<SoundService>().PlayButtonClickSound();
                     Restart();
                 }
                 else if (_deleteButton.IsHovered && _processorService.CurrentLevel.Type == LevelType.Custom)
                 {
+                    _services.GetRequiredService<SoundService>().PlayButtonClickSound();
                     _services.GetRequiredService<LevelService>().Levels.Remove(_processorService.CurrentLevel);
                     _services.GetRequiredService<SceneService>().SetScene<MenuScene>();
                 }
