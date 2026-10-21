@@ -54,6 +54,7 @@ public class LanguageService
                 ["Game.Delete"] = "Удалить",
                 ["Settings.ArrowHint"] = "ПОДСКАЗКА СТРЕЛКОЙ",
                 ["Settings.FillAnimation"] = "АНИМАЦИЯ ЗАКРАШИВАНИЯ",
+                ["Settings.Cursor"] = "КУРСОР",
                 ["Settings.Language"] = "ЯЗЫК",
                 ["Settings.Music"] = "МУЗЫКА",
                 ["Settings.Sound"] = "ЗВУК"
@@ -77,6 +78,7 @@ public class LanguageService
                 ["Game.Delete"] = "Delete",
                 ["Settings.ArrowHint"] = "ARROW HINT",
                 ["Settings.FillAnimation"] = "FILL ANIMATION",
+                ["Settings.Cursor"] = "CURSOR",
                 ["Settings.Language"] = "LANGUAGE",
                 ["Settings.Music"] = "MUSIC",
                 ["Settings.Sound"] = "SOUND"

@@ -103,6 +103,15 @@ public class SettingsService
         
         _drawService.DrawCheckbox(spriteBatch, animationBounds, Settings.FillAnimationEnabled, 
             Colors.Text, Color.Black, Colors.Text);
+        
+        var cursorBounds = GetCursorBounds(bounds, right);
+        
+        _drawService.DrawStringLeft(spriteBatch, _languageService.GetText("Settings.Cursor"), 
+            new Vector2(left, bounds.Y + top + step + step + cursorBounds.Height / 4f), 
+            Colors.Text);
+        
+        _drawService.DrawCheckbox(spriteBatch, cursorBounds, Settings.CursorEnabled, 
+            Colors.Text, Color.Black, Colors.Text);
 
         var languageBounds = GetLanguageBounds(bounds, top, step, right);
         
@@ -122,7 +131,7 @@ public class SettingsService
         var musicSliderInputBounds = GetMusicSliderInputBounds(bounds, top, step, left);
         
         _drawService.DrawString(spriteBatch, _languageService.GetText("Settings.Music"), 
-            new Vector2(bounds.Center.X, bounds.Y + top + step * 4), 
+            new Vector2(bounds.Center.X, bounds.Y + top + step * 4.5f), 
             Colors.Text);
         
         _drawService.DrawSlider(spriteBatch, musicSliderInputBounds, Settings.MusicVolume, 
@@ -131,7 +140,7 @@ public class SettingsService
         var soundSliderInputBounds = GetSoundSliderInputBounds(bounds, top, step, left);
         
         _drawService.DrawString(spriteBatch, _languageService.GetText("Settings.Sound"), 
-            new Vector2(bounds.Center.X, bounds.Y + top + step * 5.5f), 
+            new Vector2(bounds.Center.X, bounds.Y + top + step * 6f), 
             Colors.Text);
         
         _drawService.DrawSlider(spriteBatch, soundSliderInputBounds, Settings.SoundVolume, 
@@ -164,6 +173,14 @@ public class SettingsService
         if (animationBounds.Contains(mouse.Position))
         {
             Settings.FillAnimationEnabled = !Settings.FillAnimationEnabled;
+            return;
+        }
+        
+        var cursorBounds = GetCursorBounds(bounds, right);
+
+        if (cursorBounds.Contains(mouse.Position))
+        {
+            Settings.CursorEnabled = !Settings.CursorEnabled;
             return;
         }
 
@@ -247,8 +264,7 @@ public class SettingsService
         const int width = 24;
         const int height = 24;
         
-        return new Rectangle(right - 18, bounds.Y + 24, 
-            width, height);
+        return new Rectangle(right - 18, bounds.Y + 24, width, height);
     }
 
     private static Rectangle GetAnimationBounds(Rectangle bounds, int right)
@@ -256,8 +272,15 @@ public class SettingsService
         const int width = 24;
         const int height = 24;
         
-        return new Rectangle(right - 18, bounds.Y + 60, 
-            width, height);
+        return new Rectangle(right - 18, bounds.Y + 60, width, height);
+    }
+    
+    private static Rectangle GetCursorBounds(Rectangle bounds, int right)
+    {
+        const int width = 24;
+        const int height = 24;
+        
+        return new Rectangle(right - 18, bounds.Y + 96, width, height);
     }
     
     private static Rectangle GetLanguageBounds(Rectangle bounds, int top, int step, int right)
@@ -265,20 +288,17 @@ public class SettingsService
         const int width = 48;
         const int height = 36;
         
-        return new Rectangle(right - 18 - width / 2, bounds.Y + top + step * 2, 
-            width, height);
+        return new Rectangle(right - 18 - width / 2, bounds.Y + top + step * 3, width, height);
     }
     
     private static Rectangle GetMusicSliderInputBounds(Rectangle bounds, int top, int step, int left)
     {
-        return new Rectangle(left, bounds.Y + top + step * 4 + 20, 
-            bounds.Width - 48, 12);
+        return new Rectangle(left, (int)(bounds.Y + top + step * 4.5f + 20), bounds.Width - 48, 12);
     }
 
     private static Rectangle GetSoundSliderInputBounds(Rectangle bounds, int top, int step, int left)
     {
-        return new Rectangle(left, (int)(bounds.Y + top + step * 5.5f + 20), 
-            bounds.Width - 48, 12);
+        return new Rectangle(left, (int)(bounds.Y + top + step * 6f + 20), bounds.Width - 48, 12);
     }
 
     private void ChangeLanguage(Action action)

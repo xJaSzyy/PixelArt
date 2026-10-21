@@ -258,7 +258,7 @@ public class LevelService
             
         if (level != null)
         {
-            var scrollCount = (level.Button.Bounds.Y / level.Button.Bounds.Height) - 1;
+            var scrollCount = (level.Button.Bounds.Y / level.Button.Bounds.Height) - 2;
             for (var i = 0; i < scrollCount; i++)
             {
                 ScrollDown();

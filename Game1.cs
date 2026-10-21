@@ -15,14 +15,17 @@ public class Game1 : Game
     private SceneService _sceneService;
     private ServiceProvider _services;
 
+    private SettingsService _settingsService;
     private readonly CursorService _cursorService = new();
+
+    private bool _cursorEnabled = true; 
 
     public Game1()
     {
         var graphics = new GraphicsDeviceManager(this);
 
         Content.RootDirectory = "Content";
-        IsMouseVisible = false;
+        IsMouseVisible = true;
         IsFixedTimeStep = false;
         Window.AllowUserResizing = true;
         Window.ClientSizeChanged += OnClientSizeChanged;
@@ -74,6 +77,7 @@ public class Game1 : Game
         _sceneService = _services.GetRequiredService<SceneService>();
         _sceneService.SetScene<MenuScene>();
         
+        _settingsService = _services.GetRequiredService<SettingsService>();
         _cursorService.Initialize(GraphicsDevice, Content, _services.GetRequiredService<CameraService>());
         
         base.Initialize();
@@ -86,10 +90,16 @@ public class Game1 : Game
             base.Update(gameTime);
             return;
         }
+
+        _cursorEnabled = _settingsService.GetSettings().CursorEnabled;
+        IsMouseVisible = !_cursorEnabled;
+        
+        if (_cursorEnabled)
+        {
+            _cursorService.Update();
+        }
         
         _sceneService.CurrentScene.Update(gameTime);
-        
-        _cursorService.Update();
         
         base.Update(gameTime);
     }
@@ -98,7 +108,10 @@ public class Game1 : Game
     {
         _sceneService.CurrentScene.Draw(gameTime);
         
-        _cursorService.Draw();
+        if (_cursorEnabled)
+        {
+            _cursorService.Draw();
+        }
         
         base.Draw(gameTime);
     }
