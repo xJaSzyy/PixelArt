@@ -41,6 +41,7 @@ public class MenuScene : IScene
     private readonly LanguageService _languageService;
     private readonly ImageLoaderService _imageLoaderService;
     private readonly SettingsService _settingsService;
+    private readonly SoundService _soundService;
 
     private Button _settingsButton;
     
@@ -88,8 +89,9 @@ public class MenuScene : IScene
         _popupService = services.GetRequiredService<PopupTextService>();
         _backgroundService = services.GetRequiredService<BackgroundParticleService>();
         _languageService = services.GetRequiredService<LanguageService>();
-        _imageLoaderService = _services.GetRequiredService<ImageLoaderService>();
-        _settingsService = _services.GetRequiredService<SettingsService>();
+        _imageLoaderService = services.GetRequiredService<ImageLoaderService>();
+        _settingsService = services.GetRequiredService<SettingsService>();
+        _soundService = services.GetRequiredService<SoundService>();
     }
 
     public void LoadContent(ContentManager content)
@@ -110,16 +112,14 @@ public class MenuScene : IScene
                 Settings = _settingsService.GetSettings()
             });
         }
-
-        var soundService = _services.GetRequiredService<SoundService>();
         
-        _settingsButton = new Button(soundService,
+        _settingsButton = new Button(_soundService,
             _drawService,
             _languageService,
             content.Load<Texture2D>("Icons/settings"),
             Rectangle.Empty);
         
-        _loadImageButton = new Button(soundService,
+        _loadImageButton = new Button(_soundService,
             _drawService,
             _languageService,
             content.Load<Texture2D>("Icons/plus"),
@@ -127,7 +127,7 @@ public class MenuScene : IScene
         
         foreach (var type in Enum.GetNames<LevelType>())
         {
-            _typeButtons.Add(new Button(soundService,
+            _typeButtons.Add(new Button(_soundService,
                 _drawService,
                 _languageService,
                 null,
@@ -155,7 +155,7 @@ public class MenuScene : IScene
             {
                 _settingsService.Toggle();
                 _dialogService.IsDialogOpen = false;
-                _services.GetRequiredService<SoundService>().PlayButtonClickSound();
+                _soundService.PlayButtonClickSound();
             }
         }
 
@@ -175,7 +175,7 @@ public class MenuScene : IScene
                     else
                     {
                         _processorService.SetLevel(hoveredLevel, _settingsService.GetSettings());
-                        _services.GetRequiredService<SoundService>().PlayButtonClickSound();
+                        _soundService.PlayButtonClickSound();
                         _sceneService.SetScene<GameScene>();
                     }
                 }
@@ -189,7 +189,7 @@ public class MenuScene : IScene
                         _levelService.CanScrollToLevel = true;
                         UpdateLevelProgress();
                         ResizeAll();
-                        _services.GetRequiredService<SoundService>().PlayButtonClickSound();
+                        _soundService.PlayButtonClickSound();
                         break;
                     }
                 }
@@ -197,7 +197,7 @@ public class MenuScene : IScene
                 if (_loadImageButton.IsHovered)
                 {
                     OpenImageAsync();
-                    _services.GetRequiredService<SoundService>().PlayButtonClickSound();
+                    _soundService.PlayButtonClickSound();
                 }
             }
         }
@@ -428,7 +428,7 @@ public class MenuScene : IScene
                 new Vector2(
                     _graphicsDevice.Viewport.Width / 2f + _drawService.MeasureString("$" + _playerService.Coins).X * 1.8f,
                     32
-                ), _services.GetRequiredService<SoundService>().PlayRemoveMoneySound,
+                ), _soundService.PlayRemoveMoneySound,
                 1.25f,
                 Colors.Decline);
             
@@ -440,7 +440,7 @@ public class MenuScene : IScene
             new Vector2(
                 _graphicsDevice.Viewport.Width / 2f,
                 _graphicsDevice.Viewport.Height / 2f
-            ), _services.GetRequiredService<SoundService>().PlayNoMoneySound,
+            ), _soundService.PlayNoMoneySound,
             0.5f,
             Colors.Decline);
 

@@ -34,6 +34,7 @@ public class GameScene : IScene
     private readonly LanguageService _languageService;
     private ColorButtonsService _colorButtonsService;
     private readonly TooltipService _tooltipService;
+    private readonly SoundService _soundService;
     
     private SettingsData _settings;
 
@@ -67,7 +68,7 @@ public class GameScene : IScene
         Keys.Left,
         Keys.Right
     ];
-    
+
     public GameScene(IServiceProvider services)
     {
         _services = services;
@@ -83,25 +84,24 @@ public class GameScene : IScene
         _languageService = _services.GetRequiredService<LanguageService>();
         _pixelReplayService = _services.GetRequiredService<PixelReplayService>();
         _tooltipService = _services.GetRequiredService<TooltipService>();
+        _soundService = _services.GetRequiredService<SoundService>();
     }
 
     public void LoadContent(ContentManager content)
     {
-        var soundService = _services.GetRequiredService<SoundService>();
-        
-        _homeButton = new Button(soundService, _drawService, _languageService, content.Load<Texture2D>("Icons/home"),
+        _homeButton = new Button(_soundService, _drawService, _languageService, content.Load<Texture2D>("Icons/home"),
             new Rectangle(_graphicsDevice.Viewport.Width - _buttonSize - _buttonSpacing,
                 _buttonSpacing,
                 _buttonSize,
                 _buttonSize));
         
-        _restartButton = new Button(soundService, _drawService, _languageService, content.Load<Texture2D>("Icons/restart"),
+        _restartButton = new Button(_soundService, _drawService, _languageService, content.Load<Texture2D>("Icons/restart"),
             new Rectangle(_buttonSpacing,
                 _buttonSpacing,
                 _buttonSize,
                 _buttonSize));
         
-        _deleteButton = new Button(soundService, _drawService, _languageService, content.Load<Texture2D>("Icons/delete"),
+        _deleteButton = new Button(_soundService, _drawService, _languageService, content.Load<Texture2D>("Icons/delete"),
             new Rectangle(_buttonSpacing,
                 _buttonSpacing + _buttonSize + _buttonSpacing,
                 _buttonSize,
@@ -142,17 +142,17 @@ public class GameScene : IScene
                     _processorService.ClearHighlight();
                     _processorService.UpdateTexture();
                     _cameraService.Zoom = 1f;
-                    _services.GetRequiredService<SoundService>().PlayButtonClickSound();
+                    _soundService.PlayButtonClickSound();
                     _services.GetRequiredService<SceneService>().SetScene<MenuScene>();
                 }
                 else if (_restartButton.IsHovered)
                 {
-                    _services.GetRequiredService<SoundService>().PlayButtonClickSound();
+                    _soundService.PlayButtonClickSound();
                     Restart();
                 }
                 else if (_deleteButton.IsHovered && _processorService.CurrentLevel.Type == LevelType.Custom)
                 {
-                    _services.GetRequiredService<SoundService>().PlayButtonClickSound();
+                    _soundService.PlayButtonClickSound();
                     _services.GetRequiredService<LevelService>().Levels.Remove(_processorService.CurrentLevel);
                     _services.GetRequiredService<SceneService>().SetScene<MenuScene>();
                 }
@@ -321,7 +321,7 @@ public class GameScene : IScene
             return;
         }
         
-        _services.GetRequiredService<SoundService>().PlayFinishSound();
+        _soundService.PlayFinishSound();
         
         ColoringIsCompleted = true;
         ImageToCenter();
@@ -340,7 +340,7 @@ public class GameScene : IScene
 
         _popupService.ShowDelayed(popupText, 
             new Vector2(_graphicsDevice.Viewport.Width / 2f, _drawService.MeasureString(popupText).Y * 2.5f), 
-            _pixelReplayService.ReplayDuration, _services.GetRequiredService<SoundService>().PlayAddMoneySound,
+            _pixelReplayService.ReplayDuration, _soundService.PlayAddMoneySound,
             1.5f, Colors.Accept, 2f);
 
         _processorService.CurrentLevel.IsFinished = true;
